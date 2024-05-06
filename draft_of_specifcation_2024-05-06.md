@@ -26,10 +26,12 @@ The OpenSciMetrics (OSM) application is a command-line tool designed for the eva
 
 The architecture will largely mimic an existing application our group has been involved in called `MRIQC` ([Code](https://github.com/nipreps/mriqc/) and [Documentation](https://mriqc.readthedocs.io/en/latest/) are publicly available.)
 
+Much of the functionality is implemented in a series of small scripts available in this github repository: https://github.com/nimh-dsst/sharestats-leo-bsc
+
 ### 3.1 Containerization
 - **Docker**: The application will be containerized using Docker, ensuring consistency across different computing environments and facilitating easy distribution and deployment.
 
-### 3.3 External Dependencies
+### 3. External Dependencies
 - **ScienceBeam Parser**: Available at https://github.com/elifesciences/sciencebeam-parser
 - **rtransparent Tool**: A tool that will be integrated into the application workflow for analyzing XML data.
 - **oddpub**: https://github.com/quest-bih/oddpub
@@ -42,7 +44,6 @@ The architecture will largely mimic an existing application our group has been i
 
 ### 4.2 Programming languages
 - Although some of the tools used in OSM are written in R, it will be written entirely in Python
-
 
 ### 4.3 Documentation
 - The app will be documented using readthedocs, similar to [MRIQC](https://mriqc.readthedocs.io/en/latest/).
