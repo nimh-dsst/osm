@@ -33,7 +33,7 @@ Much of the apps functionality has been previously implemented in a series of sm
 
 ### 3.2 External Dependencies
 - **ScienceBeam Parser**: Available at https://github.com/elifesciences/sciencebeam-parser
-- **rtransparent Tool**: A tool that will be integrated into the application workflow for analyzing XML data.
+- [**rtransparent Tool**](https://github.com/serghiou/rtransparent): A tool that will be integrated into the application workflow for analyzing XML data. A docker container for rtransparent is available [here](https://hub.docker.com/r/agt24/rtransparent)
 - **oddpub**: https://github.com/quest-bih/oddpub
 - **R**
 
