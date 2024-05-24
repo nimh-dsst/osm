@@ -12,3 +12,4 @@ dist/
 build/
 .tox/
 .vscode/settings.json
+venv/
