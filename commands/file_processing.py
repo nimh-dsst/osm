@@ -8,8 +8,8 @@ def pdf_xml(file_name, file_id):
         to XML
 
     Args:
-        file_name (file path): First parameter
-        file_id (string): Second parameter
+        file_name (file path): full path to the PDF file input
+        file_id (string): unique identifier of the PDF (e.g. DOI, PMID)
     Returns:
         Creates an XML file in the directory xmls_sciencebeam
     """
