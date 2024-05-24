@@ -5,7 +5,7 @@ import os
 from commands.file_processing import pdf_xml
 
 
-class TestPdfXmlCommand(unittest.TestCase):
+class TestFileProcessing(unittest.TestCase):
     def setUp(self):
         # Create a temporary PDF file for testing
         self.pdf_path = 'test_sample.pdf'
