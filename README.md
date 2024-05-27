@@ -10,3 +10,6 @@ macOS and Linux: `source venv/bin/activate`
 
 - Next, run `pip install -r requirements.txt` to install all the dependencies.
 - Finally, run `python -m osm.cli pdf-xml "path_to_file_name.pdf" file_id`
+
+# How to run the unit tests
+- Navigate to the project's root directory and run `python -m pytest`
