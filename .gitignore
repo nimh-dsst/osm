@@ -1,2 +1,14 @@
 # Ignore the virtual environment directory
 venv/
+*coverage*
+.idea
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.env
+*.egg-info/
+dist/
+build/
+.tox/
+venv/
