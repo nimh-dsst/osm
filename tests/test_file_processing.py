@@ -1,18 +1,19 @@
-import unittest
+import pytest
 from click.testing import CliRunner
 import os
+import logging
 
 from commands.file_processing import pdf_xml
 
-
-class TestFileProcessing(unittest.TestCase):
-    def setUp(self):
+@pytest.mark.usefixtures("caplog")
+class TestFileProcessing:
+    def setup_method(self):
         # Create a temporary PDF file for testing
         self.pdf_path = 'test_sample.pdf'
         with open(self.pdf_path, 'wb') as f:
             f.write(b'%PDF-1.4\n%Test PDF content\n')
 
-    def tearDown(self):
+    def teardown_method(self):
         # Remove the temporary PDF file and any generated XML file
         if os.path.exists(self.pdf_path):
             os.remove(self.pdf_path)
@@ -20,14 +21,11 @@ class TestFileProcessing(unittest.TestCase):
         if os.path.exists(xml_output):
             os.remove(xml_output)
 
-    def test_pdf_xml_command(self):
+    def test_pdf_xml_command(self, caplog):
+        caplog.set_level(logging.INFO)
+
         runner = CliRunner()
         result = runner.invoke(pdf_xml, [self.pdf_path, 'test_file'])
 
-        # Check that the command executed successfully
-        self.assertEqual(result.exit_code, 0)
-        self.assertIn('Converted test_sample.pdf', result.output)
-
-
-if __name__ == '__main__':
-    unittest.main()
+        assert result.exit_code == 0
+        assert f'Converted: {self.pdf_path}' in caplog.text
