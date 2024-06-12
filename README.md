@@ -13,5 +13,11 @@ macOS and Linux: `source venv/bin/activate`
 
 # How to run tests of the application
 Run `tox`
+
 # How to run the unit tests
 - Navigate to the project's root directory and run `python -m pytest`
+
+# How to build the Docker image and run the container
+- Navigate to the project's root directory in your terminal
+- Run `docker build -t osm-image .` to build the image
+- When the build is complete, run `docker run -it osm-image bash` to run the Docker container
