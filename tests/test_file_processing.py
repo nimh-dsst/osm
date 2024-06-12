@@ -1,31 +1,33 @@
-import pytest
+import unittest
 from click.testing import CliRunner
 import os
-import logging
 
-from commands.file_processing import pdf_xml
+from osm.cli import cli
 
-@pytest.mark.usefixtures("caplog")
-class TestFileProcessing:
-    def setup_method(self):
+
+class TestFileProcessing(unittest.TestCase):
+    def setUp(self):
         # Create a temporary PDF file for testing
-        self.pdf_path = 'test_sample.pdf'
-        with open(self.pdf_path, 'wb') as f:
-            f.write(b'%PDF-1.4\n%Test PDF content\n')
+        self.pdfs_folder = 'docs/examples/pdf_inputs'
+        self.file = 'test_sample.pdf'
+        self.file_id = 'test_file_id'
 
-    def teardown_method(self):
-        # Remove the temporary PDF file and any generated XML file
-        if os.path.exists(self.pdf_path):
-            os.remove(self.pdf_path)
-        xml_output = f"{self.pdf_path.replace('.pdf', '')}_test_file.xml"
-        if os.path.exists(xml_output):
-            os.remove(xml_output)
+        self.output_file = f'docs/examples/sciencebeam_xml_outputs/{self.file_id}.xml'
 
-    def test_pdf_xml_command(self, caplog):
-        caplog.set_level(logging.INFO)
+    def tearDown(self):
+        # Remove the generated XML file
+        if os.path.exists(self.output_file):
+            os.remove(self.output_file)
 
+    def test_pdf_xml_command(self):
         runner = CliRunner()
-        result = runner.invoke(pdf_xml, [self.pdf_path, 'test_file'])
+        pdf_path = f'{self.pdfs_folder}/{self.file}'
+        result = runner.invoke(cli, ['pdf-xml', pdf_path, self.file_id])
 
-        assert result.exit_code == 0
-        assert f'Converted: {self.pdf_path}' in caplog.text
+        # Check that the command executed successfully
+        self.assertEqual(result.exit_code, 0)
+        self.assertTrue(os.path.exists(self.output_file))
+
+
+if __name__ == '__main__':
+    unittest.main()
