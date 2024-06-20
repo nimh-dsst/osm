@@ -32,6 +32,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Start ScienceBeam Docker container
+        run: |
+          docker run -d --rm -p 8082:8070 elifesciences/sciencebeam-parser
+
       - name: Run tests
         run: |
           tox
