@@ -1,9 +1,10 @@
 import click
 from logs.logger import logger
 
+
 @click.command()
-@click.argument('file_path', type=click.Path(exists=True))
-@click.argument('file_id', type=str)
+@click.argument("file_path", type=click.Path(exists=True))
+@click.argument("file_id", type=str)
 def pdf_xml(file_path, file_id):
     """This function converts a file from PDF
         to XML
@@ -16,4 +17,4 @@ def pdf_xml(file_path, file_id):
     """
 
     # Function Implementation
-    logger.info(f'Converted: {file_path} with ID: {file_id} to XML')
+    logger.info(f"Converted: {file_path} with ID: {file_id} to XML")
