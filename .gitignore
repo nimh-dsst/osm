@@ -1,4 +1,6 @@
 # Ignore the virtual environment directory
+_version.py
+node_modules
 venv/
 *coverage*
 .idea
