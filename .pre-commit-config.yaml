@@ -1,0 +1,33 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+-   repo: https://github.com/PyCQA/isort
+    rev: 5.10.1
+    hooks:
+    - id: isort
+      args: ["--profile", "black"]
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.1.0
+    hooks:
+    - id: trailing-whitespace
+      files: ".*\\.py"
+    - id: check-added-large-files
+-   repo: https://github.com/wemake-services/dotenv-linter
+    rev: 0.3.0  # Use the ref you want to point at
+    hooks:
+      - id: dotenv-linter
+        files: ".env.example"
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.9
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+# You can add your own hooks too.
+# -   repo: local
+#     hooks:
+#     -   id: my_hook
+#         name: Some custom hook
+#         entry: ./.local_precommit_hooks/my_own_hook.sh
+#         language: script

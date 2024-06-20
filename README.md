@@ -15,3 +15,10 @@ macOS and Linux: `source venv/bin/activate`
 Run `tox`
 # How to run the unit tests
 - Navigate to the project's root directory and run `python -m pytest`
+
+# Using pre-commit for commit checks
+
+```
+pip install pre-commit
+pre-commit install
+```
