@@ -9,6 +9,8 @@ Windows: `venv\Scripts\activate`<br>
 macOS and Linux: `source venv/bin/activate`
 
 - Next, run `pip install -e .` to install the package with its dependencies.
+- Open a terminal tab and run the image `docker run --rm -p 8082:8070 elifesciences/sciencebeam-parser` and keep it running for the rest of the testing period
+- Go back to terminal(root folder)
 - Finally, run `osm pdf-xml "path_to_file_name.pdf" file_id`
 
 # How to run tests of the application
