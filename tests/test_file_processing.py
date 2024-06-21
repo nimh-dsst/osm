@@ -1,33 +1,32 @@
-import unittest
+import pytest
 from click.testing import CliRunner
 import os
 
 from osm.cli import cli
 
 
-class TestFileProcessing(unittest.TestCase):
-    def setUp(self):
-        # Create a temporary PDF file for testing
-        self.pdfs_folder = 'docs/examples/pdf_inputs'
-        self.file = 'test_sample.pdf'
-        self.file_id = 'test_file_id'
+@pytest.fixture
+def setup_and_teardown():
+    # Setup: Create a temporary PDF file for testing
+    pdfs_folder = 'docs/examples/pdf_inputs'
+    file = 'test_sample.pdf'
+    file_id = 'test_file_id'
+    output_file = f'docs/examples/sciencebeam_xml_outputs/{file_id}.xml'
 
-        self.output_file = f'docs/examples/sciencebeam_xml_outputs/{self.file_id}.xml'
+    yield pdfs_folder, file, file_id, output_file
 
-    def tearDown(self):
-        # Remove the generated XML file
-        if os.path.exists(self.output_file):
-            os.remove(self.output_file)
-
-    def test_pdf_xml_command(self):
-        runner = CliRunner()
-        pdf_path = f'{self.pdfs_folder}/{self.file}'
-        result = runner.invoke(cli, ['pdf-xml', pdf_path, self.file_id])
-
-        # Check that the command executed successfully
-        self.assertEqual(result.exit_code, 0)
-        self.assertTrue(os.path.exists(self.output_file))
+    # Teardown: Remove the generated XML file
+    if os.path.exists(output_file):
+        os.remove(output_file)
 
 
-if __name__ == '__main__':
-    unittest.main()
+def test_pdf_xml_command(setup_and_teardown):
+    pdfs_folder, file, file_id, output_file = setup_and_teardown
+
+    runner = CliRunner()
+    pdf_path = f'{pdfs_folder}/{file}'
+    result = runner.invoke(cli, ['pdf-xml', pdf_path, file_id])
+
+    # Check that the command executed successfully
+    assert result.exit_code == 0
+    assert os.path.exists(output_file)

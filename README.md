@@ -8,7 +8,9 @@ OpenSciMetrics (OSM) applies NLP and LLM-based metrics and indicators related to
 Windows: `venv\Scripts\activate`<br>
 macOS and Linux: `source venv/bin/activate`
 
-- Next, run `pip install -r requirements.txt` to install all the dependencies.
+- Next, run `pip install -r requirements.txt && pre-commit install` to install all the dependencies.
+- Open a terminal tab and run the image `docker run --rm -p 8082:8070 elifesciences/sciencebeam-parser` and keep it running for the rest of the testing period
+- Go back to terminal(root folder)
 - Finally, run `python -m osm.cli pdf-xml "path_to_file_name.pdf" file_id`
 
 # How to run tests of the application
