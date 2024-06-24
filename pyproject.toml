@@ -1,0 +1,55 @@
+[project]
+name = "osm-cli"
+description = "Open Science Metrics (OSM) client for tracking scientific transparency and reproducibility metrics"
+readme = "README.md"
+requires-python = ">=3.8"
+keywords = [
+  "open science",
+  "altmetrics",
+  "scientific transparency",
+  "reproducibility"
+]
+dynamic = ["version"]
+
+dependencies = [
+    "click>=8.1.7",
+    "rich>=13.7.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "tox>=4.15.0",
+    "pytest>=8.2.1",
+    "pytest-cov",
+    "ruff>=0.4.9",
+    "build",
+    "twine",
+    "pre-commit",
+    "pkginfo>=1.10"
+]
+
+[project.urls]
+homepage = "https://website"
+source = "https://github.com/nimh-dsst/osm-cli"
+issues = "https://github.com/nimh-dsst/osm-cli/issues"
+
+[build-system]
+requires = ["setuptools>=42", "wheel", "setuptools_scm[toml]>=3.4"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+write_to = "osm_cli/_version.py"
+
+[tool.setuptools.packages.find]
+where = ["osm_cli"]
+
+[project.scripts]
+osm-cli = "osm_cli.cli.main:osm"
+
+[tool.black]
+line-length = 88
+target-version = ["py38", "py39", "py310"]
+
+[tool.ruff]
+line-length = 88
+indent-width = 4

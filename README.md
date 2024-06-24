@@ -8,10 +8,20 @@ OpenSciMetrics (OSM) applies NLP and LLM-based metrics and indicators related to
 Windows: `venv\Scripts\activate`<br>
 macOS and Linux: `source venv/bin/activate`
 
-- Next, run `pip install -r requirements.txt` to install all the dependencies.
-- Finally, run `python -m osm.cli pdf-xml "path_to_file_name.pdf" file_id`
+- Next, run `pip install -e .` to install the package with its dependencies.
+- Finally, run `osm pdf-xml "path_to_file_name.pdf" file_id`
 
 # How to run tests of the application
 Run `tox`
 # How to run the unit tests
-- Navigate to the project's root directory and run `python -m pytest`
+- Navigate to the project's root directory and run `pytest`
+
+# Using pre-commit for commit checks
+
+Pre-commit will run all of its hooks on every commit you make. To install
+pre-commit and its hooks, run the following commands:
+
+```
+pip install pre-commit
+pre-commit install
+```
