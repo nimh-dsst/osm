@@ -1,9 +1,9 @@
 import socket
 
 import docker
+import requests
 from docker.errors import DockerException
 from pydantic import FilePath
-import requests
 
 from osm_cli.converters.converter import Converter
 from osm_cli.utils.config import config
@@ -22,12 +22,11 @@ class PDFConverter(Converter):
         Returns:
             XML content as a string
         """
-        sciencebeam_url: str = f'{self.protocol}://{self.host}:{self.port}/api/convert'
-        with open(pdf_path, 'rb') as pdf_file:
-            files = {'file': pdf_file}
-            headers = {'Accept': 'application/tei+xml'}
-            response = requests.post(
-                sciencebeam_url, files=files, headers=headers)
+        sciencebeam_url: str = f"{self.protocol}://{self.host}:{self.port}/api/convert"
+        with open(pdf_path, "rb") as pdf_file:
+            files = {"file": pdf_file}
+            headers = {"Accept": "application/tei+xml"}
+            response = requests.post(sciencebeam_url, files=files, headers=headers)
 
             if response.status_code == 200:
                 return response.text
@@ -56,7 +55,7 @@ class PDFConverter(Converter):
         """
         try:
             client = docker.from_env()
-            client.images.get('elifesciences/sciencebeam-parser')
+            client.images.get("elifesciences/sciencebeam-parser")
             return True
         except DockerException:
             return False

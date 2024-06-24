@@ -25,17 +25,17 @@ def pdf_xml(file_path, file_id):
         converter = PDFConverter()
 
         if not converter.is_docker_running():
-            raise click.ClickException('Please make sure the docker is running')
+            raise click.ClickException("Please make sure the docker is running")
 
         if not converter.is_host_ready():
-            raise click.ClickException('The converter server is offline')
+            raise click.ClickException("The converter server is offline")
 
         xml_content = converter.convert(file_path)
         # Save the converted xml contents
-        output_file: str = f'docs/examples/sciencebeam_xml_outputs/{file_id}.xml'
-        with open(output_file, 'w', encoding='utf-8') as xml_file:
+        output_file: str = f"docs/examples/sciencebeam_xml_outputs/{file_id}.xml"
+        with open(output_file, "w", encoding="utf-8") as xml_file:
             xml_file.write(xml_content)
-            logger.info(f'Converted: {file_path} with ID: {file_id} to XML')
+            logger.info(f"Converted: {file_path} with ID: {file_id} to XML")
 
     except requests.RequestException as error:
         logger.error("Request error:", error)

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from pydantic import FilePath, BaseModel
+from pydantic import BaseModel, FilePath
 
 
 class Converter(ABC, BaseModel):
