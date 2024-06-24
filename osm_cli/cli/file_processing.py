@@ -1,5 +1,6 @@
 import click
-from logs.logger import logger
+
+from osm_cli.logging.logger import logger
 
 
 @click.command()
