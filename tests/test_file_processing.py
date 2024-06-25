@@ -3,7 +3,7 @@ import logging
 import pytest
 from click.testing import CliRunner
 
-from osm_cli.cli.main import pdf_xml
+from osm.cli.main import pdf_xml
 
 
 @pytest.fixture

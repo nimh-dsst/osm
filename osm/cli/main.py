@@ -1,6 +1,6 @@
 import click
 
-from osm_cli.logging.logger import logger
+from osm.logging.logger import logger
 
 
 @click.group()
