@@ -5,8 +5,8 @@ import requests
 from docker.errors import DockerException
 from pydantic import FilePath
 
-from osm_cli.converters.converter import Converter
-from osm_cli.utils.config import config
+from osm.converters.converter import Converter
+from osm.utils.config import config
 
 
 class PDFConverter(Converter):

@@ -14,6 +14,8 @@ dynamic = ["version"]
 dependencies = [
     "click>=8.1.7",
     "rich>=13.7.1",
+    "docker",
+    "pydantic",
 ]
 
 [project.optional-dependencies]
