@@ -1,5 +1,5 @@
 [project]
-name = "osm-cli"
+name = "osm"
 description = "Open Science Metrics (OSM) client for tracking scientific transparency and reproducibility metrics"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -30,21 +30,21 @@ dev = [
 
 [project.urls]
 homepage = "https://website"
-source = "https://github.com/nimh-dsst/osm-cli"
-issues = "https://github.com/nimh-dsst/osm-cli/issues"
+source = "https://github.com/nimh-dsst/osm"
+issues = "https://github.com/nimh-dsst/osm/issues"
 
 [build-system]
 requires = ["setuptools>=42", "wheel", "setuptools_scm[toml]>=3.4"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
-write_to = "osm_cli/_version.py"
+write_to = "osm/_version.py"
 
 [tool.setuptools.packages.find]
-where = ["osm_cli"]
+where = ["."]
 
 [project.scripts]
-osm-cli = "osm_cli.cli.main:osm"
+osm = "osm.cli.main:osm"
 
 [tool.black]
 line-length = 88
