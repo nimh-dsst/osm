@@ -1,10 +1,7 @@
-from pydantic.v1 import BaseSettings
-
-
-class AppConfig(BaseSettings):
-    PORT: int = 8082
-    HOST: str = "localhost"
-    PROTOCAL: str = "http"
+class AppConfig:
+    PORT: int = 8070
+    HOST: str = "sciencebeam"
+    PROTOCOL: str = "http"
 
 
 config = AppConfig()

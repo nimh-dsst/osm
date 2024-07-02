@@ -14,12 +14,12 @@ dynamic = ["version"]
 dependencies = [
     "click>=8.1.7",
     "rich>=13.7.1",
-    "docker",
-    "pydantic",
+    "requests>=2.32.3",
 ]
 
 [project.optional-dependencies]
 dev = [
+    "pytest-mock>=3.14.0",
     "tox>=4.15.0",
     "pytest>=8.2.1",
     "pytest-cov",

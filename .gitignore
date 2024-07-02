@@ -13,6 +13,5 @@ __pycache__/
 dist/
 build/
 .tox/
-venv/
 .vscode/settings.json
 .DS_Store
