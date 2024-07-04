@@ -6,9 +6,9 @@ jobs:
   pre-commit:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v3
-    - uses: pre-commit/action@v3.0.1
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+      - uses: pre-commit/action@v3.0.1
   tox-tests:
     runs-on: ubuntu-latest
 
@@ -17,7 +17,6 @@ jobs:
         python-version: [3.9]
 
     steps:
-
       - name: Checkout repository
         uses: actions/checkout@v2
 
@@ -39,14 +38,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e .[dev]
 
-      - name: Start ScienceBeam Docker container
+      - name: Install Docker Compose
         run: |
-          docker run -d --rm -p 8070 elifesciences/sciencebeam-parser
+          mkdir -p ~/.local/bin
+          curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o ~/.local/bin/docker-compose
+          chmod +x ~/.local/bin/docker-compose
+          export PATH="$HOME/.local/bin:$PATH"
+          docker-compose --version
 
-      - name: Run tests
+      - name: Build and run Docker containers
         run: |
-          tox
+          docker-compose up --build -d
 
-      - name: Test packaging
+      - name: Run tox tests inside Docker and tox packaging
         run: |
-          tox -e .package
+          docker-compose run osm bash -c "pip install tox && tox && tox -e .package"
