@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  sciencebeam:
+    image: elifesciences/sciencebeam-parser
+    ports:
+      - "8070:8070"
+    networks:
+      - app-network
+
+  osm:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8070"
+    volumes:
+      - .:/app
+    depends_on:
+      - sciencebeam
+    environment:
+      - SCIENCEBEAM_URL=http://sciencebeam:8070
+    tty: true
+    stdin_open: true
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

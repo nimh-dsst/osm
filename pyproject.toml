@@ -14,10 +14,13 @@ dynamic = ["version"]
 dependencies = [
     "click>=8.1.7",
     "rich>=13.7.1",
+    "requests>=2.32.3",
+    "rpy2==3.5.16"
 ]
 
 [project.optional-dependencies]
 dev = [
+    "pytest-mock>=3.14.0",
     "tox>=4.15.0",
     "pytest>=8.2.1",
     "pytest-cov",
@@ -25,7 +28,8 @@ dev = [
     "build",
     "twine",
     "pre-commit",
-    "pkginfo>=1.10"
+    "pkginfo>=1.10",
+    "pytest_mock"
 ]
 
 [project.urls]

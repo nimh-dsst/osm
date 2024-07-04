@@ -2,6 +2,7 @@
 _version.py
 node_modules
 venv/
+.DS_Store
 *coverage*
 .idea
 __pycache__/
@@ -13,6 +14,6 @@ __pycache__/
 dist/
 build/
 .tox/
-venv/
 .vscode/settings.json
 .DS_Store
+osm.egg-info
