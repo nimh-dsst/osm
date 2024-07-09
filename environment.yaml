@@ -1,0 +1,54 @@
+name: osm
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python=3.11
+  - click
+  - python-dotenv
+  - ipython
+  - lxml
+  - pandas
+  - pip
+  - pkginfo
+  - pre-commit
+  - pytest
+  - pytest-cov
+  - pytest-mock
+  - requests
+  - rich
+  - rpy2
+  - ruff=0.5.0
+  # Dependencies for rtransparent
+  - r-crul
+  - r-devtools
+  - r-dplyr
+  - r-furrr
+  - r-future
+  - r-globals
+  - r-hoardr
+  - r-httpcode
+  - r-lazyeval
+  - r-lubridate
+  - r-magrittr
+  - r-pbapply
+  - r-pdftools
+  - r-plyr
+  - r-purrr
+  - r-qpdf
+  - r-readr
+  - r-rentrez
+  - r-rlang
+  - r-stringr
+  - r-tibble
+  - r-tidyr
+  - r-tidyselect
+  - r-timechange
+  - r-tokenizers
+  - r-triebeard
+  - r-urltools
+  - r-utf8
+  - r-XML
+  - r-xml2
+  - pip:
+    - metapub

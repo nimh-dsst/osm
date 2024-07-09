@@ -1,0 +1,9 @@
+services:
+  sciencebeam:
+    ports:
+      # Forward the port 8070 on the host to the port 8070 on the container for
+      # convenience during development
+      - "8070:8070"
+  app:
+    volumes:
+      - .:/app

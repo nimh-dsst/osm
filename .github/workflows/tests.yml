@@ -6,47 +6,33 @@ jobs:
   pre-commit:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
     - uses: pre-commit/action@v3.0.1
-  tox-tests:
-    runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        python-version: [3.9]
-
-    steps:
-
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Cache pip
-        uses: actions/cache@v2
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -e .[dev]
-
-      - name: Start ScienceBeam Docker container
-        run: |
-          docker run -d --rm -p 8070 elifesciences/sciencebeam-parser
-
-      - name: Run tests
-        run: |
-          tox
-
-      - name: Test packaging
-        run: |
-          tox -e .package
+  pytest-suite:
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout Code
+          uses: actions/checkout@v4
+        - name: Set up Docker Buildx
+          uses: docker/setup-buildx-action@v3
+        - name: Set up docker caching
+          uses: actions/cache@v4
+          with:
+            path: /tmp/.buildx-cache
+            key: ${{ runner.os }}-docker-${{ hashFiles('Dockerfile', '**/compose*yaml', '.docker/*', 'pyproject.toml', 'environment.yaml') }}
+            restore-keys: |
+              ${{ runner.os }}-docker-
+        - name: Build the stack
+          run: |
+            docker buildx build --cache-from=type=local,src=/tmp/.buildx-cache --cache-to=type=local,dest=/tmp/.buildx-cache,mode=max --build-arg BUILDKIT_INLINE_CACHE=1 .
+            docker-compose up -d
+          env:
+            DOCKER_BUILDKIT: 1
+        - name: Wait for services to be ready
+          run: sleep 10  # Adjust time as needed for your services
+        - name: Run pytest
+          run: docker-compose run --entrypoint '/bin/bash -lc' app pytest tests
+        - name: Tear down the stack
+          if: always()
+          run: docker-compose down

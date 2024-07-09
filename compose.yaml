@@ -1,0 +1,18 @@
+services:
+  sciencebeam:
+    image: elifesciences/sciencebeam-parser
+    networks:
+      - app_network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - sciencebeam
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
