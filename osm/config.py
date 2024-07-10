@@ -13,11 +13,16 @@ class AppConfig:
     sb_protocol: str = "http"
 
     def __init__(
-        self, sb_port: int = None, sb_host: str = None, sb_protocol: str = None
+        self,
+        sb_port: int = None,
+        sb_host: str = None,
+        sb_protocol: str = None,
+        vroom_connection_size: int = 2**20,
     ):
         self.sb_port = int(sb_port) if sb_port is not None else self.sb_port
         self.sb_host = sb_host if sb_host is not None else self.sb_host
         self.sb_protocol = sb_protocol if sb_protocol is not None else self.sb_protocol
+        self.vroom_connection_size = vroom_connection_size
 
 
 load_dotenv()

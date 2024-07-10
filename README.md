@@ -9,7 +9,7 @@ OpenSciMetrics (OSM) applies NLP and LLM-based metrics and indicators related to
 ```
 docker-compose -f compose.yaml run \
   --rm \
-  -v $PWD:/mnt \
+  -v $PWD:/app \
   app \
   rtransparent \
   /mnt/docs/examples/pdf_inputs/test_sample.pdf \

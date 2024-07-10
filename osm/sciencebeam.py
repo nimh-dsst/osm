@@ -60,14 +60,20 @@ class PDFConverter(Converter):
             return True
 
 
-def convert_pdf(file_path, output_file_path):
-    """Converts a PDF file to XML and saves the output.
+def sciencebeam_pdf_conversion(file_path, text_dir):
+    """Converts a directory of PDFs to a directory of XML and saves the output.
 
     Args:
         file_path (str): Path to the input PDF file.
         output_file_path (str): Path to the output XML file.
     """
     converter = PDFConverter()
+    output_file_path = text_dir / (Path(file_path).stem + ".xml")
+    if output_file_path.exists():
+        logger.info(
+            f"Skipping: {file_path}. Output file already exists: {output_file_path}"
+        )
+        return
     xml_content = converter.convert(file_path)
 
     # Save the converted xml contents

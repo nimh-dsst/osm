@@ -25,8 +25,9 @@ RUN R -e '\
 install.packages("roadoi", repos = "http://cran.us.r-project.org"); \
 devtools::install_github("quest-bih/oddpub"); \
 devtools::install_github("cran/crminer"); \
-devtools::install_github("serghiou/metareadr"); \
-devtools::install_github("serghiou/rtransparent")'
+devtools::install_github("serghiou/metareadr")'
+COPY external /app/external
+RUN R -e 'devtools::install("external/rtransparent")'
 
 # Copy the project files and install the package
 COPY pyproject.toml /app

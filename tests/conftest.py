@@ -6,6 +6,30 @@ import pytest
 import requests
 
 
+def pytest_addoption(parser):
+    parser.addoption(
+        "--rs",
+        "--run-slow",
+        action="store_true",
+        help="Run tests that take a long time >10s to complete",
+    )
+
+
+def pytest_configure(config):
+    config.addinivalue_line("markers", "run_slow: test takes >10s to complete")
+
+
+def pytest_collection_modifyitems(config, items):
+    if not config.getoption("--run-slow"):
+        for item in items:
+            try:
+                next(m for m in item.iter_markers() if m.name == "run_slow")
+            except StopIteration:
+                pass
+            else:
+                item.add_marker(pytest.mark.skip("run with --run-slow"))
+
+
 @pytest.fixture
 def mocked_socket():
     mock_sock_instance = MagicMock(spec=socket.socket)
@@ -37,7 +61,7 @@ def mocked_requests_post():
 
 
 @pytest.fixture
-def pdf_setup(tmp_path):
+def sample_pdf(tmp_path):
     pdfs_folder = Path("docs/examples/pdf_inputs")
     file_in = pdfs_folder / "test_sample.pdf"
     output = tmp_path / "test_output_file.xml"
