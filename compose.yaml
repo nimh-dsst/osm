@@ -1,0 +1,14 @@
+services:
+  sciencebeam:
+    image: elifesciences/sciencebeam-parser
+    ports:
+      - "8070:8070"
+  rtransparent:
+    image: nimh/rtransparent
+    ports:
+      - "8071:8071"
+    healthcheck:
+      test: ["CMD", "curl", "--include", "--request", "GET", "http://localhost:8071/health"]
+      interval: 1s
+      timeout: 3s
+      retries: 3
