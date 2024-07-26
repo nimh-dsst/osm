@@ -2,7 +2,7 @@
 name = "osm"
 description = "Open Science Metrics (OSM) client for tracking scientific transparency and reproducibility metrics"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.11"
 keywords = [
   "open science",
   "altmetrics",
@@ -10,22 +10,10 @@ keywords = [
   "reproducibility"
 ]
 dynamic = ["version"]
-
 dependencies = [
-    "click>=8.1.7",
-    "rich>=13.7.1",
-]
-
-[project.optional-dependencies]
-dev = [
-    "tox>=4.15.0",
-    "pytest>=8.2.1",
-    "pytest-cov",
-    "ruff>=0.4.9",
-    "build",
-    "twine",
-    "pre-commit",
-    "pkginfo>=1.10"
+  "pydantic",
+  "odmantic",
+  "requests",
 ]
 
 [project.urls]
@@ -44,7 +32,7 @@ write_to = "osm/_version.py"
 where = ["."]
 
 [project.scripts]
-osm = "osm.cli.main:osm"
+osm = "osm.cli:main"
 
 [tool.black]
 line-length = 88

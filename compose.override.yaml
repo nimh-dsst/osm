@@ -1,0 +1,32 @@
+services:
+  rtransparent:
+    build:
+      context: .
+      dockerfile: docker_images/rtransparent/Dockerfile
+    volumes:
+      - ./docker_images/rtransparent:/app
+
+  osm_web_api:
+    environment:
+      - MONGODB_URI=mongodb://db:27017/test
+      # - MONGODB_URI=mongodb://mongoadmin:secret@db:27017/osm
+    build:
+      context: .
+      dockerfile: ./docker_images/web_api/Dockerfile
+    ports:
+      - 80:80
+    volumes:
+      - ./docker_images/web_api:/app/app
+    working_dir: /app/app
+    command: ["fastapi","dev","--host","0.0.0.0","--port","80"]
+    depends_on:
+        - db
+
+  db:
+    image: mongo:4.4.6
+    ports:
+      - 27017:27017
+    environment:
+      - MONGO_INITDB_DATABASE=test
+    #   - MONGO_INITDB_ROOT_USERNAME=mongoadmin
+    #   - MONGO_INITDB_ROOT_PASSWORD=secret

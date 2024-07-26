@@ -16,3 +16,4 @@ build/
 venv/
 .vscode/settings.json
 .DS_Store
+osm_output
