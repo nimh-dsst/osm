@@ -9,7 +9,8 @@ RUN pip install --no-cache-dir --upgrade -r /app/app/requirements.txt
 RUN mkdir -p /opt/osm
 COPY pyproject.toml /opt/osm
 COPY osm /opt/osm/osm
-COPY .git /opt/osm/.git
-RUN pip install  /opt/osm
+ARG PSEUDO_VERSION=0.0.1 # strongly recommended to update based on git describe
+RUN SETUPTOOLS_SCM_PRETEND_VERSION_FOR_OSM=${PSEUDO_VERSION} pip install -e /opt/osm
+RUN --mount=source=.git,target=/opt/osm/.git,type=bind pip install -e /opt/osm
 
 COPY ./docker_images/web_api/main.py /app/app/main.py

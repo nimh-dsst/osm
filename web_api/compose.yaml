@@ -8,3 +8,12 @@ services:
       dockerfile: ./docker_images/web_api/Dockerfile
     ports:
       - 80:80
+  traefik:
+    image: traefik:v3.1
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./traefik:/etc/traefik"
+      - "./letsencrypt:/letsencrypt"
+    ports:
+      - "80:80"
+      - "443:443"
