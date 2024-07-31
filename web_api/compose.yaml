@@ -2,10 +2,10 @@ services:
   osm_web_api:
     image: osm_web_api
     environment:
-      - MONGODB_URI="mongodb+srv://johnlee:<password>@cluster0.6xo8ws7.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+      - MONGODB_URI="mongodb+srv://the_rest_of_the_connection_string"
     build:
-      context: ../..
-      dockerfile: ./docker_images/web_api/Dockerfile
+      context: ..
+      dockerfile: ./web_api/Dockerfile
     ports:
       - 80:80
   traefik:

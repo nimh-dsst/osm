@@ -1,10 +1,19 @@
 #!/bin/bash
+# Script for testing the deployment during local development... ideally this
+# should be done in a CI/CD pipeline but sometimes that breaks...
+# 1. Run the script from the project root directory i.e. bash web_api/deploy.sh
+# 2. Ensure you have the necessary environment variables set in .env
 
-# Set your variables here
+# Set your variables in .env (see web_api/.env.template for help)
+if [ -f .env ]; then
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    export "$line"
+  done < .env
+  else
+    echo "No .env file found. Please create one using the .env.template file."
+    exit 1
+fi
 
-# Export AWS credentials
-export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
-export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
 
 # Log in to Docker Hub
 echo "Logging in to Docker Hub..."
@@ -15,25 +24,27 @@ echo "Building and pushing Docker image..."
 DOCKER_BUILDKIT=1 docker build -t $DOCKER_IMAGE_TAG -f ./web_api/docker_images/web_api/Dockerfile .
 docker push $DOCKER_IMAGE_TAG
 
-# Set up Terraform
-echo "Setting up Terraform..."
-terraform -install-autocomplete
+pushd web_api/terraform
+  # Set up Terraform
+  echo "Setting up Terraform..."
+  terraform -install-autocomplete
 
-# Initialize Terraform
-echo "Initializing Terraform..."
-terraform init -backend-config="./web_api/terraform/backend-config.tf"
+  # Initialize Terraform
+  echo "Initializing Terraform..."
+  terraform init -backend-config="./backend-config.tf"
 
-# Plan Terraform changes
-echo "Planning Terraform changes..."
-terraform plan -var-file="./web_api/terraform/$ENVIRONMENT.tfvars"
+  # Plan Terraform changes
+  echo "Planning Terraform changes..."
+  terraform plan -var-file="./$ENVIRONMENT.tfvars"
 
-# Apply Terraform changes
-echo "Applying Terraform changes..."
-terraform apply -var-file="./web_api/terraform/$ENVIRONMENT.tfvars" -auto-approve
+  # Apply Terraform changes
+  echo "Applying Terraform changes..."
+  terraform apply -var-file="./$ENVIRONMENT.tfvars" -auto-approve
 
-# Get the instance ID and public DNS
-instance_id=$(terraform output -raw instance_id)
-public_dns=$(terraform output -raw public_dns)
+  # Get the instance ID and public DNS
+  instance_id=$(terraform output -raw instance_id)
+  public_dns=$(terraform output -raw public_dns)
+popd
 
 # Deploy Docker Compose on the instance
 echo "Deploying Docker Compose on the instance..."

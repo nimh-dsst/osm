@@ -1,5 +1,5 @@
 provider "aws" {
-  region = "us-east-1"
+  region = var.aws_region
 }
 
 variable "environment" {
@@ -31,6 +31,12 @@ variable "domain" {
   default     = "osm.nimh.nih.gov"
 }
 
+variable "aws_region" {
+  description = "AWS region"
+  default     = "us-east-1"
+}
+
+# Data source to find the latest Ubuntu AMI
 data "aws_ami" "ubuntu" {
   most_recent = true
   owners      = ["099720109477"]
@@ -40,6 +46,7 @@ data "aws_ami" "ubuntu" {
   }
 }
 
+# VPC
 resource "aws_vpc" "main" {
   cidr_block = "10.0.0.0/16"
 
@@ -48,6 +55,7 @@ resource "aws_vpc" "main" {
   }
 }
 
+# Subnet
 resource "aws_subnet" "main" {
   vpc_id            = aws_vpc.main.id
   cidr_block        = "10.0.1.0/24"
@@ -58,6 +66,7 @@ resource "aws_subnet" "main" {
   }
 }
 
+# Security Group
 resource "aws_security_group" "app" {
   vpc_id = aws_vpc.main.id
 
@@ -87,6 +96,7 @@ resource "aws_security_group" "app" {
   }
 }
 
+# EC2 Instance
 resource "aws_instance" "app" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = var.instance_type
@@ -107,6 +117,20 @@ resource "aws_instance" "app" {
               EOF
 }
 
+# S3 Bucket for Terraform State
+resource "aws_s3_bucket" "terraform_state" {
+  bucket = var.s3_bucket
+
+  versioning {
+    enabled = true
+  }
+
+  tags = {
+    Name = "${var.environment}-terraform-state"
+  }
+}
+
+# DynamoDB Table for Terraform State Locking
 resource "aws_dynamodb_table" "terraform_locks" {
   name         = var.dynamodb_table
   billing_mode = "PAY_PER_REQUEST"
@@ -120,4 +144,13 @@ resource "aws_dynamodb_table" "terraform_locks" {
   tags = {
     Name = "${var.environment}-terraform-locks"
   }
+}
+
+# Outputs
+output "instance_id" {
+  value = aws_instance.app.id
+}
+
+output "public_dns" {
+  value = aws_instance.app.public_dns
 }
