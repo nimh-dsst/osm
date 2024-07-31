@@ -1,16 +1,15 @@
 provider "aws" {
-  region = var.aws_region
+  region = "us-east-1"
 }
 
 terraform {
   backend "s3" {
-    bucket         = "osm-storage"
+    bucket         = "osm-terraform-storage"
     key            = "terraform/staging/terraform.tfstate"
     region         = "us-east-1"
     dynamodb_table = "terraform-locks"
   }
 }
-
 
 # Data source to find the latest Ubuntu AMI
 data "aws_ami" "ubuntu" {
@@ -25,7 +24,6 @@ data "aws_ami" "ubuntu" {
 # VPC
 resource "aws_vpc" "main" {
   cidr_block = "10.0.0.0/16"
-
   tags = {
     Name = "${var.environment}-vpc"
   }
@@ -36,7 +34,6 @@ resource "aws_subnet" "main" {
   vpc_id            = aws_vpc.main.id
   cidr_block        = "10.0.1.0/24"
   availability_zone = "us-east-1a"
-
   tags = {
     Name = "${var.environment}-subnet"
   }
@@ -78,7 +75,7 @@ resource "aws_instance" "app" {
   instance_type = var.instance_type
   subnet_id     = aws_subnet.main.id
   key_name      = "dsst2023"
-  security_groups = [aws_security_group.app.id]
+  security_groups = [aws_security_group.app.name]
 
   tags = {
     Name = "${var.environment}-instance"
@@ -93,31 +90,6 @@ resource "aws_instance" "app" {
               EOF
 }
 
-# S3 Bucket for Terraform State
-resource "aws_s3_bucket" "terraform_state" {
-  bucket = var.s3_bucket
-  tags = {
-    Name = "${var.environment}-terraform-state"
-  }
-}
-
-# DynamoDB Table for Terraform State Locking
-resource "aws_dynamodb_table" "terraform_locks" {
-  name         = var.dynamodb_table
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "LockID"
-
-  attribute {
-    name = "LockID"
-    type = "S"
-  }
-
-  tags = {
-    Name = "${var.environment}-terraform-locks"
-  }
-}
-
-# Outputs
 output "instance_id" {
   value = aws_instance.app.id
 }

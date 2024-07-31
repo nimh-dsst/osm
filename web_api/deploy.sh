@@ -21,7 +21,7 @@ echo $DOCKER_HUB_ACCESS_TOKEN | docker login --username $DOCKER_HUB_USERNAME --p
 
 # Build and push Docker image
 echo "Building and pushing Docker image..."
-DOCKER_BUILDKIT=1 docker build -t $DOCKER_IMAGE_TAG -f ./web_api/docker_images/web_api/Dockerfile .
+DOCKER_BUILDKIT=1 docker build -t $DOCKER_IMAGE_TAG -f ./web_api/Dockerfile .
 docker push $DOCKER_IMAGE_TAG
 
 # Set up Terraform
@@ -32,7 +32,7 @@ pushd web_api/terraform
 
   # Initialize Terraform
   echo "Initializing Terraform..."
-  tofu init -reconfigure -backend-config="./backend-config-${ENVIRONMENT}.tf"
+  tofu init -reconfigure
 
 
   # Plan Terraform changes
