@@ -14,6 +14,7 @@ if [ -f .env ]; then
     exit 1
 fi
 
+echo ${SSH_KEY_PATH}
 
 # Log in to Docker Hub
 echo "Logging in to Docker Hub..."
@@ -50,7 +51,7 @@ popd
 
 # Deploy Docker Compose on the instance
 echo "Deploying Docker Compose on the instance..."
-ssh -o StrictHostKeyChecking=no -i dsst2023.pem ubuntu@$public_dns -p 2222 << EOF
+ssh -o StrictHostKeyChecking=no -i $SSH_KEY_PATH ubuntu@$public_dns -p 2222 << EOF
   mkdir -p ~/app
   cd ~/app
   echo "$(<./web_api/compose.yaml)" > compose.yaml
