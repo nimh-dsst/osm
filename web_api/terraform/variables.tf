@@ -23,14 +23,6 @@ variable "security_group_ids" {
   type        = list(string)
 }
 
-variable "mongodb_uri" {
-  description = "MongoDB URI for state locking"
-}
-
-variable "mongodb_db" {
-  description = "MongoDB Database for state locking"
-}
-
 variable "domain" {
   description = "Domain for Traefik"
   default     = "osm.nimh.nih.gov"

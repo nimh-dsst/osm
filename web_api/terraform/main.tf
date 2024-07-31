@@ -11,6 +11,7 @@ terraform {
   }
 }
 
+
 # Data source to find the latest Ubuntu AMI
 data "aws_ami" "ubuntu" {
   most_recent = true
@@ -75,7 +76,7 @@ resource "aws_instance" "app" {
   instance_type = var.instance_type
   subnet_id     = aws_subnet.main.id
   key_name      = "dsst2023"
-  security_groups = [aws_security_group.app.name]
+  vpc_security_group_ids = [aws_security_group.app.id]
 
   tags = {
     Name = "${var.environment}-instance"
