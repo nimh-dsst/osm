@@ -13,11 +13,6 @@ variable "instance_type" {
   default     = "t3.micro"
 }
 
-variable "spot_instance_type" {
-  description = "EC2 spot instance type"
-  default     = "t3.micro"
-}
-
 variable "subnet_ids" {
   description = "List of subnet IDs"
   type        = list(string)
@@ -38,5 +33,20 @@ variable "mongodb_db" {
 
 variable "domain" {
   description = "Domain for Traefik"
-  default     = ""
+  default     = "osm.nimh.nih.gov"
+}
+
+variable "ssh_port" {
+  description = "Non-standard port for SSH"
+  default     = 2222
+}
+
+variable "s3_bucket" {
+  description = "S3 bucket for Terraform state"
+  default     = "osm-storage"
+}
+
+variable "dynamodb_table" {
+  description = "DynamoDB table for Terraform state locking"
+  default     = "terraform-locks"
 }

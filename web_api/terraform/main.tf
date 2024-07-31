@@ -2,39 +2,15 @@ provider "aws" {
   region = var.aws_region
 }
 
-variable "environment" {
-  description = "The environment to deploy to (staging or production)"
-  type        = string
+terraform {
+  backend "s3" {
+    bucket         = "osm-storage"
+    key            = "terraform/staging/terraform.tfstate"
+    region         = "us-east-1"
+    dynamodb_table = "terraform-locks"
+  }
 }
 
-variable "instance_type" {
-  default = "t3.micro"
-}
-
-variable "ssh_port" {
-  description = "Non-standard port for SSH"
-  default     = 2222
-}
-
-variable "s3_bucket" {
-  description = "S3 bucket for Terraform state"
-  default     = "osm-storage"
-}
-
-variable "dynamodb_table" {
-  description = "DynamoDB table for Terraform state locking"
-  default     = "terraform-locks"
-}
-
-variable "domain" {
-  description = "Domain for Traefik"
-  default     = "osm.nimh.nih.gov"
-}
-
-variable "aws_region" {
-  description = "AWS region"
-  default     = "us-east-1"
-}
 
 # Data source to find the latest Ubuntu AMI
 data "aws_ami" "ubuntu" {
@@ -120,11 +96,6 @@ resource "aws_instance" "app" {
 # S3 Bucket for Terraform State
 resource "aws_s3_bucket" "terraform_state" {
   bucket = var.s3_bucket
-
-  versioning {
-    enabled = true
-  }
-
   tags = {
     Name = "${var.environment}-terraform-state"
   }
