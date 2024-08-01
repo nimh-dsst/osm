@@ -11,6 +11,7 @@ terraform {
   }
 }
 
+# Your variables.tf should contain all variables, including environment, instance_type, ssh_port, etc.
 
 # Data source to find the latest Ubuntu AMI
 data "aws_ami" "ubuntu" {
@@ -26,7 +27,7 @@ data "aws_ami" "ubuntu" {
 resource "aws_vpc" "main" {
   cidr_block = "10.0.0.0/16"
   tags = {
-    Name = "${var.environment}-vpc"
+    Name = "staging-vpc"
   }
 }
 
@@ -36,7 +37,7 @@ resource "aws_subnet" "main" {
   cidr_block        = "10.0.1.0/24"
   availability_zone = "us-east-1a"
   tags = {
-    Name = "${var.environment}-subnet"
+    Name = "staging-subnet"
   }
 }
 
@@ -66,20 +67,20 @@ resource "aws_security_group" "app" {
   }
 
   tags = {
-    Name = "${var.environment}-security-group"
+    Name = "staging-security-group"
   }
 }
 
 # EC2 Instance
 resource "aws_instance" "app" {
-  ami           = data.aws_ami.ubuntu.id
-  instance_type = var.instance_type
-  subnet_id     = aws_subnet.main.id
-  key_name      = "dsst2023"
+  ami                    = data.aws_ami.ubuntu.id
+  instance_type          = var.instance_type
+  subnet_id              = aws_subnet.main.id
+  key_name               = "dsst2023"
   vpc_security_group_ids = [aws_security_group.app.id]
 
   tags = {
-    Name = "${var.environment}-instance"
+    Name = "staging-instance"
   }
 
   user_data = <<-EOF
