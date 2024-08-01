@@ -82,6 +82,7 @@ resource "aws_instance" "staging" {
   subnet_id              = aws_subnet.staging.id
   key_name               = "dsst2023"
   vpc_security_group_ids = [aws_security_group.staging.id]
+  associate_public_ip_address = true
 
   tags = {
     Name = "staging-instance"
@@ -96,17 +97,6 @@ resource "aws_instance" "staging" {
               EOF
 }
 
-resource "aws_eip" "staging" {
-  domain = "vpc"
-
-  tags = {
-    Name = "staging-elastic-ip"
-  }
-}
-resource "aws_eip_association" "staging" {
-  instance_id   = aws_instance.staging.id
-  allocation_id = aws_eip.staging.id
-}
 
 output "instance_id" {
   value = aws_instance.staging.id

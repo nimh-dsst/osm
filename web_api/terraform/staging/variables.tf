@@ -6,7 +6,7 @@ variable "instance_type" {
 
 variable "domain" {
   description = "Domain for Traefik"
-  default     = "osm.nimh.nih.gov"
+  default     = "pythonaisolutions.com"
 }
 
 variable "ssh_port" {
