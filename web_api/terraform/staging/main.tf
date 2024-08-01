@@ -5,7 +5,7 @@ provider "aws" {
 terraform {
   backend "s3" {
     bucket         = "osm-terraform-storage"
-    key            = "terraform/production/terraform.tfstate"
+    key            = "terraform/staging/terraform.tfstate"
     region         = "us-east-1"
     dynamodb_table = "terraform-locks"
   }
@@ -13,29 +13,29 @@ terraform {
 
 module "shared_resources" {
   source      = "../modules/shared_resources"
-  environment = "production"
+  environment = "staging"
 }
 
-# Production Subnet
-resource "aws_subnet" "production" {
+# Staging Subnet
+resource "aws_subnet" "staging" {
   vpc_id            = module.shared_resources.vpc_id
-  cidr_block        = "10.0.2.0/24"
+  cidr_block        = "10.0.1.0/24"
   availability_zone = "us-east-1a"
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "production-subnet"
+    Name = "staging-subnet"
   }
 }
 
-# Route Table Association for Production
-resource "aws_route_table_association" "production" {
-  subnet_id      = aws_subnet.production.id
+# Route Table Association for Staging
+resource "aws_route_table_association" "staging" {
+  subnet_id      = aws_subnet.staging.id
   route_table_id = module.shared_resources.route_table_id
 }
 
 # Security Group
-resource "aws_security_group" "production" {
+resource "aws_security_group" "staging" {
   vpc_id = module.shared_resources.vpc_id
 
   ingress {
@@ -60,20 +60,20 @@ resource "aws_security_group" "production" {
   }
 
   tags = {
-    Name = "production-security-group"
+    Name = "staging-security-group"
   }
 }
 
 # EC2 Instance
-resource "aws_instance" "production" {
+resource "aws_instance" "staging" {
   ami                    = data.aws_ami.ubuntu.id
   instance_type          = var.instance_type
-  subnet_id              = aws_subnet.production.id
+  subnet_id              = aws_subnet.staging.id
   key_name               = "dsst2023"
-  vpc_security_group_ids = [aws_security_group.production.id]
+  vpc_security_group_ids = [aws_security_group.staging.id]
 
   tags = {
-    Name = "production-instance"
+    Name = "staging-instance"
   }
 
   user_data = <<-EOF
@@ -85,24 +85,24 @@ resource "aws_instance" "production" {
               EOF
 }
 
-# Elastic IP for Production
-resource "aws_eip" "production" {
+# Elastic IP for Staging
+resource "aws_eip" "staging" {
   vpc = true
 
   tags = {
-    Name = "production-elastic-ip"
+    Name = "staging-elastic-ip"
   }
 }
 
-resource "aws_eip_association" "production" {
-  instance_id   = aws_instance.production.id
-  allocation_id = aws_eip.production.id
+resource "aws_eip_association" "staging" {
+  instance_id   = aws_instance.staging.id
+  allocation_id = aws_eip.staging.id
 }
 
 output "instance_id" {
-  value = aws_instance.production.id
+  value = aws_instance.staging.id
 }
 
 output "public_dns" {
-  value = aws_instance.production.public_dns
+  value = aws_instance.staging.public_dns
 }
