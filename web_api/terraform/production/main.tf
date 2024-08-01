@@ -85,9 +85,9 @@ resource "aws_instance" "production" {
               EOF
 }
 
-# Elastic IP for Production
+# Elastic IP
 resource "aws_eip" "production" {
-  vpc = true
+  domain = "vpc"
 
   tags = {
     Name = "production-elastic-ip"

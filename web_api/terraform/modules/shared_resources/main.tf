@@ -3,6 +3,25 @@ variable "environment" {
   type        = string
 }
 
+variable "aws_region" {
+  description = "AWS region"
+  default     = "us-east-1"
+}
+
+
+variable "s3_bucket" {
+  description = "S3 bucket for Terraform state"
+  default     = "osm-storage"
+}
+
+variable "dynamodb_table" {
+  description = "DynamoDB table for Terraform state locking"
+  default     = "terraform-locks"
+}
+
+
+
+
 # VPC
 resource "aws_vpc" "main" {
   cidr_block = "10.0.0.0/16"

@@ -11,6 +11,7 @@ terraform {
   }
 }
 
+
 module "shared_resources" {
   source      = "../modules/shared_resources"
   environment = "staging"
@@ -64,6 +65,16 @@ resource "aws_security_group" "staging" {
   }
 }
 
+# Data source to find the latest Ubuntu AMI
+data "aws_ami" "ubuntu" {
+  most_recent = true
+  owners      = ["099720109477"]
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
+  }
+}
+
 # EC2 Instance
 resource "aws_instance" "staging" {
   ami                    = data.aws_ami.ubuntu.id
@@ -85,15 +96,13 @@ resource "aws_instance" "staging" {
               EOF
 }
 
-# Elastic IP for Staging
 resource "aws_eip" "staging" {
-  vpc = true
+  domain = "vpc"
 
   tags = {
     Name = "staging-elastic-ip"
   }
 }
-
 resource "aws_eip_association" "staging" {
   instance_id   = aws_instance.staging.id
   allocation_id = aws_eip.staging.id

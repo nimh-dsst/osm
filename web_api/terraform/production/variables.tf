@@ -3,11 +3,6 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
-variable "environment" {
-  description = "Deployment environment (staging or production)"
-  type        = string
-}
-
 variable "instance_type" {
   description = "EC2 instance type"
   default     = "t3.micro"
