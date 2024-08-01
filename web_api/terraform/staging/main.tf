@@ -105,3 +105,7 @@ output "instance_id" {
 output "public_dns" {
   value = aws_instance.staging.public_dns
 }
+
+output "public_ip" {
+  value = aws_instance.staging.public_ip
+}

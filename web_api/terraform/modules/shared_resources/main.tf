@@ -20,8 +20,6 @@ variable "dynamodb_table" {
 }
 
 
-
-
 # VPC
 resource "aws_vpc" "main" {
   cidr_block = "10.0.0.0/16"
@@ -52,6 +50,7 @@ resource "aws_route_table" "main" {
     Name = "${var.environment}-route-table"
   }
 }
+
 
 output "vpc_id" {
   value = aws_vpc.main.id
