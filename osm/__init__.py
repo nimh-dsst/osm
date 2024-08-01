@@ -23,5 +23,3 @@ def generate_version_file():
     with open(version_file_path, "w") as version_file:
         version_file.write(version_file_content)
 
-
-__version__ = get_version()
