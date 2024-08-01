@@ -85,19 +85,8 @@ resource "aws_instance" "production" {
               EOF
 }
 
-# Elastic IP
-resource "aws_eip" "production" {
-  domain = "vpc"
 
-  tags = {
-    Name = "production-elastic-ip"
-  }
-}
 
-resource "aws_eip_association" "production" {
-  instance_id   = aws_instance.production.id
-  allocation_id = aws_eip.production.id
-}
 
 output "instance_id" {
   value = aws_instance.production.id
