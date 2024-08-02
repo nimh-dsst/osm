@@ -11,5 +11,5 @@ variable "domain" {
 
 variable "ssh_port" {
   description = "Non-standard port for SSH"
-  default     = 2222
+  default     = 22
 }

@@ -35,6 +35,12 @@ resource "aws_route_table_association" "staging" {
   route_table_id = module.shared_resources.route_table_id
 }
 
+# Associate the Network ACL with the Subnet
+resource "aws_network_acl_association" "main" {
+  subnet_id      = aws_subnet.staging.id
+  network_acl_id = module.shared_resources.aws_network_acl_id
+}
+
 # Security Group
 resource "aws_security_group" "staging" {
   vpc_id = module.shared_resources.vpc_id
@@ -98,11 +104,25 @@ resource "aws_instance" "staging" {
               #!/bin/bash
               apt-get update -y
               apt-get install -y docker.io docker-compose
+              systemctl restart sshd
               systemctl start docker
               systemctl enable docker
               EOF
 }
 
+
+resource "aws_eip" "staging" {
+  domain = "vpc"
+
+  tags = {
+    Name = "staging-elastic-ip"
+  }
+}
+
+resource "aws_eip_association" "staging" {
+  instance_id   = aws_instance.staging.id
+  allocation_id = aws_eip.staging.id
+}
 
 output "instance_id" {
   value = aws_instance.staging.id
