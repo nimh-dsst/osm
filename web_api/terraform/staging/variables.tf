@@ -3,7 +3,6 @@ variable "instance_type" {
   default     = "t3.micro"
 }
 
-
 variable "domain" {
   description = "Domain for Traefik"
   default     = "pythonaisolutions.com"

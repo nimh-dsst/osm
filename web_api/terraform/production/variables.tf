@@ -8,16 +8,6 @@ variable "instance_type" {
   default     = "t3.micro"
 }
 
-variable "subnet_ids" {
-  description = "List of subnet IDs"
-  type        = list(string)
-}
-
-variable "security_group_ids" {
-  description = "List of security group IDs"
-  type        = list(string)
-}
-
 variable "domain" {
   description = "Domain for Traefik"
   default     = "osm.nimh.nih.gov"
@@ -25,7 +15,7 @@ variable "domain" {
 
 variable "ssh_port" {
   description = "Non-standard port for SSH"
-  default     = 2222
+  default     = 22
 }
 
 variable "s3_bucket" {
