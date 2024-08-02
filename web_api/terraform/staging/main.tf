@@ -14,7 +14,6 @@ terraform {
 
 module "shared_resources" {
   source      = "../modules/shared_resources"
-  environment = "staging"
 }
 
 # Staging Subnet
@@ -39,6 +38,19 @@ resource "aws_route_table_association" "staging" {
 resource "aws_network_acl_association" "main" {
   subnet_id      = aws_subnet.staging.id
   network_acl_id = module.shared_resources.aws_network_acl_id
+}
+
+resource "aws_eip" "staging" {
+  domain = "vpc"
+
+  tags = {
+    Name = "staging-elastic-ip"
+  }
+}
+
+resource "aws_eip_association" "staging" {
+  instance_id   = aws_instance.staging.id
+  allocation_id = aws_eip.staging.id
 }
 
 # Security Group
@@ -111,18 +123,7 @@ resource "aws_instance" "staging" {
 }
 
 
-resource "aws_eip" "staging" {
-  domain = "vpc"
 
-  tags = {
-    Name = "staging-elastic-ip"
-  }
-}
-
-resource "aws_eip_association" "staging" {
-  instance_id   = aws_instance.staging.id
-  allocation_id = aws_eip.staging.id
-}
 
 output "instance_id" {
   value = aws_instance.staging.id

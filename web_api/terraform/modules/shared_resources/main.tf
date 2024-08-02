@@ -1,8 +1,3 @@
-variable "environment" {
-  description = "Deployment environment (staging or production)"
-  type        = string
-}
-
 variable "aws_region" {
   description = "AWS region"
   default     = "us-east-1"
@@ -24,7 +19,7 @@ variable "dynamodb_table" {
 resource "aws_vpc" "main" {
   cidr_block = "10.0.0.0/16"
   tags = {
-    Name = "${var.environment}-vpc"
+    Name = "osm-vpc"
   }
 }
 
@@ -33,7 +28,7 @@ resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
 
   tags = {
-    Name = "${var.environment}-internet-gateway"
+    Name = "osm-internet-gateway"
   }
 }
 
@@ -47,7 +42,7 @@ resource "aws_route_table" "main" {
   }
 
   tags = {
-    Name = "${var.environment}-route-table"
+    Name = "osm-route-table"
   }
 }
 
@@ -56,7 +51,7 @@ resource "aws_network_acl" "main" {
   vpc_id = aws_vpc.main.id
 
   tags = {
-    Name = "${var.environment}-network-acl"
+    Name = "osm-network-acl"
   }
 }
 
@@ -87,7 +82,19 @@ resource "aws_network_acl_rule" "allow_all_outbound" {
   to_port        = 0
 }
 
+resource "aws_vpc_dhcp_options" "main" {
+  domain_name          = "compute-1.amazonaws.com"
+  domain_name_servers  = ["AmazonProvidedDNS"]
 
+  tags = {
+    Name = "osm-dhcp-options"
+  }
+}
+
+resource "aws_vpc_dhcp_options_association" "main" {
+  vpc_id          = aws_vpc.main.id
+  dhcp_options_id = aws_vpc_dhcp_options.main.id
+}
 
 # Outputs
 output "vpc_id" {
