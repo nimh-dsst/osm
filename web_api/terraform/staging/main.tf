@@ -5,67 +5,81 @@ provider "aws" {
 terraform {
   backend "s3" {
     bucket         = "osm-terraform-storage"
-    key            = "terraform/staging/terraform.tfstate"
+    key            = "terraform/staging-state/terraform.tfstate"
     region         = "us-east-1"
     dynamodb_table = "terraform-locks"
   }
 }
 
-module "shared_resources" {
-  source = "../modules/shared_resources"
-}
 
-# Data source to find the latest Ubuntu AMI
-data "aws_ami" "ubuntu" {
-  most_recent = true
-  owners      = ["099720109477"]
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
-  }
+module "shared_resources" {
+  source      = "../modules/shared_resources"
+  ssh_port    = var.ssh_port
 }
 
 # EC2 Instance
 resource "aws_instance" "staging" {
-  ami                    = data.aws_ami.ubuntu.id
+  ami                    = module.shared_resources.ami_id
   instance_type          = var.instance_type
-  key_name               = "dsst2023"
-  associate_public_ip_address = true
   subnet_id              = module.shared_resources.subnet_id
+  key_name               = "dsst2023"
+  vpc_security_group_ids = [module.shared_resources.security_group_id]
+  associate_public_ip_address = true
 
   tags = {
     Name = "staging-instance"
   }
 
   user_data = <<-EOF
-              #!/bin/bash
-              apt-get update -y
-              apt-get install -y docker.io docker-compose
-              systemctl restart sshd
-              systemctl start docker
-              systemctl enable docker
+    #!/bin/bash
+    apt-get update -y
+    apt-get install -y docker.io docker-compose
+    systemctl restart sshd
+    systemctl start docker
+    systemctl enable docker
               EOF
+}
+
+resource "aws_eip" "staging" {
+  domain = "vpc"
+
+  tags = {
+    Name = "staging-elastic-ip"
+  }
+}
+
+resource "aws_eip_association" "staging" {
+  instance_id   = aws_instance.staging.id
+  allocation_id = aws_eip.staging.id
 }
 
 output "vpc_id" {
   value = module.shared_resources.vpc_id
 }
-output "subnet_id" {
-  value = module.shared_resources.subnet_id
-}
 output "internet_gateway_id" {
   value = module.shared_resources.internet_gateway_id
 }
-
 output "route_table_id" {
   value = module.shared_resources.route_table_id
 }
+output "network_acl_id" {
+  value = module.shared_resources.aws_network_acl_id
+}
+output "security_group_id" {
+  value = module.shared_resources.security_group_id
+}
+output "subnet_id" {
+  value = module.shared_resources.subnet_id
+}
+
 output "instance_id" {
   value = aws_instance.staging.id
 }
-output "public_ip" {
-  value = aws_instance.staging.public_ip
-}
+
 output "public_dns" {
-  value = aws_instance.staging.public_dns
+  value = aws_eip.staging.public_dns
+}
+
+output "public_ip" {
+  value = aws_eip.staging.public_ip
 }

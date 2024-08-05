@@ -28,13 +28,9 @@ from odmantic import AIOEngine
 from osm.schemas import Invocation
 
 app = FastAPI()
-
-client = motor.motor_asyncio.AsyncIOMotorClient(
-    os.environ.get(
-        "MONGODB_URI",
-        "mongodb+srv://johnlee:<password>@cluster0.6xo8ws7.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
-    )
-)
+dburi = os.environ.get("MONGODB_URI", "mongodb://localhost:27017")
+print(f"My DBBB!!! {dburi}")
+client = motor.motor_asyncio.AsyncIOMotorClient(dburi)
 engine = AIOEngine(client=client, database="test")
 
 

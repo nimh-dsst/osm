@@ -47,14 +47,15 @@ deploy_terraform() {
 
   popd
 
+  # Transfer the docker-compose.yaml file to the remote instance
+  scp -o StrictHostKeyChecking=no -i $SSH_KEY_PATH temp.yaml ubuntu@$public_dns:~/docker-compose.yaml
   # Deploy Docker Compose on the instance
   echo "Deploying Docker Compose on the instance..."
   ssh -o StrictHostKeyChecking=no -i $SSH_KEY_PATH ubuntu@$public_dns -p $TF_VAR_ssh_port << EOF
-    mkdir -p ~/app
-    cd ~/app
-    echo "$(<./web_api/compose.yaml)" > compose.yaml
-    docker-compose up -d
+    sudo docker-compose up -d
 EOF
+  
+
 
   # Notify success
   if [ $? -eq 0 ]; then
@@ -74,13 +75,30 @@ if [ -z "$SSH_KEY_PATH" ]; then
 fi
 
 # Log in to Docker Hub
-# echo "Logging in to Docker Hub..."
-# echo $DOCKER_HUB_ACCESS_TOKEN | docker login --username $DOCKER_HUB_USERNAME --password-stdin
+echo "Logging in to Docker Hub..."
+echo $DOCKER_HUB_ACCESS_TOKEN | docker login --username $DOCKER_HUB_USERNAME --password-stdin
+# Build and push Docker image
+echo "Building and pushing Docker image..."
+DOCKER_BUILDKIT=1 docker build -t $DOCKER_IMAGE_TAG -f ./web_api/Dockerfile .
+docker push $DOCKER_IMAGE_TAG
 
-# # Build and push Docker image
-# echo "Building and pushing Docker image..."
-# DOCKER_BUILDKIT=1 docker build -t $DOCKER_IMAGE_TAG -f ./web_api/Dockerfile .
-# docker push $DOCKER_IMAGE_TAG
+# Define the compose file content
+COMPOSE_FILE=$(cat <<EOF
+version: '3'
+services:
+  osm_web_api:
+    image: ${DOCKER_IMAGE_TAG}
+    environment:
+      - MONGODB_URI=${MONGODB_URI}
+    ports:
+      - "8000:8000"
+EOF
+)
+
+# Create a temporary docker-compose.yaml file locally
+echo "${COMPOSE_FILE}" > temp.yaml
 
 # Deploy
 deploy_terraform ${ENVIRONMENT}
+# Clean up the local temporary file
+rm temp.yaml
