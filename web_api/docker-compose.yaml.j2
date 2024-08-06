@@ -1,0 +1,28 @@
+
+version: '3'
+services:
+  osm_web_api:
+    image: {{ docker_image_tag }}
+    environment:
+      - MONGODB_URI={{ mongodb_uri }}
+    ports:
+      - "80:80"
+    working_dir: /app/app
+    depends_on:
+      - traefik
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.osm_web_api.loadbalancer.server.port=80
+      - traefik.http.routers.osm_web_api-http.entrypoints=http
+      - traefik.http.routers.osm_web_api-http.rule=Host(`osm.pythonaisolutions.com`)
+      - traefik.docker.network=traefik-public
+      - traefik.http.routers.osm_web_api-https.entrypoints=https
+      - traefik.http.routers.osm_web_api-https.rule=Host(`osm.pythonaisolutions.com`)
+      - traefik.http.routers.osm_web_api-https.tls=true
+      - traefik.http.routers.osm_web_api-https.tls.certresolver=le
+      - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
+      - traefik.http.middlewares.https-redirect.redirectscheme.permanent=true
+      - traefik.http.routers.osm_web_api-http.middlewares=https-redirect
+networks:
+  traefik-public:
+    external: true
