@@ -79,7 +79,7 @@ def create_temp_files():
 
     traefik_hashed_password = (
         subprocess.check_output(
-            f"openssl passwd -apr1 {os.getenv('TRAEFIK_PASSWORD')}", shell=True
+            f"openssl passwd -apr1 '{os.getenv('TRAEFIK_PASSWORD')}'", shell=True
         )
         .decode()
         .strip()
