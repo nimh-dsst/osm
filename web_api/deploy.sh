@@ -100,6 +100,8 @@ services:
         - "--entrypoints.http.address=:80"
         - "--entrypoints.https.address=:443"
         - "--certificatesresolvers.le.acme.email=${CERT_EMAIL}"
+        - "--certificatesresolvers.le.acme.storage=/certificates/acme.json"
+        - "--certificatesresolvers.le.acme.tlschallenge=true"
         - --log
         - --accesslog
       ports:
@@ -115,7 +117,8 @@ networks:
     external: true
 volumes:
         traefik-public-certificates:
-EOF
+EOF)
+
 COMPOSE_FILE=$(cat <<EOF
 version: '3'
 services:
@@ -134,12 +137,23 @@ services:
       - traefik.http.routers.osm_web_api-http.entrypoints=http
       - traefik.http.routers.osm_web_api-http.rule=Host(`osm.pythonaisolutions.com`)
       - traefik.docker.network=traefik-default
+      # https
+      - traefik.http.routers.osm_web_api-https.entrypoints=https
+      - traefik.http.routers.osm_web_api-https.rule=Host(`osm.pythonaisolutions.com`)
+      - traefik.http.routers.osm_web_api-https.tls=true
+      # use the "le" (Let's Encrypt) resolver to get Let's Encrypt certificates
+      - traefik.http.routers.osm_web_api-https.tls.certresolver=le
+      # https-redirect middleware
+      - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
+      - traefik.http.middlewares.https-redirect.redirectscheme.permanent=true
+      # apply the redirect middleware to the http router
+      - traefik.http.routers.osm_web_api-http.middlewares=https-redirect
+
 networks:
   traefik-public:
     external: true
 
-EOF
-)
+EOF)
 
 # Create a temporary docker-compose.yaml file locally
 echo "${COMPOSE_FILE}" > temp.yaml
