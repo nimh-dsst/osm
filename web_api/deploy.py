@@ -74,7 +74,7 @@ def deploy_terraform(environment):
 
 
 def create_temp_files():
-    traefik_template_path = Path("web_api/docker-compose-traefik.yaml.j2")
+    # traefik_template_path = Path("web_api/docker-compose-traefik.yaml.j2")
     compose_template_path = Path("web_api/docker-compose.yaml.j2")
 
     traefik_auth = (
@@ -87,30 +87,31 @@ def create_temp_files():
         .replace("$", "$$")
     )
 
-    traefik_template = Template(traefik_template_path.read_text())
+    # traefik_template = Template(traefik_template_path.read_text())
+    # traefik_compose_content = traefik_template.render(
+    #     cert_email=os.getenv("CERT_EMAIL"),
+    #     traefik_auth=traefik_auth,
+    # )
     compose_template = Template(compose_template_path.read_text())
-
-    traefik_compose_content = traefik_template.render(
+    compose_content = compose_template.render(
+        docker_image_tag=os.getenv("DOCKER_IMAGE_TAG"),
+        mongodb_uri=os.getenv("MONGODB_URI"),
         cert_email=os.getenv("CERT_EMAIL"),
         traefik_auth=traefik_auth,
     )
 
-    compose_content = compose_template.render(
-        docker_image_tag=os.getenv("DOCKER_IMAGE_TAG"),
-        mongodb_uri=os.getenv("MONGODB_URI"),
-    )
-
     temp_dir = Path(tempfile.mkdtemp())
-    traefik_compose_path = temp_dir / "docker-compose-traefik.yaml"
+    # traefik_compose_path = temp_dir / "docker-compose-traefik.yaml"
     compose_path = temp_dir / "docker-compose.yaml"
 
-    traefik_compose_path.write_text(traefik_compose_content)
+    # traefik_compose_path.write_text(traefik_compose_content)
     compose_path.write_text(compose_content)
 
-    return traefik_compose_path, compose_path
+    return compose_path
+    # return traefik_compose_path, compose_path
 
 
-def transfer_and_deploy_files(public_dns, traefik_compose_path, compose_path):
+def transfer_and_deploy_files(public_dns, compose_path):
     print("Transferring Docker Compose files to the remote instance...")
     ssh_key_path = os.getenv("SSH_KEY_PATH")
     ssh_port = os.getenv("TF_VAR_ssh_port")
@@ -118,14 +119,14 @@ def transfer_and_deploy_files(public_dns, traefik_compose_path, compose_path):
     run_command(
         f"scp -o StrictHostKeyChecking=no -i {ssh_key_path} {compose_path} ubuntu@{public_dns}:~/docker-compose.yaml"
     )
-    run_command(
-        f"scp -o StrictHostKeyChecking=no -i {ssh_key_path} {traefik_compose_path} ubuntu@{public_dns}:~/docker-compose-traefik.yaml"
-    )
+    # run_command(
+    #     f"scp -o StrictHostKeyChecking=no -i {ssh_key_path} {traefik_compose_path} ubuntu@{public_dns}:~/docker-compose-traefik.yaml"
+    # )
 
     print("Deploying Docker Compose on the instance...")
-    run_command(
-        f"ssh -o StrictHostKeyChecking=no -i {ssh_key_path} ubuntu@{public_dns} -p {ssh_port} 'sudo docker-compose -f docker-compose-traefik.yaml up -d'"
-    )
+    # run_command(
+    #     f"ssh -o StrictHostKeyChecking=no -i {ssh_key_path} ubuntu@{public_dns} -p {ssh_port} 'sudo docker-compose -f docker-compose-traefik.yaml up -d'"
+    # )
     run_command(
         f"ssh -o StrictHostKeyChecking=no -i {ssh_key_path} ubuntu@{public_dns} -p {ssh_port} 'sudo docker-compose up -d'"
     )
@@ -135,7 +136,8 @@ def main(skip_terraform_deployment, skip_docker_rebuild):
     if not skip_docker_rebuild:
         build_and_push_docker_image()
 
-    traefik_compose_path, compose_path = create_temp_files()
+    compose_path = create_temp_files()
+    # traefik_compose_path, compose_path = create_temp_files()
 
     if not skip_terraform_deployment:
         deploy_terraform(os.getenv("ENVIRONMENT"))
@@ -143,10 +145,10 @@ def main(skip_terraform_deployment, skip_docker_rebuild):
     public_dns_file = Path(".public_dns")
     if public_dns_file.exists():
         public_dns = public_dns_file.read_text().strip()
-        transfer_and_deploy_files(public_dns, traefik_compose_path, compose_path)
+        transfer_and_deploy_files(public_dns, compose_path)
 
     # Clean up temporary files
-    traefik_compose_path.unlink()
+    # traefik_compose_path.unlink()
     compose_path.unlink()
     print("Cleaned up temporary files.")
 

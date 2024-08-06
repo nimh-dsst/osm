@@ -1,26 +1,71 @@
+version: '3.7'
 services:
-  osm_web_api:
-    image: {{ docker_image_tag }}
-    environment:
-      - MONGODB_URI={{ mongodb_uri }}
-    ports:
-      - "80:80"
-    working_dir: /app/app
-    depends_on:
-      - traefik
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.osm_web_api.loadbalancer.server.port=80
-      - traefik.http.routers.osm_web_api-http.entrypoints=http
-      - traefik.http.routers.osm_web_api-http.rule=Host(`osm.pythonaisolutions.com`)
-      - traefik.docker.network=traefik-public
-      - traefik.http.routers.osm_web_api-https.entrypoints=https
-      - traefik.http.routers.osm_web_api-https.rule=Host(`osm.pythonaisolutions.com`)
-      - traefik.http.routers.osm_web_api-https.tls=true
-      - traefik.http.routers.osm_web_api-https.tls.certresolver=le
-      - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
-      - traefik.http.middlewares.https-redirect.redirectscheme.permanent=true
-      - traefik.http.routers.osm_web_api-http.middlewares=https-redirect
+    osm_web_api:
+        image: {{ docker_image_tag }}
+        environment:
+            - MONGODB_URI={{ mongodb_uri }}
+        working_dir: /app/app
+        labels:
+            - traefik.enable=true
+            - traefik.http.services.osm_web_api.loadbalancer.server.port=80
+            - traefik.http.routers.osm_web_api-http.rule=Host(`osm.pythonaisolutions.com`)
+            - traefik.http.routers.osm_web_api-http.entrypoints=http
+            - traefik.docker.network=traefik-public
+            # https
+            - traefik.http.routers.osm_web_api-https.rule=Host(`osm.pythonaisolutions.com`)
+            - traefik.http.routers.osm_web_api-https.entrypoints=https
+            - traefik.http.routers.osm_web_api-https.tls=true
+            # use the "le" (Let's Encrypt) resolver to get Let's Encrypt certificates
+            - traefik.http.routers.osm_web_api-https.tls.certresolver=le
+            # https-redirect middleware
+            - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
+            - traefik.http.middlewares.https-redirect.redirectscheme.permanent=true
+            # apply the redirect middleware to the http router
+            - traefik.http.routers.osm_web_api-http.middlewares=https-redirect
+
+    traefik:
+        image: traefik
+        restart: always
+        container_name: traefik
+        command:
+            # - --api
+            - --providers.docker=true
+            - --providers.docker.exposedbydefault=false
+            - --entrypoints.http.address=:80
+            - --entrypoints.https.address=:443
+            - --certificatesresolvers.le.acme.email={{ cert_email }}
+            - --certificatesresolvers.le.acme.storage=/certificates/acme.json
+            - --certificatesresolvers.le.acme.tlschallenge=true
+            - --log
+            - --accesslog
+        # labels:
+        #     - traefik.enable=true
+        #     - traefik.http.services.traefik-dashboard.loadbalancer.server.port=8080
+        #     - traefik.http.routers.traefik-dashboard-http.entrypoints=http
+        #     - traefik.http.routers.traefik-dashboard-http.rule=Host(`traefik.pythonaisolutions.com`)
+        #     - traefik.docker.network=traefik-public
+        #     - traefik.http.routers.traefik-dashboard-https.entrypoints=https
+        #     - traefik.http.routers.traefik-dashboard-https.rule=Host(`traefik.pythonaisolutions.com`)
+        #     - traefik.http.routers.traefik-dashboard-https.tls=true
+        #     - traefik.http.routers.traefik-dashboard-https.tls.certresolver=le
+        #     - traefik.http.routers.traefik-dashboard-https.service=api@internal
+        #     - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
+        #     - traefik.http.middlewares.https-redirect.redirectscheme.permanent=true
+        #     - traefik.http.routers.traefik-dashboard-http.middlewares=https-redirect
+        #     - "traefik.http.middlewares.admin-auth.basicauth.users={{ traefik_auth }}"
+        #     - traefik.http.routers.traefik-dashboard-https.middlewares=admin-auth
+        ports:
+            - 80:80
+            - 443:443
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock:ro
+            - traefik-public-certificates:/certificates
+        networks:
+            - traefik-public
+
+
+volumes:
+    traefik-public-certificates:
+
 networks:
-  traefik-public:
-    external: true
+    traefik-public:
