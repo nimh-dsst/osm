@@ -15,7 +15,7 @@ else
   exit 1
 fi
 # Error fast for missing variables
-echo $ENVIRONMENT $DOCKER_HUB_USERNAME $DOCKER_HUB_ACCESS_TOKEN $DOCKER_IMAGE_TAG $SSH_KEY_PATH $SSH_KEY_PATH $TF_VAR_ssh_port > /dev/null
+echo $ENVIRONMENT $DOCKER_HUB_USERNAME $DOCKER_HUB_ACCESS_TOKEN $DOCKER_IMAGE_TAG $SSH_KEY_PATH $SSH_KEY_PATH $TF_VAR_ssh_port $TRAEFIK_USER $TRAEFIK_PASSWORD> /dev/null
 
 ######################################### Functions #########################################
 # Function to deploy using Opentofu (fork of Terraform)
@@ -86,24 +86,50 @@ DOCKER_BUILDKIT=1 docker build -t $DOCKER_IMAGE_TAG -f ./web_api/Dockerfile .
 docker push $DOCKER_IMAGE_TAG
 
 # Define the compose file content
-TRAFAIK_COMPOSE_FILE=$(cat <<EOF
+TRAEFIK_HASHED_PASSWORD=$(openssl passwd -apr1 ${TRAEFIK_PASSWORD})
+TRAEFIK_COMPOSE_FILE=$(cat <<EOF
 services:
   traefik:
       image: "traefik"
       restart: always
       container_name: "traefik"
       command:
-        - "--api.insecure=true"
-        # - "--metrics.prometheus=true"
-        - "--providers.docker=true"
-        - "--providers.docker.exposedbydefault=false"
-        - "--entrypoints.http.address=:80"
-        - "--entrypoints.https.address=:443"
-        - "--certificatesresolvers.le.acme.email=${CERT_EMAIL}"
-        - "--certificatesresolvers.le.acme.storage=/certificates/acme.json"
-        - "--certificatesresolvers.le.acme.tlschallenge=true"
+        - --api
+        # - --metrics.prometheus=true
+        - --providers.docker=true
+        - --providers.docker.exposedbydefault=false
+        - --entrypoints.http.address=:80
+        - --entrypoints.https.address=:443
+        - --certificatesresolvers.le.acme.email=${CERT_EMAIL}
+        - --certificatesresolvers.le.acme.storage=/certificates/acme.json
+        - --certificatesresolvers.le.acme.tlschallenge=true
         - --log
         - --accesslog
+      labels:
+        - traefik.enable=true
+        - traefik.http.services.traefik-dashboard.loadbalancer.server.port=8080
+        #  make traefik use this domain in http
+        - traefik.http.routers.traefik-dashboard-http.entrypoints=http
+        - traefik.http.routers.traefik-dashboard-http.rule=Host(\`traefik.pythonaisolutions.com\`)
+        #  use the traefik public network
+        - traefik.docker.network=traefik-public
+        # traefik-https
+        - traefik.http.routers.traefik-dashboard-https.entrypoints=https
+        - traefik.http.routers.traefik-dashboard-https.rule=Host(\`traefik.pythonaisolutions.com\`)
+        - traefik.http.routers.traefik-dashboard-https.tls=true
+        # use the "le" (Let's Encrypt) resolver
+        - traefik.http.routers.traefik-dashboard-https.tls.certresolver=le
+        #  use the special traefik service api@internal with the web ui
+        - traefik.http.routers.traefik-dashboard-https.service=api@internal
+        #  apply the redirect middleware to the http router
+        - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
+        - traefik.http.middlewares.https-redirect.redirectscheme.permanent=true
+        # only use middleware for redirect
+        - traefik.http.routers.traefik-dashboard-http.middlewares=https-redirect
+        #  enable basic auth
+        - traefik.http.middlewares.admin-auth.basicauth.users=${TRAEFIK_USER}:\'${TRAEFIK_HASHED_PASSWORD}\'
+        #  enable http basic auth
+        - traefik.http.routers.traefik-dashboard-https.middlewares=admin-auth
       ports:
         - 80:80
         - 443:443
@@ -112,12 +138,15 @@ services:
         - traefik-public-certificates:/certificates
       networks:
         - traefik-public
+
+
 networks:
   traefik-public:
     external: true
 volumes:
         traefik-public-certificates:
-EOF)
+EOF
+)
 
 COMPOSE_FILE=$(cat <<EOF
 version: '3'
@@ -135,11 +164,11 @@ services:
       - traefik.enable=true
       - traefik.http.routers.osm_web_api.loadbalancer.server.port=80
       - traefik.http.routers.osm_web_api-http.entrypoints=http
-      - traefik.http.routers.osm_web_api-http.rule=Host(`osm.pythonaisolutions.com`)
+      - traefik.http.routers.osm_web_api-http.rule=Host(\`osm.pythonaisolutions.com\`)
       - traefik.docker.network=traefik-default
       # https
       - traefik.http.routers.osm_web_api-https.entrypoints=https
-      - traefik.http.routers.osm_web_api-https.rule=Host(`osm.pythonaisolutions.com`)
+      - traefik.http.routers.osm_web_api-https.rule=Host(\`osm.pythonaisolutions.com\`)
       - traefik.http.routers.osm_web_api-https.tls=true
       # use the "le" (Let's Encrypt) resolver to get Let's Encrypt certificates
       - traefik.http.routers.osm_web_api-https.tls.certresolver=le
@@ -153,7 +182,8 @@ networks:
   traefik-public:
     external: true
 
-EOF)
+EOF
+)
 
 # Create a temporary docker-compose.yaml file locally
 echo "${COMPOSE_FILE}" > temp.yaml
