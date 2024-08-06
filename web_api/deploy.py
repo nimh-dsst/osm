@@ -1,4 +1,5 @@
 import argparse
+import contextlib
 import os
 import subprocess
 import sys
@@ -54,35 +55,36 @@ def deploy_terraform(environment):
     print("Deploying using Opentofu...")
     terraform_dir = f"web_api/terraform/{environment}"
 
-    os.chdir(terraform_dir)
-    run_command("tofu init")
-    run_command("tofu plan")
-    run_command("tofu apply -auto-approve")
+    with contextlib.chdir(terraform_dir):
+        run_command("tofu init")
+        run_command("tofu plan")
+        run_command("tofu apply -auto-approve")
 
-    public_dns = (
-        subprocess.check_output("tofu output -raw public_dns", shell=True)
-        .decode()
-        .strip()
-    )
+        public_dns = (
+            subprocess.check_output("tofu output -raw public_dns", shell=True)
+            .decode()
+            .strip()
+        )
 
     if not public_dns:
         sys.exit(f"Public DNS not found for {environment}. Exiting...")
 
     # Write public_dns to a hidden file in the current directory
-    public_dns_file = Path(".public_dns")
-    public_dns_file.write_text(public_dns)
+    Path(".public_dns").write_text(public_dns)
 
 
 def create_temp_files():
     traefik_template_path = Path("web_api/docker-compose-traefik.yaml.j2")
     compose_template_path = Path("web_api/docker-compose.yaml.j2")
 
-    traefik_hashed_password = (
+    traefik_auth = (
         subprocess.check_output(
-            f"openssl passwd -apr1 '{os.getenv('TRAEFIK_PASSWORD')}'", shell=True
+            f"htpasswd -nb {os.getenv('TRAEFIK_USER')} {os.getenv('TRAEFIK_PASSWORD')}",
+            shell=True,
         )
         .decode()
         .strip()
+        .replace("$", "$$")
     )
 
     traefik_template = Template(traefik_template_path.read_text())
@@ -90,8 +92,7 @@ def create_temp_files():
 
     traefik_compose_content = traefik_template.render(
         cert_email=os.getenv("CERT_EMAIL"),
-        traefik_user=os.getenv("TRAEFIK_USER"),
-        traefik_hashed_password=traefik_hashed_password,
+        traefik_auth=traefik_auth,
     )
 
     compose_content = compose_template.render(
