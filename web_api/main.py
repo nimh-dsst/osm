@@ -46,6 +46,6 @@ if __name__ == "__main__":
     import uvicorn
 
     loop = asyncio.get_event_loop()
-    config = uvicorn.Config(app=app, host="0.0.0.0", port=8000, loop=loop)
+    config = uvicorn.Config(app=app, host="0.0.0.0", port=80, loop=loop)
     server = uvicorn.Server(config)
     loop.run_until_complete(server.serve())

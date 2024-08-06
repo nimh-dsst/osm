@@ -47,14 +47,17 @@ deploy_terraform() {
 
   popd
 
-  # Transfer the docker-compose.yaml file to the remote instance
+  # Transfer the docker-compose files to the remote instance
   scp -o StrictHostKeyChecking=no -i $SSH_KEY_PATH temp.yaml ubuntu@$public_dns:~/docker-compose.yaml
+  scp -o StrictHostKeyChecking=no -i $SSH_KEY_PATH traefik_temp.yaml ubuntu@$public_dns:~/docker-compose-traefik.yaml
   # Deploy Docker Compose on the instance
   echo "Deploying Docker Compose on the instance..."
   ssh -o StrictHostKeyChecking=no -i $SSH_KEY_PATH ubuntu@$public_dns -p $TF_VAR_ssh_port << EOF
+    sudo docker-compose -f docker-compose-traefik.yaml up -d
+EOF
+  ssh -o StrictHostKeyChecking=no -i $SSH_KEY_PATH ubuntu@$public_dns -p $TF_VAR_ssh_port << EOF
     sudo docker-compose up -d
 EOF
-  
 
 
   # Notify success
@@ -83,6 +86,36 @@ DOCKER_BUILDKIT=1 docker build -t $DOCKER_IMAGE_TAG -f ./web_api/Dockerfile .
 docker push $DOCKER_IMAGE_TAG
 
 # Define the compose file content
+TRAFAIK_COMPOSE_FILE=$(cat <<EOF
+services:
+  traefik:
+      image: "traefik"
+      restart: always
+      container_name: "traefik"
+      command:
+        - "--api.insecure=true"
+        # - "--metrics.prometheus=true"
+        - "--providers.docker=true"
+        - "--providers.docker.exposedbydefault=false"
+        - "--entrypoints.http.address=:80"
+        - "--entrypoints.https.address=:443"
+        - "--certificatesresolvers.le.acme.email=${CERT_EMAIL}"
+        - --log
+        - --accesslog
+      ports:
+        - 80:80
+        - 443:443
+      volumes:
+        - "/var/run/docker.sock:/var/run/docker.sock:ro"
+        - traefik-public-certificates:/certificates
+      networks:
+        - traefik-public
+networks:
+  traefik-public:
+    external: true
+volumes:
+        traefik-public-certificates:
+EOF
 COMPOSE_FILE=$(cat <<EOF
 version: '3'
 services:
@@ -91,14 +124,28 @@ services:
     environment:
       - MONGODB_URI=${MONGODB_URI}
     ports:
-      - "8000:8000"
+      - "80:80"
+    working_dir: /app/app
+    depends_on:
+      - traefik
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.osm_web_api.loadbalancer.server.port=80
+      - traefik.http.routers.osm_web_api-http.entrypoints=http
+      - traefik.http.routers.osm_web_api-http.rule=Host(`osm.pythonaisolutions.com`)
+      - traefik.docker.network=traefik-default
+networks:
+  traefik-public:
+    external: true
+
 EOF
 )
 
 # Create a temporary docker-compose.yaml file locally
 echo "${COMPOSE_FILE}" > temp.yaml
+echo "${TRAEFIK_COMPOSE_FILE}" > traefik_temp.yaml
 
 # Deploy
 deploy_terraform ${ENVIRONMENT}
 # Clean up the local temporary file
-rm temp.yaml
+rm {temp,traefik_temp}.yaml
