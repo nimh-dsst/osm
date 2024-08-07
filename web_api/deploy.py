@@ -128,7 +128,7 @@ def transfer_and_deploy_files(public_dns, compose_path):
     #     f"ssh -o StrictHostKeyChecking=no -i {ssh_key_path} ubuntu@{public_dns} -p {ssh_port} 'sudo docker-compose -f docker-compose-traefik.yaml up -d'"
     # )
     run_command(
-        f"ssh -o StrictHostKeyChecking=no -i {ssh_key_path} ubuntu@{public_dns} -p {ssh_port} 'sudo docker-compose up -d'"
+        f"ssh -o StrictHostKeyChecking=no -i {ssh_key_path} ubuntu@{public_dns} -p {ssh_port} 'sudo docker-compose up --remove-orphans -d'"
     )
 
 

@@ -8,20 +8,19 @@ services:
         labels:
             - traefik.enable=true
             - traefik.http.routers.osm_web_api.rule=Host(`osm.pythonaisolutions.com`)
-            - traefik.http.routers.osm_web_api.entrypoints=http
-            - traefik.http.services.osm_web_api-http.loadbalancer.server.port=80
-            - traefik.docker.network=traefik-public
-            # https
-            - traefik.http.routers.osm_web_api-https.rule=Host(`osm.pythonaisolutions.com`)
-            - traefik.http.routers.osm_web_api-https.entrypoints=https
-            - traefik.http.routers.osm_web_api-https.tls=true
+            - "traefik.http.routers.osm_web_api.entrypoints=web,websecure"
             # use the "le" (Let's Encrypt) resolver to get Let's Encrypt certificates
-            - traefik.http.routers.osm_web_api-https.tls.certresolver=le
+            - traefik.http.routers.osm_web_api.tls=true
+            - traefik.http.routers.osm_web_api.tls.certresolver=le
+            # - traefik.http.services.osm_web_api-http.loadbalancer.server.port=80
+            # - traefik.http.routers.osm_web_api-https.rule=Host(`osm.pythonaisolutions.com`)
+            # - traefik.http.routers.osm_web_api-https.tls=true
+            - traefik.docker.network=traefik-public
             # https-redirect middleware
-            - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
-            - traefik.http.middlewares.https-redirect.redirectscheme.permanent=true
-            # apply the redirect middleware to the http router
-            - traefik.http.routers.osm_web_api-http.middlewares=https-redirect
+            # - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
+            # - traefik.http.middlewares.https-redirect.redirectscheme.permanent=true
+            # # apply the redirect middleware to the http router
+            # - traefik.http.routers.osm_web_api.middlewares=https-redirect
         networks:
             - traefik-public
 
@@ -33,8 +32,10 @@ services:
             # - --api
             - --providers.docker=true
             - --providers.docker.exposedbydefault=false
-            - --entrypoints.http.address=:80
-            - --entrypoints.https.address=:443
+            - --entrypoints.web.address=:80
+            - --entryPoints.web.http.redirections.entryPoint.to=websecure
+            - --entryPoints.web.http.redirections.entryPoint.scheme=https
+            - --entrypoints.websecure.address=:443
             - "--certificatesresolvers.le.acme.email={{ cert_email }}"
             - --certificatesresolvers.le.acme.storage=/certificates/acme.json
             - --certificatesresolvers.le.acme.tlschallenge=true
@@ -52,16 +53,16 @@ services:
             - traefik-public
 
 
-    whoami:
-        image: "traefik/whoami"
-        container_name: "simple-service"
-        labels:
-            - "traefik.enable=true"
-            - "traefik.http.routers.whoami.rule=Host(`osm.pythonaisolutions.com`)"
-            - "traefik.http.routers.whoami.entrypoints=https"
-            - "traefik.http.routers.whoami.tls.certresolver=le"
-        networks:
-            - traefik-public
+    # whoami:
+    #     image: "traefik/whoami"
+    #     container_name: "simple-service"
+    #     labels:
+    #         - "traefik.enable=true"
+    #         - "traefik.http.routers.whoami.rule=Host(`osm.pythonaisolutions.com`)"
+    #         - "traefik.http.routers.whoami.entrypoints=https"
+    #         - "traefik.http.routers.whoami.tls.certresolver=le"
+    #     networks:
+    #         - traefik-public
 
 
 volumes:
