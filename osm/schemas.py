@@ -43,7 +43,7 @@ class Metrics(EmbeddedModel):
 
 class Client(EmbeddedModel):
     compute_context_id: int
-    email: Optional[EmailStr]
+    email: Optional[EmailStr] = None
 
 
 class Work(EmbeddedModel):
@@ -62,8 +62,8 @@ class Work(EmbeddedModel):
     openalex_id: Optional[str] = None
     scopus_id: Optional[str] = None
     filename: str
-    file: str
-    content_hash: str
+    file: Optional[str] = None
+    content_hash: Optional[str] = None
 
 
 class Invocation(Model):
@@ -81,8 +81,8 @@ class Invocation(Model):
     # components: list[Component]
 
 
-# Rtransparent:
-# Component.construct(name="rtransparent", version="0.13", docker_image="nimh-dsst/rtransparent:0.13", docker_image_id="dsjfkldsjflkdsjlf2jkl23j")
-# Derivative.construct(name="rtransparent", version="0.13", docker_image="nimh-dsst/rtransparent:0.13", docker_image_id="dsjfkldsjflkdsjlf2jkl23j")
-# ScibeamParser:
-# Component.construct(name="scibeam-parser", version="0.5.1", docker_image="elife/scibeam-parser:0.5.1", docker_image_id="dsjfkldsjflkdsjlf2jkl23j")
+# Rtransparent: Component.construct(name="rtransparent", version="0.13", docker_image="nimh-dsst/rtransparent:0.13",
+# docker_image_id="dsjfkldsjflkdsjlf2jkl23j") Derivative.construct(name="rtransparent", version="0.13",
+# docker_image="nimh-dsst/rtransparent:0.13", docker_image_id="dsjfkldsjflkdsjlf2jkl23j") ScibeamParser:
+# Component.construct(name="scibeam-parser", version="0.5.1", docker_image="elife/scibeam-parser:0.5.1",
+# docker_image_id="dsjfkldsjflkdsjlf2jkl23j")
