@@ -6,9 +6,7 @@ from pathlib import Path
 
 import requests
 
-from osm import get_version
-
-__version__ = get_version()
+from osm._version import __version__
 
 DEFAULT_OUTPUT_DIR = "./osm_output"
 
