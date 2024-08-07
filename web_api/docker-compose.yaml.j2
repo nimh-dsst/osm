@@ -8,11 +8,18 @@ services:
         labels:
             - traefik.enable=true
             - traefik.docker.network=traefik-public
-            - traefik.http.routers.osm_web_api.rule=Host(`osm.pythonaisolutions.com`)
+            - traefik.http.routers.osm_web_api.rule=Host(`osm.pythonaisolutions.com`) || Host(`www.osm.pythonaisolutions.com`)
             - "traefik.http.routers.osm_web_api.entrypoints=web,websecure"
             # use the "le" (Let's Encrypt) resolver to get Let's Encrypt certificates
             - traefik.http.routers.osm_web_api.tls=true
             - traefik.http.routers.osm_web_api.tls.certresolver=le
+            # allow www prefix
+            # - "traefik.http.middlewares.www-redirectregex.redirectregex.regex=^(http://|https://)www.(.*)"
+            # - "traefik.http.middlewares.www-redirectregex.redirectregex.replacement=$${1}$${2}"
+            #  remove prefix
+            - traefik.http.middlewares.wwwredirect.redirectregex.regex=^https://www\.(.*)
+            - traefik.http.middlewares.wwwredirect.redirectregex.replacement=https://$${1}
+            - traefik.http.routers.osm_web_api.middlewares=wwwredirect
         networks:
             - traefik-public
 
