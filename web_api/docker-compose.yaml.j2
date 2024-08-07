@@ -7,20 +7,12 @@ services:
         working_dir: /app/app
         labels:
             - traefik.enable=true
+            - traefik.docker.network=traefik-public
             - traefik.http.routers.osm_web_api.rule=Host(`osm.pythonaisolutions.com`)
             - "traefik.http.routers.osm_web_api.entrypoints=web,websecure"
             # use the "le" (Let's Encrypt) resolver to get Let's Encrypt certificates
             - traefik.http.routers.osm_web_api.tls=true
             - traefik.http.routers.osm_web_api.tls.certresolver=le
-            # - traefik.http.services.osm_web_api-http.loadbalancer.server.port=80
-            # - traefik.http.routers.osm_web_api-https.rule=Host(`osm.pythonaisolutions.com`)
-            # - traefik.http.routers.osm_web_api-https.tls=true
-            - traefik.docker.network=traefik-public
-            # https-redirect middleware
-            # - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
-            # - traefik.http.middlewares.https-redirect.redirectscheme.permanent=true
-            # # apply the redirect middleware to the http router
-            # - traefik.http.routers.osm_web_api.middlewares=https-redirect
         networks:
             - traefik-public
 
@@ -29,19 +21,18 @@ services:
         restart: always
         container_name: traefik
         command:
-            # - --api
             - --providers.docker=true
             - --providers.docker.exposedbydefault=false
             - --entrypoints.web.address=:80
-            - --entryPoints.web.http.redirections.entryPoint.to=websecure
-            - --entryPoints.web.http.redirections.entryPoint.scheme=https
             - --entrypoints.websecure.address=:443
+            - --entryPoints.web.http.redirections.entryPoint.to=websecure
             - "--certificatesresolvers.le.acme.email={{ cert_email }}"
             - --certificatesresolvers.le.acme.storage=/certificates/acme.json
             - --certificatesresolvers.le.acme.tlschallenge=true
             - --log
             - --accesslog
             - --api.insecure=true
+            # - --api
         ports:
             - 80:80
             - 8080:8080
@@ -51,19 +42,6 @@ services:
             - traefik-public-certificates:/certificates
         networks:
             - traefik-public
-
-
-    # whoami:
-    #     image: "traefik/whoami"
-    #     container_name: "simple-service"
-    #     labels:
-    #         - "traefik.enable=true"
-    #         - "traefik.http.routers.whoami.rule=Host(`osm.pythonaisolutions.com`)"
-    #         - "traefik.http.routers.whoami.entrypoints=https"
-    #         - "traefik.http.routers.whoami.tls.certresolver=le"
-    #     networks:
-    #         - traefik-public
-
 
 volumes:
     traefik-public-certificates:
