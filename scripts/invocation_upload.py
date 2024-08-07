@@ -7,8 +7,9 @@ from typing import List
 
 import pandas as pd
 import requests
-from motor import MotorClient
-from odmantic import SyncEngine
+
+# from motor.motor_tornado import MotorClient
+from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import ValidationError
 
 from osm.schemas import Client, Invocation, Work
@@ -77,9 +78,9 @@ def read_data(data_path: str):
 
 async def upload_data(invocations: List[Invocation], mongo_uri: str, db_name: str):
     """upload invocations to MongoDB one after the other to prevent timeout"""
-    motor_client = MotorClient(mongo_uri)
+    motor_client = AsyncIOMotorClient(mongo_uri)
     try:
-        engine = SyncEngine(client=motor_client, database=db_name)
+        engine = motor_client(client=motor_client, database=db_name)
         engine.save_all(invocations)
     except (TypeError, Exception) as e:
         if isinstance(e, TypeError):
@@ -114,6 +115,7 @@ def main(data_path="all_indicators.feather"):
         if transformed_pickle.exists():
             df = pickle.loads(transformed_pickle.read_bytes())
         else:
+            breakpoint()
             df = read_data(data_path)
             if not df.empty:
                 invocations = transform_data(df)
