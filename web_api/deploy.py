@@ -111,7 +111,7 @@ def create_temp_files():
     # return traefik_compose_path, compose_path
 
 
-def transfer_and_deploy_files(public_dns, compose_path):
+def transfer_and_deploy_files(public_dns, compose_path, attach_to_logs=False):
     print("Transferring Docker Compose files to the remote instance...")
     ssh_key_path = os.getenv("SSH_KEY_PATH")
     ssh_port = os.getenv("TF_VAR_ssh_port")
@@ -130,30 +130,13 @@ def transfer_and_deploy_files(public_dns, compose_path):
     run_command(
         f"ssh -o StrictHostKeyChecking=no -i {ssh_key_path} ubuntu@{public_dns} -p {ssh_port} 'sudo docker-compose up --remove-orphans -d'"
     )
+    if attach_to_logs:
+        run_command(
+            f"ssh -o StrictHostKeyChecking=no -i {ssh_key_path} ubuntu@{public_dns} -p {ssh_port} 'sudo docker-compose logs -f'"
+        )
 
 
-def main(skip_terraform_deployment, skip_docker_rebuild):
-    if not skip_docker_rebuild:
-        build_and_push_docker_image()
-
-    compose_path = create_temp_files()
-    # traefik_compose_path, compose_path = create_temp_files()
-
-    if not skip_terraform_deployment:
-        deploy_terraform(os.getenv("ENVIRONMENT"))
-
-    public_dns_file = Path(".public_dns")
-    if public_dns_file.exists():
-        public_dns = public_dns_file.read_text().strip()
-        transfer_and_deploy_files(public_dns, compose_path)
-
-    # Clean up temporary files
-    # traefik_compose_path.unlink()
-    compose_path.unlink()
-    print("Cleaned up temporary files.")
-
-
-if __name__ == "__main__":
+def parse_args():
     parser = argparse.ArgumentParser(description="Deploy the application.")
     parser.add_argument(
         "--skip-terraform-deployment",
@@ -165,6 +148,37 @@ if __name__ == "__main__":
         action="store_true",
         help="Skip rebuilding the Docker image.",
     )
+    parser.add_argument(
+        "--attach-to-logs",
+        action="store_true",
+        help="Attach to the logs of the deployed containers.",
+    )
 
-    args = parser.parse_args()
-    main(args.skip_terraform_deployment, args.skip_docker_rebuild)
+    return parser.parse_args()
+
+
+def main(args=None):
+    if args is None:
+        args = parse_args()
+    if not args.skip_docker_rebuild:
+        build_and_push_docker_image()
+
+    compose_path = create_temp_files()
+    # traefik_compose_path, compose_path = create_temp_files()
+
+    if not args.skip_terraform_deployment:
+        deploy_terraform(os.getenv("ENVIRONMENT"))
+
+    public_dns_file = Path(".public_dns")
+    if public_dns_file.exists():
+        public_dns = public_dns_file.read_text().strip()
+        transfer_and_deploy_files(public_dns, compose_path, args.attach_to_logs)
+
+    # Clean up temporary files
+    # traefik_compose_path.unlink()
+    compose_path.unlink()
+    print("Cleaned up temporary files.")
+
+
+if __name__ == "__main__":
+    main()
