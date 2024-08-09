@@ -23,6 +23,21 @@ services:
         networks:
             - traefik-public
 
+    dashboard:
+        image: {{ dashboard_image_tag }}
+        environment:
+            - MONGODB_URI={{ mongodb_uri }}
+        working_dir: /app
+        labels:
+            - traefik.enable=true
+            - traefik.docker.network=traefik-public
+            - traefik.http.routers.dashboard.rule=Host(`osm-dashboard.pythonaisolutions.com`)
+            - "traefik.http.routers.dashboard.entrypoints=web,websecure"
+            # use the "le" (Let's Encrypt) resolver to get Let's Encrypt certificates
+            - traefik.http.routers.dashboard.tls=true
+            - traefik.http.routers.dashboard.tls.certresolver=le
+        networks:
+            - traefik-public
     traefik:
         image: traefik
         restart: always

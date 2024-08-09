@@ -38,17 +38,21 @@ def run_command(command):
         sys.exit(f"Command failed: {command}")
 
 
-def build_and_push_docker_image():
+def build_and_push_docker_images():
     print("Logging in to Docker Hub...")
     run_command(
         f"echo {os.getenv('DOCKER_HUB_ACCESS_TOKEN')} | docker login --username {os.getenv('DOCKER_HUB_USERNAME')} --password-stdin"
     )
 
-    print("Building and pushing Docker image...")
+    print("Building and pushing Docker images...")
     run_command(
         f"DOCKER_BUILDKIT=1 docker build -t {os.getenv('DOCKER_IMAGE_TAG')} -f ./web_api/Dockerfile ."
     )
     run_command(f"docker push {os.getenv('DOCKER_IMAGE_TAG')}")
+    run_command(
+        f"DOCKER_BUILDKIT=1 docker build -t {os.getenv('DASHBOARD_IMAGE_TAG')} -f ./web_api/dashboard/Dockerfile ."
+    )
+    run_command(f"docker push {os.getenv('DASHBOARD_IMAGE_TAG')}")
 
 
 def deploy_terraform(environment):
@@ -95,6 +99,7 @@ def create_temp_files():
     compose_template = Template(compose_template_path.read_text())
     compose_content = compose_template.render(
         docker_image_tag=os.getenv("DOCKER_IMAGE_TAG"),
+        dashboard_image_tag=os.getenv("DASHBOARD_IMAGE_TAG"),
         mongodb_uri=os.getenv("MONGODB_URI"),
         cert_email=os.getenv("CERT_EMAIL"),
         traefik_auth=traefik_auth,
@@ -161,7 +166,7 @@ def main(args=None):
     if args is None:
         args = parse_args()
     if not args.skip_docker_rebuild:
-        build_and_push_docker_image()
+        build_and_push_docker_images()
 
     compose_path = create_temp_files()
     # traefik_compose_path, compose_path = create_temp_files()
