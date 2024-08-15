@@ -9,7 +9,6 @@ services:
   osm_web_api:
     environment:
       - MONGODB_URI=mongodb://db:27017/test
-      # - MONGODB_URI=mongodb://mongoadmin:secret@db:27017/osm
     build:
       context: .
       dockerfile: ./docker_images/web_api/Dockerfile
@@ -23,10 +22,9 @@ services:
         - db
 
   db:
+  # use old version of mongo to avoid Apple Instruction set error
     image: mongo:4.4.6
     ports:
       - 27017:27017
     environment:
       - MONGO_INITDB_DATABASE=test
-    #   - MONGO_INITDB_ROOT_USERNAME=mongoadmin
-    #   - MONGO_INITDB_ROOT_PASSWORD=secret
