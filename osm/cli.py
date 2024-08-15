@@ -1,24 +1,17 @@
 import argparse
-import json
-import logging
-import shlex
-import subprocess
-import time
-from pathlib import Path
 
-import requests
+from osm._utils import DEFAULT_OUTPUT_DIR, _existing_file, _setup, compose_down
+from osm.pipeline.core import Pipeline
+from osm.pipeline.extractors import RTransparentExtractor
+from osm.pipeline.parsers import ScienceBeamParser
+from osm.pipeline.savers import FileSaver, JSONSaver, OSMSaver, Savers
 
-from osm._utils import (
-    DEFAULT_OUTPUT_DIR,
-    _existing_file,
-    _get_metrics_dir,
-    _get_text_dir,
-    _upload_data,
-)
-from osm.components.rtransparent import _extract
-from osm.components.sciencebeam import _convert
-
-logger = logging.getLogger(__name__)
+PARSERS = {
+    "sciencebeam": ScienceBeamParser,
+}
+EXTRACTORS = {
+    "rtransparent": RTransparentExtractor,
+}
 
 
 def parse_args():
@@ -26,7 +19,7 @@ def parse_args():
 
     parser.add_argument(
         "-f",
-        "--file",
+        "--filepath",
         type=_existing_file,
         required=True,
         help="Specify the path to the pdf/xml for processing.",
@@ -41,6 +34,20 @@ def parse_args():
         "--output_dir",
         default=DEFAULT_OUTPUT_DIR,
         help="Directory to store output.",
+    )
+    parser.add_argument(
+        "--parser",
+        choices=PARSERS.keys(),
+        default=["sciencebeam"],
+        nargs="+",
+        help="Select the tool for parsing the input document. Default is 'sciencebeam'.",
+    )
+    parser.add_argument(
+        "--metrics-type",
+        choices=EXTRACTORS.keys(),
+        default=["rtransparent"],
+        nargs="+",
+        help="Select the tool for extracting the output metrics. Default is 'rtransparent'.",
     )
     parser.add_argument(
         "--comment",
@@ -61,71 +68,39 @@ def parse_args():
     return parser.parse_args()
 
 
-def wait_for_containers():
-    while True:
-        try:
-            response = requests.get("http://localhost:8071/health")
-            if response.status_code == 200:
-                break
-        except requests.exceptions.RequestException:
-            pass
-
-        time.sleep(1)
-
-
-def compose_up():
-    cmd = shlex.split("docker-compose up -d --build")
-    subprocess.run(
-        cmd,
-        check=True,
-    )
-
-
-def compose_down():
-    cmd = shlex.split("docker-compose down")
-    subprocess.run(
-        cmd,
-        check=True,
-    )
-
-
-def _setup(args):
-    output_dir = Path(args.output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
-    xml_out = _get_text_dir() / f"{args.uid}.xml"
-    if args.file.name.endswith(".pdf"):
-        if xml_out.exists():
-            raise FileExistsError(xml_out)
-    metrics_out = _get_metrics_dir() / f"{args.uid}.json"
-    if metrics_out.exists():
-        raise FileExistsError(metrics_out)
-    if not args.user_managed_compose:
-        compose_up()
-    logger.info("Waiting for containers to be ready...")
-    wait_for_containers()
-    return xml_out, metrics_out
-
-
 def main():
     args = parse_args()
     try:
-        xml_out, metrics_out = _setup(args)
-        file_in = args.file.read_bytes()
-
-        if args.file.name.endswith(".pdf"):
-            xml = _convert(file_in)
-            xml_out.write_bytes(xml)
-        else:
-            xml = file_in
-        extracted = _extract(xml)
-        metrics_out.write_text(json.dumps(extracted))
-        _upload_data(args, file_in, xml, extracted)
-
+        xml_path, metrics_path = _setup(args)
+        pipeline = Pipeline(
+            filepath=args.filepath,
+            xml_path=xml_path,
+            metrics_path=metrics_path,
+            parsers=[PARSERS[p] for p in args.parser],
+            extractors=[EXTRACTORS[m] for m in args.metrics_type],
+            savers=Savers(
+                file_saver=FileSaver(), json_saver=JSONSaver(), osm_saver=OSMSaver()
+            ),
+        )
+        pipeline.run()
     finally:
         if not args.user_managed_compose:
             compose_down()
-        pass
 
 
 if __name__ == "__main__":
     main()
+
+# def main():
+#     args = parse_args()
+#     try:
+#         pipeline = _setup(args)
+#         pipeline.parse()
+#         pipeline.extract()
+#         pipeline.save()
+# xml_path, metrics_path, parser, extractor = _setup(args)
+# xml = parser.parse()
+# xml_path.write_bytes(xml)
+# metrics = _extract(xml)
+# metrics_path.write_text(json.dumps(metrics))
+# _upload_data(args, file_in, xml, metrics,components)

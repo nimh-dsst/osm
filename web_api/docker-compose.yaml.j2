@@ -1,0 +1,73 @@
+name: osm
+services:
+    web_api:
+        image: {{ docker_image_tag }}
+        pull_policy: always
+        environment:
+            - MONGODB_URI={{ mongodb_uri }}
+        working_dir: /app/app
+        expose:
+            - "80"
+        labels:
+            - traefik.enable=true
+            - traefik.docker.network=osm_traefik-public
+            - traefik.http.routers.osm_web_api.rule=Host(`osm.pythonaisolutions.com`) && PathPrefix(`/api`)
+            - "traefik.http.routers.osm_web_api.entrypoints=web,websecure"
+            - traefik.http.services.osm_web_api.loadbalancer.server.port=80
+            # use the "le" (Let's Encrypt) resolver to get Let's Encrypt certificates
+            - traefik.http.routers.osm_web_api.tls=true
+            - traefik.http.routers.osm_web_api.tls.certresolver=le
+        networks:
+            - traefik-public
+
+    dashboard:
+        image: {{ dashboard_image_tag }}
+        pull_policy: always
+        environment:
+            - MONGODB_URI={{ mongodb_uri }}
+        working_dir: /app
+        labels:
+            - traefik.enable=true
+            - traefik.docker.network=osm_traefik-public
+            - traefik.http.routers.dashboard.rule=Host(`osm.pythonaisolutions.com`)
+            - traefik.http.routers.dashboard.entrypoints=web,websecure
+            # use the "le" (Let's Encrypt) resolver to get Let's Encrypt certificates
+            - traefik.http.routers.dashboard.tls=true
+            - traefik.http.routers.dashboard.tls.certresolver=le
+            - traefik.http.services.dashboard.loadbalancer.server.port=8501
+        expose:
+            - "8501"
+
+        networks:
+            - traefik-public
+    reverse_proxy:
+        image: traefik
+        restart: always
+        command:
+            - --providers.docker=true
+            - --providers.docker.exposedbydefault=false
+            - --entrypoints.web.address=:80
+            - --entrypoints.websecure.address=:443
+            - --entryPoints.web.http.redirections.entryPoint.to=websecure
+            - "--certificatesresolvers.le.acme.email={{ cert_email }}"
+            - --certificatesresolvers.le.acme.storage=/certificates/acme.json
+            {# - "--certificatesresolvers.le.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory" #}
+            - --certificatesresolvers.le.acme.tlschallenge=true
+            - --log
+            - --accesslog
+            - --log.level=DEBUG
+        ports:
+            - 80:80
+            - 8080:8080
+            - 443:443
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock:ro
+            - traefik-public-certificates:/certificates
+        networks:
+            - traefik-public
+
+volumes:
+    traefik-public-certificates:
+
+networks:
+    traefik-public:

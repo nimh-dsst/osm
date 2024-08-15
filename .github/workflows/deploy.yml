@@ -1,0 +1,66 @@
+name: Deploy to AWS EC2 with Terraform
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: staging
+        type: choice
+        options:
+          - staging
+  push:
+    tags:
+      - 'v*.*.*' # Matches version tags like v1.0.0
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          install: true
+
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push Docker image
+        run: |
+          DOCKER_BUILDKIT=1 docker build -t osm_web_api:${{ github.event.inputs.environment || 'production' }} -f ./docker_images/web_api/Dockerfile .
+          docker tag osm_web_api:${{ github.event.inputs.environment || 'production' }}:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/osm_web_api:${{ github.event.inputs.environment || 'production' }}
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/osm_web_api:${{ github.event.inputs.environment || 'production' }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Terraform Init
+        run: terraform init -backend-config="path/to/${{ github.event.inputs.environment || 'production' }}/backend-config"
+
+      - name: Terraform Plan
+        run: terraform plan -var-file="terraform/${{ github.event.inputs.environment || 'production' }}.tfvars"
+
+      - name: Terraform Apply
+        if: success()
+        run: terraform apply -var-file="terraform/${{ github.event.inputs.environment || 'production' }}.tfvars" -auto-approve
+
+      - name: Notify Success
+        if: success()
+        run: echo "Deployment to ${{ github.event.inputs.environment || 'production' }} environment was successful."
+
+      - name: Notify Failure
+        if: failure()
+        run: echo "Deployment to ${{ github.event.inputs.environment || 'production' }} environment failed."

@@ -10,6 +10,7 @@ __pycache__/
 *.pyd
 *.env
 *.egg-info/
+*.tfstate
 dist/
 build/
 .tox/
@@ -17,3 +18,6 @@ venv/
 .vscode/settings.json
 .DS_Store
 osm_output
+.terraform
+.terraform.lock.hcl
+.public_dns

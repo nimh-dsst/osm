@@ -1,0 +1,39 @@
+services:
+  osm_web_api:
+    image: osm_web_api
+    environment:
+      - MONGODB_URI="mongodb+srv://the_rest_of_the_connection_string"
+    ports:
+      - 80:80
+  # traefik:
+  #   image: traefik:v3.1
+  #   volumes:
+  #     - "/var/run/docker.sock:/var/run/docker.sock"
+  #     - "./traefik:/etc/traefik"
+  #     - "./letsencrypt:/letsencrypt"
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  traefik:
+    image: "traefik"
+    container_name: "traefik"
+    command:
+      - "--api.insecure=true"
+      - "--metrics.prometheus=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.websecure.http.tls=true"
+      - "--entrypoints.websecure.http.tls.certresolver=letsencrypt"
+      # http -> https redirect
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+      - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - myrttle_letsencrypt:/letsencrypt

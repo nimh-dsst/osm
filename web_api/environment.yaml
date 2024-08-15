@@ -1,0 +1,11 @@
+name: deploy
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - awscli
+  - opentofu >= 1.8.1
+  - python-dotenv
+  - jinja2
+  - ipython
+  - pdbpp

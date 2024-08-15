@@ -22,19 +22,14 @@ curl -X POST "http://localhost:80/upload/" \
 import os
 
 import motor.motor_asyncio
-from fastapi import FastAPI
-from odmantic import AIOEngine
+from fastapi import FastAPI, HTTPException
+from odmantic import AIOEngine, ObjectId
 
 from osm.schemas import Invocation
 
 app = FastAPI()
-
-client = motor.motor_asyncio.AsyncIOMotorClient(
-    os.environ.get(
-        "MONGODB_URI",
-        "mongodb+srv://johnlee:<password>@cluster0.6xo8ws7.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
-    )
-)
+dburi = os.environ.get("MONGODB_URI", "mongodb://localhost:27017")
+client = motor.motor_asyncio.AsyncIOMotorClient(dburi)
 engine = AIOEngine(client=client, database="test")
 
 
@@ -44,12 +39,22 @@ async def upload_invocation(invocation: Invocation):
     return invocation
 
 
+@app.get("/invocations/{id}", response_model=Invocation)
+async def get_invocation_by_id(id: ObjectId):
+    invocation = await engine.find_one(Invocation, Invocation.id == id)
+    if invocation is None:
+        raise HTTPException(404)
+    return invocation
+
+
 if __name__ == "__main__":
     import asyncio
 
     import uvicorn
 
     loop = asyncio.get_event_loop()
-    config = uvicorn.Config(app=app, host="0.0.0.0", port=8000, loop=loop)
+    config = uvicorn.Config(
+        app=app, host="0.0.0.0", port=80, root_path="/api", loop=loop
+    )
     server = uvicorn.Server(config)
     loop.run_until_complete(server.serve())
