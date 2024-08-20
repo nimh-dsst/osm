@@ -1,50 +1,81 @@
 from abc import ABC, abstractmethod
-from typing import Optional
+from pathlib import Path
+from typing import Any, Optional
+
+from osm import schemas
 
 
-# Parser Interface
-class Parser(ABC):
+class Component(ABC):
+    def __init__(self, version: str = "0.0.1"):
+        """As subclasses evolve they should keep track of their version."""
+        self.version = version
+        self.docker_image = None
+        self.docker_image_id = None
+        self._name = None
+        self._orm_model = None
+
     @abstractmethod
-    def parse(self, data: bytes) -> str:
+    def run(self, data: Any, **kwargs) -> Any:
         pass
 
+    def _get_model_fields(self) -> dict[str, Any]:
+        return {
+            "name": self.name,
+            "version": self.version,
+        }
 
-# Extractor Interface
-class Extractor(ABC):
-    @abstractmethod
-    def extract(self, data: str) -> dict:
-        pass
+    @property
+    def name(self) -> str:
+        return self.__class__.__name__
 
+    @property
+    def orm_model(self) -> schemas.Component:
+        if self._orm_model is None:
+            self._orm_model = schemas.Component(
+                **self._get_model_fields(),
+            )
+        return self._orm_model
 
-# Saver Interface
-class Saver(ABC):
-    @abstractmethod
-    def save(self, data: dict):
-        pass
+    def model_dump(self) -> dict[str, Any]:
+        """Return a dict of the components model."""
+        return self.orm_model.model_dump()
 
 
 class Savers:
-    def __init__(self, file_saver: Saver, json_saver: Saver, osm_saver: Saver):
+    def __init__(
+        self, file_saver: Component, json_saver: Component, osm_saver: Component
+    ):
         self.file_saver = file_saver
         self.json_saver = json_saver
         self.osm_saver = osm_saver
 
-    def save_file(self, data: str):
-        self.file_saver.save(data)
+    def __iter__(self):
+        yield self.file_saver
+        yield self.json_saver
+        yield self.osm_saver
 
-    def save_json(self, data: dict):
-        self.json_saver.save(data)
+    def save_file(self, data: str, path: Path):
+        self.file_saver.run(data, path)
 
-    def save_osm(self, data: dict):
-        self.osm_saver.save(data)
+    def save_json(self, data: dict, path: Path):
+        self.json_saver.run(data, path)
+
+    def save_osm(
+        self,
+        file_in: bytes,
+        metrics: dict,
+        components: list,
+    ):
+        # Call the method to save or upload the data
+        self.osm_saver.run(file_in, metrics, components)
 
 
 class Pipeline:
     def __init__(
         self,
         *,
-        parsers: list[Parser],
-        extractors: list[Extractor],
+        parsers: list[Component],
+        extractors: list[Component],
         savers: Savers,
         filepath: str,
         xml_path: Optional[str] = None,
@@ -60,17 +91,16 @@ class Pipeline:
 
     def run(self):
         for parser in self.parsers:
-            parsed_data = parser.parse(self.file_data)
+            parsed_data = parser.run(self.file_data)
             if isinstance(parsed_data, str):
                 self.savers.save_file(parsed_data, self.xml_path)
             for extractor in self.extractors:
-                extracted_metrics = extractor.extract(parsed_data)
+                # extracted_metrics = extractor.run(parsed_data,parser=parser.name)
+                extracted_metrics = extractor.run(parsed_data)
                 self.savers.save_osm(
-                    {
-                        "parser": parser.__class__.__name__,
-                        "extractor": extractor.__class__.__name__,
-                        "metrics": extracted_metrics,
-                    }
+                    file_in=self.file_data,
+                    metrics=extracted_metrics,
+                    components=[*self.parsers, *self.extractors, *self.savers],
                 )
                 self.savers.save_json(extracted_metrics, self.metrics_path)
 

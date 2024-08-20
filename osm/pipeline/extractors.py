@@ -1,22 +1,34 @@
-import json
+import logging
 
 import requests
 
+from .core import Component
 
-def _extract(xml: bytes) -> str:
-    """Extracts metrics from an XML.
+logger = logging.getLogger(__name__)
 
-    Args:
-        xml: Raw bytes for an xml file.
-    """
-    headers = {"Content-Type": "application/octet-stream"}
-    response = requests.post(
-        "http://localhost:8071/extract-metrics", data=xml, headers=headers
-    )
-    if response.status_code == 200:
-        return json.loads(response.json())[0]
-    else:
-        response.raise_for_status()
+
+class RTransparentExtractor(Component):
+    def run(self, data: str, parser: str = None) -> dict:
+        headers = {"Content-Type": "application/octet-stream"}
+        response = requests.post(
+            "http://localhost:8071/extract-metrics",
+            data=data,
+            headers=headers,
+            params={"parser": parser},
+        )
+        if response.status_code == 200:
+            metrics = response.json()
+            # pmid only exists when input filename is correct
+            metrics.pop("pmid")
+            #  replace bizarre sentinel value
+            for k, v in metrics.items():
+                if v == -2147483648:
+                    metrics[k] = None
+            return metrics
+        else:
+            breakpoint()
+            logger.error(f"Error: {response.text}")
+            response.raise_for_status()
 
 
 # import psutil

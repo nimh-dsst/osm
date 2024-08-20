@@ -1,25 +1,36 @@
+name: local-osm
 services:
   rtransparent:
     build:
       context: .
-      dockerfile: docker_images/rtransparent/Dockerfile
+      dockerfile: ./external_components/rtransparent/Dockerfile
     volumes:
-      - ./docker_images/rtransparent:/app
+      - ./external_components/rtransparent:/app
 
-  osm_web_api:
+  web_api:
     environment:
       - MONGODB_URI=mongodb://db:27017/test
     build:
       context: .
-      dockerfile: ./docker_images/web_api/Dockerfile
+      dockerfile: ./web/api/Dockerfile
     ports:
       - 80:80
     volumes:
-      - ./docker_images/web_api:/app/app
+      - ./web/api:/app/app
     working_dir: /app/app
     command: ["fastapi","dev","--host","0.0.0.0","--port","80"]
     depends_on:
         - db
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: ./web/dashboard/Dockerfile
+    environment:
+      - MONGODB_URI=mongodb://db:27017/test
+    working_dir: /app
+    ports:
+      - "8501:8501"
 
   db:
   # use old version of mongo to avoid Apple Instruction set error

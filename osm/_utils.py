@@ -40,9 +40,6 @@ def get_compute_context_id():
 
 
 def _upload_data(args, file_in, xml, metrics, components):
-    """
-    TODO: add in derivatives and components
-    """
     osm_api = os.environ.get("OSM_API", "http://localhost:80")
 
     payload = {
@@ -106,11 +103,19 @@ def _setup(args):
     if args.filepath.name.endswith(".pdf"):
         if xml_path.exists():
             raise FileExistsError(xml_path)
+    elif args.filepath.name.endswith(".xml"):
+        logger.warning(
+            """The input file is an xml file. Skipping the pdf to text
+            conversion and so ignoring requested parsers."""
+        )
+        args.parser = ["no-op"]
     metrics_path = _get_metrics_dir() / f"{args.uid}.json"
     if metrics_path.exists():
         raise FileExistsError(metrics_path)
     if not args.user_managed_compose:
         compose_up()
+
     logger.info("Waiting for containers to be ready...")
+    print("Waiting for containers to be ready...")
     wait_for_containers()
     return xml_path, metrics_path

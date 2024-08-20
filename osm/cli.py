@@ -1,13 +1,14 @@
 import argparse
 
 from osm._utils import DEFAULT_OUTPUT_DIR, _existing_file, _setup, compose_down
-from osm.pipeline.core import Pipeline
+from osm.pipeline.core import Pipeline, Savers
 from osm.pipeline.extractors import RTransparentExtractor
-from osm.pipeline.parsers import ScienceBeamParser
-from osm.pipeline.savers import FileSaver, JSONSaver, OSMSaver, Savers
+from osm.pipeline.parsers import NoopParser, ScienceBeamParser
+from osm.pipeline.savers import FileSaver, JSONSaver, OSMSaver
 
 PARSERS = {
     "sciencebeam": ScienceBeamParser,
+    "no-op": NoopParser,
 }
 EXTRACTORS = {
     "rtransparent": RTransparentExtractor,
@@ -72,14 +73,22 @@ def main():
     args = parse_args()
     try:
         xml_path, metrics_path = _setup(args)
+
         pipeline = Pipeline(
             filepath=args.filepath,
             xml_path=xml_path,
             metrics_path=metrics_path,
-            parsers=[PARSERS[p] for p in args.parser],
-            extractors=[EXTRACTORS[m] for m in args.metrics_type],
+            parsers=[PARSERS[p]() for p in args.parser],
+            extractors=[EXTRACTORS[m]() for m in args.metrics_type],
             savers=Savers(
-                file_saver=FileSaver(), json_saver=JSONSaver(), osm_saver=OSMSaver()
+                file_saver=FileSaver(),
+                json_saver=JSONSaver(),
+                osm_saver=OSMSaver(
+                    comment=args.comment,
+                    email=args.email,
+                    user_defined_id=args.uid,
+                    filename=args.filepath.name,
+                ),
             ),
         )
         pipeline.run()
@@ -90,17 +99,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# def main():
-#     args = parse_args()
-#     try:
-#         pipeline = _setup(args)
-#         pipeline.parse()
-#         pipeline.extract()
-#         pipeline.save()
-# xml_path, metrics_path, parser, extractor = _setup(args)
-# xml = parser.parse()
-# xml_path.write_bytes(xml)
-# metrics = _extract(xml)
-# metrics_path.write_text(json.dumps(metrics))
-# _upload_data(args, file_in, xml, metrics,components)
