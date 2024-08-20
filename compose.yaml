@@ -4,7 +4,7 @@ services:
     ports:
       - "8070:8070"
   rtransparent:
-    image: nimh/rtransparent
+    image: nimhdsst/rtransparent:staging
     ports:
       - "8071:8071"
     healthcheck:

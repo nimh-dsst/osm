@@ -24,6 +24,10 @@ resource "aws_instance" "staging" {
   key_name               = "dsst2023"
   vpc_security_group_ids = [module.shared_resources.security_group_id]
   associate_public_ip_address = true
+  root_block_device {
+    volume_size = 30
+    volume_type = "gp2" # General Purpose SSD (can be "gp2", "gp3", "io1", "io2", etc.)
+  }
 
   tags = {
     Name = "staging-instance"

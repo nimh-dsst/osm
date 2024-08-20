@@ -47,18 +47,22 @@ def build_and_push_docker_images():
 
     print("Building and pushing Docker images...")
     run_command(
-        f"DOCKER_BUILDKIT=1 docker build -t {os.getenv('DOCKER_IMAGE_TAG')} -f ./web/Dockerfile ."
+        f"DOCKER_BUILDKIT=1 docker build -t {os.getenv('DOCKER_IMAGE_TAG')} -f ./web/api/Dockerfile ."
     )
     run_command(f"docker push {os.getenv('DOCKER_IMAGE_TAG')}")
     run_command(
         f"DOCKER_BUILDKIT=1 docker build -t {os.getenv('DASHBOARD_IMAGE_TAG')} -f ./web/dashboard/Dockerfile ."
     )
     run_command(f"docker push {os.getenv('DASHBOARD_IMAGE_TAG')}")
+    run_command(
+        f"DOCKER_BUILDKIT=1 docker build -t nimhdsst/rtransparent:{os.getenv('ENVIRONMENT')} -f ./external_components/rtransparent/Dockerfile ."
+    )
+    run_command(f"docker push {os.getenv('DASHBOARD_IMAGE_TAG')}")
 
 
 def deploy_terraform(environment):
     print("Deploying using Opentofu...")
-    terraform_dir = f"web_api/terraform/{environment}"
+    terraform_dir = f"web/deploy/terraform/{environment}"
 
     with contextlib.chdir(terraform_dir):
         run_command("tofu init")
@@ -79,7 +83,7 @@ def deploy_terraform(environment):
 
 
 def create_temp_files():
-    compose_template_path = Path("web_api/docker-compose.yaml.j2")
+    compose_template_path = Path("web/deploy/docker-compose.yaml.j2")
     compose_template = Template(compose_template_path.read_text())
     compose_content = compose_template.render(
         docker_image_tag=os.getenv("DOCKER_IMAGE_TAG"),
@@ -100,18 +104,17 @@ def transfer_and_deploy_files(public_dns, compose_path, attach_to_logs=False):
     sleep(5)
     print("Transferring Docker Compose files to the remote instance...")
     ssh_key_path = os.getenv("SSH_KEY_PATH")
-    ssh_port = os.getenv("TF_VAR_ssh_port")
 
     run_command(
         f"scp -o StrictHostKeyChecking=no -i {ssh_key_path} {compose_path} ubuntu@{public_dns}:~/docker-compose.yaml"
     )
     print("Deploying Docker Compose on the instance...")
     run_command(
-        f"ssh -o StrictHostKeyChecking=no -i {ssh_key_path} ubuntu@{public_dns} -p {ssh_port} 'sudo docker-compose up --remove-orphans -d'"
+        f"ssh -o StrictHostKeyChecking=no -i {ssh_key_path} ubuntu@{public_dns} 'sudo docker-compose up --remove-orphans -d'"
     )
     if attach_to_logs:
         run_command(
-            f"ssh -o StrictHostKeyChecking=no -i {ssh_key_path} ubuntu@{public_dns} -p {ssh_port} 'sudo docker-compose logs -f'"
+            f"ssh -o StrictHostKeyChecking=no -i {ssh_key_path} ubuntu@{public_dns} 'sudo docker-compose logs -f'"
         )
 
 
