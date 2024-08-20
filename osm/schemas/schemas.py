@@ -9,8 +9,8 @@ from .metrics_schemas import RtransparentMetrics
 class Component(EmbeddedModel):
     name: str
     version: str
-    docker_image: str
-    docker_image_id: str
+    docker_image: Optional[str] = None
+    docker_image_id: Optional[str] = None
 
 
 class Client(EmbeddedModel):
@@ -33,7 +33,7 @@ class Work(EmbeddedModel):
     doi: Optional[str] = None
     openalex_id: Optional[str] = None
     scopus_id: Optional[str] = None
-    filename: str
+    filename: str = ""
     file: Optional[str] = None
     content_hash: Optional[str] = None
 
@@ -44,13 +44,14 @@ class Invocation(Model):
     for the Odmantic document model used to interact with mongodb.
     """
 
-    osm_version: str
-    user_comment: Optional[str]
-    client: Client
     work: Work
-    # Potentially link to other databases for extra metadata but for now will just use component outputs
     metrics: RtransparentMetrics
+
     components: list[Component]
+    client: Client
+    user_comment: Optional[str] = ""
+    osm_version: str
+    # Potentially link to other databases for extra metadata but for now will just use component outputs
 
 
 # Rtransparent: Component.construct(name="rtransparent", version="0.13", docker_image="nimh-dsst/rtransparent:0.13", docker_image_id="dsjfkldsjflkdsjlf2jkl23j")

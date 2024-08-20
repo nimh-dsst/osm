@@ -47,11 +47,11 @@ def build_and_push_docker_images():
 
     print("Building and pushing Docker images...")
     run_command(
-        f"DOCKER_BUILDKIT=1 docker build -t {os.getenv('DOCKER_IMAGE_TAG')} -f ./web_api/Dockerfile ."
+        f"DOCKER_BUILDKIT=1 docker build -t {os.getenv('DOCKER_IMAGE_TAG')} -f ./web/Dockerfile ."
     )
     run_command(f"docker push {os.getenv('DOCKER_IMAGE_TAG')}")
     run_command(
-        f"DOCKER_BUILDKIT=1 docker build -t {os.getenv('DASHBOARD_IMAGE_TAG')} -f ./web_api/dashboard/Dockerfile ."
+        f"DOCKER_BUILDKIT=1 docker build -t {os.getenv('DASHBOARD_IMAGE_TAG')} -f ./web/dashboard/Dockerfile ."
     )
     run_command(f"docker push {os.getenv('DASHBOARD_IMAGE_TAG')}")
 

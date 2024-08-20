@@ -47,6 +47,27 @@ async def get_invocation_by_id(id: ObjectId):
     return invocation
 
 
+LOGGING_CONFIG = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "default": {
+            "()": "logging.Formatter",
+            "fmt": "%(levelname)s %(name)s@%(lineno)d %(message)s",
+        },
+    },
+    "handlers": {
+        "default": {
+            "formatter": "default",
+            "class": "my_project.ColorStreamHandler",
+            "stream": "ext://sys.stderr",
+        },
+    },
+    "loggers": {
+        "": {"handlers": ["default"], "level": "TRACE"},
+    },
+}
+
 if __name__ == "__main__":
     import asyncio
 
@@ -54,7 +75,12 @@ if __name__ == "__main__":
 
     loop = asyncio.get_event_loop()
     config = uvicorn.Config(
-        app=app, host="0.0.0.0", port=80, root_path="/api", loop=loop
+        app=app,
+        host="0.0.0.0",
+        port=80,
+        root_path="/api",
+        loop=loop,
+        log_config=LOGGING_CONFIG,
     )
     server = uvicorn.Server(config)
     loop.run_until_complete(server.serve())

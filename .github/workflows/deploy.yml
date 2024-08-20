@@ -40,7 +40,7 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          DOCKER_BUILDKIT=1 docker build -t osm_web_api:${{ github.event.inputs.environment || 'production' }} -f ./docker_images/web_api/Dockerfile .
+          DOCKER_BUILDKIT=1 docker build -t osm_web_api:${{ github.event.inputs.environment || 'production' }} -f ./web/app/Dockerfile .
           docker tag osm_web_api:${{ github.event.inputs.environment || 'production' }}:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/osm_web_api:${{ github.event.inputs.environment || 'production' }}
           docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/osm_web_api:${{ github.event.inputs.environment || 'production' }}
 
