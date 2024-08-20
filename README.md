@@ -37,6 +37,7 @@ docker compose -f compose.yaml -f compose.development.override.yaml up --build
 And in another terminal:
 
 ```
+export OSM_API="http://localhost:80"
 osm -f path/to/pdf-or-xml -u uuid --user-managed-compose
 ```
 

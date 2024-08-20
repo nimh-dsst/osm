@@ -20,11 +20,14 @@ logger = logging.getLogger(__name__)
 class FileSaver(Component):
     def run(self, data: str, path: Path):
         path.write_text(data)
+        logger.info(f"Data saved to {path}")
 
 
 class JSONSaver(Component):
     def run(self, data: dict, path: Path):
         path.write_text(json.dumps(data))
+        logger.info(f"Metrics saved to {path}")
+        print(f"Metrics saved to {path}")
 
 
 class OSMSaver(Component):
@@ -37,7 +40,7 @@ class OSMSaver(Component):
         self.filename = filename
 
     def run(self, file_in: bytes, metrics: dict, components: list):
-        osm_api = os.environ.get("OSM_API", "http://localhost:80")
+        osm_api = os.environ.get("OSM_API", "https://osm.pythonaisolutions.com/api")
         # Build the payload
         payload = {
             "osm_version": __version__,
@@ -63,7 +66,8 @@ class OSMSaver(Component):
             # should be serializable. If they're not then a they should be encoded
             # as a string or something like that:  base64.b64encode(bytes).decode("utf-8")
             response = requests.put(
-                f"{osm_api}/upload", json=validated_data.model_dump(exclude=["id"])
+                f"{osm_api}/upload/",
+                json=validated_data.model_dump(exclude=["id"]),
             )
             if response.status_code == 200:
                 print("Invocation data uploaded successfully")
