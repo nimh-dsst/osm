@@ -150,7 +150,7 @@ class RtransparentMetrics(EmbeddedModel):
     #  some extra fields
     affiliation_aff_id: Optional[str] = None
     affiliation_all: Optional[str] = None
-    article: Optional[str] = None
+    article: Optional[int] = None
     author: Optional[str] = None
     author_aff_id: Optional[str] = None
     correspondence: Optional[str] = None

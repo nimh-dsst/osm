@@ -22,7 +22,7 @@ Guidance for deployment using Terraform and Docker Compose and GitHub Actions.
      - S3 bucket configuration for storing Terraform state files.
      - DynamoDB table for state locking.
 
-4. **Deployment Script (deploy.sh)**
+4. **Deployment Script (deploy.py)**
    - **Purpose**: Automate the deployment process for local development (staging environment).
    - **Steps**:
      - Set environment variables.
