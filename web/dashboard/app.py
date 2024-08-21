@@ -1,10 +1,11 @@
 import os
 
-import holoviews as hv
 import pandas as pd
 import panel as pn
+from main_dashboard import MainDashboard
 from odmantic import SyncEngine
 from pymongo import MongoClient
+from ui import get_template
 
 from osm import schemas
 
@@ -68,30 +69,15 @@ def load_data():
     return pd.DataFrame(flatten_dict(match) for match in matches)
 
 
-def get_dashboard():
-    data_grouped = pn.state.cache["data_grouped"]
+def dashboard_page():
+    template = get_template()
 
-    # Create charts
-    fig_data = hv.Bars(
-        data_grouped,
-        kdims=["year"],
-        vdims=[
-            "percent_is_data_pred",
-        ],
-    )
-    fig_code = hv.Bars(
-        data_grouped,
-        kdims=["year"],
-        vdims=[
-            "percent_is_code_pred",
-        ],
-    )
-    # Layout the dashboard
-    dashboard = pn.Column(
-        "# Data and code transparency",
-        pn.Row(fig_data, fig_code, sizing_mode="stretch_width"),
-    )
-    return dashboard
+    dashboard = MainDashboard({"RTransparent": pn.state.cache["data"]})
+
+    template.main.append(dashboard.get_dashboard)
+    template.sidebar.append(dashboard.get_sidebar)
+
+    return template
 
 
 def on_load():
@@ -100,18 +86,13 @@ def on_load():
     """
     pn.config.browser_info = True
     pn.config.notifications = True
-    pn.state.cache["data"] = load_data()
-    pn.state.cache["data_grouped"] = (
-        pn.state.cache["data"][pn.state.cache["data"]["year"] != 999999]
-        .groupby("year")
-        .agg(
-            percent_is_data_pred=("is_data_pred", lambda x: x.mean() * 100),
-            percent_is_code_pred=("is_code_pred", lambda x: x.mean() * 100),
-            avg_score=("score", "mean"),
-            avg_eigenfactor_score=("eigenfactor_score", "mean"),
-        )
-        .reset_index()
-    )
+    raw_data = load_data()
+    raw_data = raw_data[raw_data != 999999]
+
+    # Harcoded for now, will be added to the raw data later
+    raw_data["metrics"] = "RTransparent"
+
+    pn.state.cache["data"] = raw_data
 
 
 if __name__ == "__main__":
@@ -119,7 +100,7 @@ if __name__ == "__main__":
     pn.state.onload(on_load)
     print("starting dashboard!")
     pn.serve(
-        get_dashboard(),
+        {"/": dashboard_page},
         address="0.0.0.0",
         port=8501,
         start=True,

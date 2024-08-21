@@ -16,5 +16,5 @@ RUN SETUPTOOLS_SCM_PRETEND_VERSION_FOR_OSM=${PSEUDO_VERSION} pip install -e /opt
 RUN --mount=source=.git,target=/opt/osm/.git,type=bind pip install -e /opt/osm
 
 # # Copy the project files and install the package
-COPY web/dashboard/dashboard.py /app
-CMD ["python", "dashboard.py"]
+COPY web/dashboard/ /app
+CMD ["python", "app.py"]
