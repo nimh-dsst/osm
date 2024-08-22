@@ -10,30 +10,34 @@ logger = logging.getLogger(__name__)
 indicators_df = pd.read_csv('indicators_all.csv')
 funders_df = pd.read_csv('biomedical_research_funders.csv')
 
-funding_columns = ['fund_text', 'fund_pmc_institute', 'fund_pmc_source', 'fund_pmc_anysource']
+funding_columns = ['fund_text', 'fund_pmc_institute',
+                   'fund_pmc_source', 'fund_pmc_anysource']
 
 
 def data_cleaning_processing():
-    """Removes spaces and symbols as well as convert to lowercase"""
+    """Removes spaces and symbols"""
     for col in funding_columns:
-        indicators_df[col] = indicators_df[col].astype(str).str.lower()  # Convert to lowercase
-        indicators_df[col] = indicators_df[col].str.replace('[^\w\s]', '', regex=True)  # Remove punctuation
+        indicators_df[col] = indicators_df[col].str.replace(
+            '[^\w\s]', '', regex=True)  # Remove punctuation
 
 
-def founder_mapping(funder_names_set):
+def founder_mapping(funder_names_acronyms):
     """map founder and return a new df with new mapping"""
     try:
         output_df = pd.DataFrame(indicators_df['pmid'])
 
         # Check for funder matches and populate the output DataFrame
-        for funder_name in funder_names_set:
+        for names_acronyms in funder_names_acronyms:
             # Initialize a column for each funder with False
-            output_df[funder_name] = False
+            output_df[names_acronyms] = False
 
             # Update the column if any of the funding information columns contain the funder name
             for column in funding_columns:
-                output_df[funder_name] = output_df[funder_name] | indicators_df[column].str.contains(funder_name, na=False)
+                output_df[names_acronyms] = output_df[names_acronyms] | indicators_df[column].str.contains(
+                    names_acronyms, case=False, na=False)
+
         return output_df
+
     except Exception as e:
         logger.error(f"Error mapping data {e}")
 
@@ -47,10 +51,13 @@ def output_to_file(output_df: pd.DataFrame):
 def main():
     try:
         funder_names_set = set(funders_df['Name'].tolist())
+        funder_acronyms = set(funders_df['Acronym'].tolist())
+
+        funder_names_acronyms = funder_names_set.union(funder_acronyms)
 
         data_cleaning_processing()
 
-        output_df = founder_mapping(funder_names_set)
+        output_df = founder_mapping(funder_names_acronyms)
 
         output_to_file(output_df)
     except Exception as e:
