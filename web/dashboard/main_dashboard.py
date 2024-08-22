@@ -3,22 +3,25 @@ from datetime import datetime
 import pandas as pd
 import panel as pn
 import param
+from components.select_picker import SelectPicker
 
 pn.extension("echarts")
 
-
 pd.options.display.max_columns = None
-
-# filters = {
-#     "journal" : "category",
-#     "metrics" : "select",
-# }
 
 
 groups = {"year": "int"}
 
-extraction_tools_metrics = {
-    "RTransparent": ["is_data_pred", "is_code_pred", "score", "eigenfactor_score"]
+extraction_tools_params = {
+    "RTransparent": {
+        "metrics": ["is_data_pred", "is_code_pred", "score", "eigenfactor_score"],
+        "splitting_vars": [
+            "None",
+            "journal",
+            "affiliation_country",
+            "fund_pmc_institute",
+        ],
+    }
 }
 
 dims_aggregations = {
@@ -69,16 +72,7 @@ class MainDashboard(param.Parameterized):
         step=1, label="Publication date"
     )
 
-    filter_journal = param.Selector(
-        default="All journals (including empty)",
-        objects=[
-            "All journals (including empty)",
-            "All journals (excluding empty values)",
-            "Only selected journals",
-        ],
-        label="Journal",
-    )
-    filter_selected_journals = param.ListSelector(default=[], objects=[], label="")
+    filter_journal = param.ListSelector(default=[], objects=[], label="Journal")
 
     def __init__(self, datasets, **params):
         super().__init__(**params)
@@ -90,31 +84,42 @@ class MainDashboard(param.Parameterized):
         self.param.extraction_tool.objects = list(self.datasets.keys())
         self.extraction_tool = self.param.extraction_tool.objects[0]
 
+        self.journal_select_picker = SelectPicker.from_param(
+            self.param.filter_journal,
+            update_title_callback=lambda select_picker,
+            values,
+            options: self.new_picker_title("journals", select_picker, values, options),
+        )
+
     @pn.depends("extraction_tool", watch=True)
     def did_change_extraction_tool(self):
         print("DID_CHANGE_EXTRACTION_TOOL")
 
-        new_extraction_tools_metrics_metrics = extraction_tools_metrics[
-            self.extraction_tool
+        # Updated the metrics param
+        new_extraction_tools_metrics = extraction_tools_params[self.extraction_tool][
+            "metrics"
         ]
 
         new_metrics = []
-        for m in new_extraction_tools_metrics_metrics:
+        for m in new_extraction_tools_metrics:
             for agg in dims_aggregations[m]:
                 new_metrics.append(metrics_titles[f"{agg}_{m}"])
 
         self.param.metrics.objects = new_metrics
         self.metrics = self.param.metrics.objects[0]
 
-        # self.param.metrics.objects = extraction_tools_metrics[self.extraction_tool]
-        # self.metrics = self.param.metrics.objects[0]
+        # Update the splitting_var param
+        new_extraction_tools_splitting_vars = extraction_tools_params[
+            self.extraction_tool
+        ]["splitting_vars"]
+        self.param.splitting_var.objects = new_extraction_tools_splitting_vars
+        self.splitting_var = self.param.splitting_var.objects[0]
 
+        # Update the raw data
         self.raw_data = self.datasets[self.extraction_tool]
-        print(self.raw_data)
-        # breakpoint()
 
-        # Hardcoded for RTransparent for the moment, update to more generic later
-
+        # Update the filters
+        ## filter_pubdate
         self.param.filter_pubdate.bounds = (
             self.raw_data.year.min(),
             # self.raw_data.year.max(),
@@ -127,19 +132,14 @@ class MainDashboard(param.Parameterized):
         )
         self.filter_pubdate = (self.raw_data.year.min(), self.raw_data.year.max())
 
-        self.param.filter_selected_journals.objects = self.raw_data.journal.unique()
-        # As default, takes the journals with the biggest number of occurences
-        self.filter_selected_journals = list(
-            self.raw_data.journal.value_counts().iloc[:10].index
-        )
+        # ## filter_journal
+        self.param.filter_journal.objects = self.raw_data.journal.unique()
+        self.filter_journal = list(self.raw_data.journal.value_counts().iloc[:10].index)
 
     def filtered_grouped_data(self):
         filters = []
 
-        if self.filter_journal == "All journals (excluding empty values)":
-            filters.append(("journal.notnull()"))
-        elif self.filter_journal == "Only selected journals":
-            filters.append(f"journal in {self.filter_selected_journals}")
+        filters.append(f"journal in {self.filter_journal}")
 
         if self.filter_pubdate is not None:
             filters.append(f"year >= {self.filter_pubdate[0]}")
@@ -154,9 +154,11 @@ class MainDashboard(param.Parameterized):
             for agg in aggs:
                 aggretations[f"{agg}_{field}"] = (field, aggregation_formulas[agg])
 
-        result = (
-            filtered_df.groupby(self.splitting_var).agg(**aggretations).reset_index()
-        )
+        groupers = ["year"]
+        if self.splitting_var != "None":
+            groupers.append(self.splitting_var)
+
+        result = filtered_df.groupby(groupers).agg(**aggretations).reset_index()
 
         return result
 
@@ -173,15 +175,39 @@ class MainDashboard(param.Parameterized):
 
         raw_metric = metrics_by_title[self.metrics]
 
-        xAxis = df[self.splitting_var].tolist()
-        series = [
-            {
-                "id": self.metrics,
-                "name": self.metrics,
-                "type": "line",
-                "data": df[raw_metric].tolist(),
-            }
-        ]
+        xAxis = df["year"].tolist()
+
+        if self.splitting_var == "None":
+            series = [
+                {
+                    "id": self.metrics,
+                    "name": self.metrics,
+                    "type": "line",
+                    "data": df[raw_metric].tolist(),
+                }
+            ]
+            legend_data = [
+                {"name": self.metrics, "icon": "path://M 0 0 H 20 V 20 H 0 Z"},
+            ]
+        else:
+            series = []
+            legend_data = []
+
+            # TODO : handle other splitting_var
+            if self.splitting_var == "journal":
+                for journal in sorted(self.filter_journal):
+                    journal_df = df.query(f"journal == '{journal}'")
+                    series.append(
+                        {
+                            "id": journal,
+                            "name": journal,
+                            "type": "line",
+                            "data": journal_df[raw_metric].tolist(),
+                        }
+                    )
+                    legend_data.append(
+                        {"name": journal, "icon": "path://M 0 0 H 20 V 20 H 0 Z"}
+                    )
 
         title = f"{self.metrics} by {self.splitting_var} ({int(self.filter_pubdate[0])}-{int(self.filter_pubdate[1])})"
 
@@ -197,9 +223,7 @@ class MainDashboard(param.Parameterized):
                 #                 {{a1}} : {{c1}} """,
             },
             "legend": {
-                "data": [
-                    {"name": self.metrics, "icon": "path://M 0 0 H 20 V 20 H 0 Z"},
-                ],
+                "data": legend_data,
                 "orient": "vertical",
                 "right": 10,
                 "top": 20,
@@ -292,7 +316,22 @@ class MainDashboard(param.Parameterized):
             pubdate_shortcuts,
         )
 
-    @pn.depends("extraction_tool", "filter_journal")
+    def new_picker_title(self, entity, picker, values, options):
+        value_count = len(picker.value)
+        options_count = len(picker.options)
+
+        if value_count == options_count:
+            title = f"All {entity} ({ value_count })"
+
+        elif value_count == 0:
+            title = f"No {entity} (0 out of { options_count })"
+
+        else:
+            title = f"{ value_count } {entity} out of { options_count }"
+
+        return title
+
+    @pn.depends("extraction_tool")
     def get_sidebar(self):
         print("GET_SIDEBAR")
 
@@ -305,15 +344,8 @@ class MainDashboard(param.Parameterized):
             # pn.pane.Markdown("#### Publication Date"),
             self.get_pubdate_filter(),
             pn.layout.Divider(),
-            pn.widgets.Select.from_param(self.param.filter_journal),
+            self.journal_select_picker,
         ]
-
-        if self.filter_journal == "Only selected journals":
-            items.append(
-                pn.widgets.MultiChoice.from_param(
-                    self.param.filter_selected_journals, max_items=10
-                )
-            )
 
         sidebar = pn.Column(*items)
 
@@ -329,9 +361,7 @@ class MainDashboard(param.Parameterized):
             pn.widgets.Select.from_param(self.param.splitting_var),
         )
 
-    @pn.depends(
-        "extraction_tool", "filter_journal", "filter_selected_journals", "splitting_var"
-    )
+    @pn.depends("extraction_tool", "filter_journal", "splitting_var")
     def get_dashboard(self):
         print("GET_DASHBOARD")
 
