@@ -272,12 +272,12 @@ def test_transform_data_validation_error():
 async def test_upload_data_success(mock_database):
     # Define test data
     invocation_list = []
-    mongo_uri = "mongodb://test_uri"
+    MONGODB_URI = "mongodb://test_uri"
     db_name = "test_db"
 
     # If an exception is raised in the above call, the test will fail.
     # There's no need for a 'with not pytest.raises(Exception):' block.
-    await upload_data(invocation_list, mongo_uri, db_name, "1/2")
+    await upload_data(invocation_list, MONGODB_URI, db_name, "1/2")
 
 
 @pytest.mark.asyncio

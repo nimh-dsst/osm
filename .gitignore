@@ -21,3 +21,4 @@ osm_output
 .terraform
 .terraform.lock.hcl
 .public_dns
+tempdata
