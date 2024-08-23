@@ -74,6 +74,10 @@ class MainDashboard(param.Parameterized):
 
     filter_journal = param.ListSelector(default=[], objects=[], label="Journal")
 
+    filter_affiliation_country = param.ListSelector(
+        default=[], objects=[], label="Country"
+    )
+
     def __init__(self, datasets, **params):
         super().__init__(**params)
 
@@ -89,6 +93,15 @@ class MainDashboard(param.Parameterized):
             update_title_callback=lambda select_picker,
             values,
             options: self.new_picker_title("journals", select_picker, values, options),
+        )
+
+        self.affiliation_country_select_picker = SelectPicker.from_param(
+            self.param.filter_affiliation_country,
+            update_title_callback=lambda select_picker,
+            values,
+            options: self.new_picker_title(
+                "affiliation countries", select_picker, values, options
+            ),
         )
 
     @pn.depends("extraction_tool", watch=True)
@@ -132,14 +145,54 @@ class MainDashboard(param.Parameterized):
         )
         self.filter_pubdate = (self.raw_data.year.min(), self.raw_data.year.max())
 
-        # ## filter_journal
+        ## filter_journal
         self.param.filter_journal.objects = self.raw_data.journal.unique()
         self.filter_journal = list(self.raw_data.journal.value_counts().iloc[:10].index)
 
+        ## affiliation country
+        ## Keeping "None" as a string on purpose, to represent it in the SelectPicker
+        countries_with_count = {"None": 0}
+        for row in self.raw_data.affiliation_country.values:
+            if row is None:
+                countries_with_count["None"] += 1
+                continue
+            for c in row:
+                if c not in countries_with_count:
+                    countries_with_count[c] = 1
+                else:
+                    countries_with_count[c] += 1
+
+        ## We want to show all countries, but pre-select only the top 10
+        countries_with_count = {
+            country: count
+            for country, count in countries_with_count.items()
+            if count > 10
+        }
+
+        top_10_min = sorted(
+            [count for _, count in countries_with_count.items()], reverse=True
+        )[10]
+        selected_countries = [
+            country
+            for country, count in countries_with_count.items()
+            if count >= top_10_min
+        ]
+
+        def country_sorter(c):
+            return countries_with_count[c]
+
+        self.param.filter_affiliation_country.objects = sorted(
+            countries_with_count.keys(), key=country_sorter, reverse=True
+        )
+        self.filter_affiliation_country = selected_countries
+
     def filtered_grouped_data(self):
+        print("FILTERED_GROUPED_DATA")
+
         filters = []
 
         filters.append(f"journal in {self.filter_journal}")
+        # filters.append(f"affiliation_country ")
 
         if self.filter_pubdate is not None:
             filters.append(f"year >= {self.filter_pubdate[0]}")
@@ -148,6 +201,15 @@ class MainDashboard(param.Parameterized):
         filtered_df = (
             self.raw_data.query(" and ".join(filters)) if filters else self.raw_data
         )
+
+        # the filter on countries is a bit different as the rows
+        # are list of countries
+        def country_filter(cell):
+            if cell is None:
+                return "None" in self.filter_affiliation_country
+            return any(c in self.filter_affiliation_country for c in cell)
+
+        filtered_df = filtered_df[filtered_df.affiliation_country.apply(country_filter)]
 
         aggretations = {}
         for field, aggs in dims_aggregations.items():
@@ -175,7 +237,7 @@ class MainDashboard(param.Parameterized):
 
         raw_metric = metrics_by_title[self.metrics]
 
-        xAxis = df["year"].tolist()
+        xAxis = df["year"].unique().tolist()
 
         if self.splitting_var == "None":
             series = [
@@ -193,21 +255,45 @@ class MainDashboard(param.Parameterized):
             series = []
             legend_data = []
 
-            # TODO : handle other splitting_var
-            if self.splitting_var == "journal":
-                for journal in sorted(self.filter_journal):
-                    journal_df = df.query(f"journal == '{journal}'")
-                    series.append(
-                        {
-                            "id": journal,
-                            "name": journal,
-                            "type": "line",
-                            "data": journal_df[raw_metric].tolist(),
-                        }
-                    )
-                    legend_data.append(
-                        {"name": journal, "icon": "path://M 0 0 H 20 V 20 H 0 Z"}
-                    )
+            if self.splitting_var == "affiliation_country":
+                splitting_var_filter = self.filter_affiliation_country
+                splitting_var_column = "affiliation_country"
+                splitting_var_query = lambda cell, selected_item: selected_item in cell
+
+            elif self.splitting_var == "fund_pmc_institute":
+                splitting_var_filter = self.filter_fund_pmc_institute
+                splitting_var_column = "fund_pmc_institute"
+                splitting_var_query = lambda cell, selected_item: cell == selected_item
+            else:
+                print("Defaulting to splitting var 'journal' ")
+                splitting_var_filter = self.filter_journal
+                splitting_var_column = "journal"
+                splitting_var_query = lambda cell, selected_item: cell == selected_item
+
+            for selected_item in sorted(splitting_var_filter):
+                # sub_df = df.query(f"{splitting_var_column} == '{selected_item}'")
+                sub_df = (
+                    df[
+                        df[splitting_var_column].apply(
+                            lambda x: splitting_var_query(x, selected_item)
+                        )
+                    ]
+                    .groupby("year")
+                    .agg({raw_metric: "mean"})  # todo fix this
+                    .reset_index()
+                )
+
+                series.append(
+                    {
+                        "id": selected_item,
+                        "name": selected_item,
+                        "type": "line",
+                        "data": sub_df[raw_metric].tolist(),
+                    }
+                )
+                legend_data.append(
+                    {"name": selected_item, "icon": "path://M 0 0 H 20 V 20 H 0 Z"}
+                )
 
         title = f"{self.metrics} by {self.splitting_var} ({int(self.filter_pubdate[0])}-{int(self.filter_pubdate[1])})"
 
@@ -232,7 +318,7 @@ class MainDashboard(param.Parameterized):
             },
             "xAxis": {
                 "data": xAxis,
-                "name": self.splitting_var,
+                "name": "year",
                 "nameLocation": "center",
                 "nameGap": 30,
             },
@@ -345,6 +431,7 @@ class MainDashboard(param.Parameterized):
             self.get_pubdate_filter(),
             pn.layout.Divider(),
             self.journal_select_picker,
+            self.affiliation_country_select_picker,
         ]
 
         sidebar = pn.Column(*items)
@@ -361,7 +448,12 @@ class MainDashboard(param.Parameterized):
             pn.widgets.Select.from_param(self.param.splitting_var),
         )
 
-    @pn.depends("extraction_tool", "filter_journal", "splitting_var")
+    @pn.depends(
+        "extraction_tool",
+        "filter_journal",
+        "filter_affiliation_country",
+        "splitting_var",
+    )
     def get_dashboard(self):
         print("GET_DASHBOARD")
 
