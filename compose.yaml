@@ -1,9 +1,11 @@
 services:
   sciencebeam:
+    container_name: sciencebeam
     image: elifesciences/sciencebeam-parser
     ports:
       - "8070:8070"
   rtransparent:
+    container_name: rtransparent
     image: nimhdsst/rtransparent:staging
     ports:
       - "8071:8071"
