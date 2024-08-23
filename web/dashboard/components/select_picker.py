@@ -183,7 +183,7 @@ class SelectPicker(ReactiveHTML, Widget):
 
 
         div.sp_options_list_container {
-            background-color: var(--bs-form-control-bg);
+            background-color: lightgray;
             box-shadow: rgba(0, 0, 0, 0.2) 0px 5px 5px -3px,
                         rgba(0, 0, 0, 0.14) 0px 8px 10px 1px,
                         rgba(0, 0, 0, 0.12) 0px 3px 14px 2px;
@@ -255,6 +255,19 @@ class SelectPicker(ReactiveHTML, Widget):
             height:100%;
         }
 
+        .sp_filter_clear_btn {
+            padding-top: 4px;
+            padding-right: 4px;
+        }
+
+        .sp_filter_clear_btn .bk-btn {
+            border: lightgray solid 2px;
+            fill: lightgray;
+        }
+        .sp_filter_clear_btn .bk-btn :hover{
+            border: black solid 2px;
+            fill: black;
+        }
         /*
         .sp_options_list_container input[type="checkbox"].intermediary::after {
             content: "-";
@@ -330,8 +343,8 @@ class SelectPicker(ReactiveHTML, Widget):
            """,
         "input_change": """
 
-            console.log("input_change", data, model, state, view);
-            console.log(model.checkboxes_list);
+            /*console.log("input_change", data, model, state, view);
+            console.log(model.checkboxes_list);*/
 
             let new_value = [];
             model.checkboxes_list.forEach((cb, idx) => {

@@ -92,6 +92,15 @@ def on_load():
     # Harcoded for now, will be added to the raw data later
     raw_data["metrics"] = "RTransparent"
 
+    # Cleanup - might be handlded upstream in the future
+    # raw_countries = raw_data.affiliation_country.unique()
+
+    raw_data.affiliation_country = raw_data.affiliation_country.apply(
+        lambda cntry: (
+            tuple(set(map(str.strip, cntry.split(";")))) if cntry is not None else cntry
+        )
+    )
+
     pn.state.cache["data"] = raw_data
 
 
