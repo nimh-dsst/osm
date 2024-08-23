@@ -1,6 +1,9 @@
 from typing import Optional
 
 from odmantic import EmbeddedModel
+from pydantic import field_validator
+
+from .custom_fields import LongStr
 
 #  The rtransparent tool can extract from parsed pdfs or from XML directly from pubmed central. The latter has many more fields.
 
@@ -25,7 +28,7 @@ class RtransparentMetrics(EmbeddedModel):
     affiliation_country: Optional[str] = None
     affiliation_institution: Optional[str] = None
     type: Optional[str] = None
-    data_text: Optional[str] = None
+    data_text: Optional[LongStr] = None
     is_relevant_data: Optional[bool] = None
     com_specific_db: Optional[str] = None
     com_general_db: Optional[str] = None
@@ -34,12 +37,12 @@ class RtransparentMetrics(EmbeddedModel):
     com_file_formats: Optional[str] = None
     com_supplemental_data: Optional[str] = None
     com_data_availibility: Optional[str] = None
-    code_text: Optional[str] = None
+    code_text: Optional[LongStr] = None
     is_relevant_code: Optional[bool] = None
     com_code: Optional[str] = None
     com_suppl_code: Optional[str] = None
     is_coi_pred: Optional[bool] = None
-    coi_text: Optional[str] = None
+    coi_text: Optional[LongStr] = None
     is_coi_pmc_fn: Optional[bool] = None
     is_coi_pmc_title: Optional[str] = None
     is_relevant_coi: Optional[bool] = None
@@ -66,7 +69,7 @@ class RtransparentMetrics(EmbeddedModel):
     board_1: Optional[bool] = None
     no_coi_1: Optional[bool] = None
     no_funder_role_1: Optional[bool] = None
-    fund_text: Optional[str] = None
+    fund_text: Optional[LongStr] = None
     fund_pmc_institute: Optional[str] = None
     fund_pmc_source: Optional[str] = None
     fund_pmc_anysource: Optional[str] = None
@@ -112,7 +115,7 @@ class RtransparentMetrics(EmbeddedModel):
     fund_ack: Optional[str] = None
     project_ack: Optional[str] = None
     is_register_pred: Optional[bool] = None
-    register_text: Optional[str] = None
+    register_text: Optional[LongStr] = None
     is_research: Optional[bool] = None
     is_review: Optional[bool] = None
     is_reg_pmc_title: Optional[bool] = None
@@ -150,13 +153,13 @@ class RtransparentMetrics(EmbeddedModel):
     #  some extra fields
     affiliation_aff_id: Optional[str] = None
     affiliation_all: Optional[str] = None
-    article: Optional[int] = None
+    article: Optional[str] = None
     author: Optional[str] = None
     author_aff_id: Optional[str] = None
     correspondence: Optional[str] = None
     date_epub: Optional[str] = None
     date_ppub: Optional[str] = None
-    funding_text: Optional[str] = None
+    funding_text: Optional[LongStr] = None
     is_explicit: Optional[bool] = None
     is_fund_pred: Optional[bool] = None
     is_funded_pred: Optional[bool] = None
@@ -174,9 +177,9 @@ class RtransparentMetrics(EmbeddedModel):
     n_ref: Optional[str] = None
     n_table_body: Optional[str] = None
     n_table_floats: Optional[str] = None
-    open_code_statements: Optional[str] = None
-    open_data_category: Optional[str] = None
-    open_data_statements: Optional[str] = None
+    open_code_statements: Optional[LongStr] = None
+    open_data_category: Optional[LongStr] = None
+    open_data_statements: Optional[LongStr] = None
     pii: Optional[str] = None
     pmcid_uid: Optional[str] = None
     publisher_id: Optional[str] = None
@@ -184,6 +187,16 @@ class RtransparentMetrics(EmbeddedModel):
     title: Optional[str] = None
     is_data_pred: Optional[bool] = None
     is_code_pred: Optional[bool] = None
+
+    @field_validator("article")
+    def coerce_to_string(cls, v):
+        if isinstance(v, (int, float, bool)):
+            return str(v)
+        elif not isinstance(v, str):
+            raise ValueError(
+                "string required or a type that can be coerced to a string"
+            )
+        return v
 
 
 # Tried to define  programmatically but both ways seemed to yield a model class without type annotated fields...

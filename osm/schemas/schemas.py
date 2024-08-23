@@ -1,19 +1,41 @@
+import base64
+from datetime import datetime
 from typing import Optional
 
-from odmantic import EmbeddedModel, Model
-from pydantic import EmailStr
+from odmantic import EmbeddedModel, Field, Model
+from pydantic import EmailStr, field_validator
 
+from .custom_fields import LongBytes
 from .metrics_schemas import RtransparentMetrics
 
 
 class Component(EmbeddedModel):
+    model_config = {
+        "extra": "forbid",
+        "json_encoders": {
+            LongBytes: lambda v: base64.b64encode(v.get_value()).decode("utf-8"),
+        },
+    }
     name: str
     version: str
     docker_image: Optional[str] = None
     docker_image_id: Optional[str] = None
+    sample: Optional[LongBytes] = Field(
+        default=b"",
+        json_schema_extra={"exclude": True, "select": False, "write_only": True},
+    )
+
+    # def model_dump(self, **kwargs) -> dict[str, Any]:
+    #     data = super().model_dump(**kwargs)
+    #     # Iterate over the fields and remove those that are instances of LongBytes
+    #     fields_to_remove = [field for field, value in data.items() if isinstance(value, LongBytes)]
+    #     for field in fields_to_remove:
+    #         data.pop(field, None)
+    #     return data
 
 
 class Client(EmbeddedModel):
+    model_config = {"extra": "forbid"}
     compute_context_id: int
     email: Optional[EmailStr] = None
 
@@ -28,14 +50,24 @@ class Work(EmbeddedModel):
     a pdf) provided as part of each "Invocation" or cli call.
     """
 
+    model_config = {"extra": "forbid"}
     user_defined_id: str
     pmid: Optional[str] = None
     doi: Optional[str] = None
     openalex_id: Optional[str] = None
     scopus_id: Optional[str] = None
     filename: str = ""
-    file: Optional[str] = None
     content_hash: Optional[str] = None
+
+    @field_validator("user_defined_id", "pmid")
+    def coerce_to_string(cls, v):
+        if isinstance(v, (int, float, bool)):
+            return str(v)
+        elif not isinstance(v, str):
+            raise ValueError(
+                "string required or a type that can be coerced to a string"
+            )
+        return v
 
 
 class Invocation(Model):
@@ -44,15 +76,13 @@ class Invocation(Model):
     for the Odmantic document model used to interact with mongodb.
     """
 
-    work: Work
+    model_config = {"extra": "forbid"}
     metrics: RtransparentMetrics
-
-    components: list[Component]
+    components: Optional[list[Component]] = None
+    work: Work
     client: Client
-    user_comment: Optional[str] = ""
+    user_comment: str = ""
     osm_version: str
-    # Potentially link to other databases for extra metadata but for now will just use component outputs
-
-
-# Rtransparent: Component.construct(name="rtransparent", version="0.13", docker_image="nimh-dsst/rtransparent:0.13", docker_image_id="dsjfkldsjflkdsjlf2jkl23j")
-# ScibeamParser: Component.construct(name="scibeam-parser", version="0.5.1", docker_image="elife/scibeam-parser:0.5.1",docker_image_id="dsjfkldsjflkdsjlf2jkl23j")
+    funder: Optional[list[str]] = None
+    data_tags: list[str] = []
+    created_at: datetime = Field(default_factory=datetime.utcnow)
