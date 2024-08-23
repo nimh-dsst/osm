@@ -2,8 +2,9 @@ FROM tiangolo/uvicorn-gunicorn:python3.11
 
 WORKDIR /app
 
-ENV LOCAL_DATA_PATH=/opt/dashboard_data.feather
-COPY ./dashboard_data.feather /opt/dashboard_data.feather
+RUN mkdir -p /opt/data
+ENV LOCAL_DATA_PATH=/opt/data/dashboard_data.feather
+COPY ./tempdata/dashboard_data.feather /opt/data/dashboard_data.feather
 
 # Create the environment
 RUN pip install holoviews panel pymongo odmantic pandas pyarrow pydantic[email]

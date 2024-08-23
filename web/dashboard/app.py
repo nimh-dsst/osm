@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import pandas as pd
 import panel as pn
@@ -28,8 +29,9 @@ def flatten_dict(d):
 
 
 def load_data():
-    if "LOCAL_DATA_PATH" in os.environ:
-        return pd.read_feather(os.environ["LOCAL_DATA_PATH"])
+    local_path = os.environ.get("LOCAL_DATA_PATH")
+    if local_path is not None and Path(local_path).exists():
+        return pd.read_feather(local_path)
     client = MongoClient(os.environ["MONGODB_URI"])
     engine = SyncEngine(client=client, database="osm")
     matches = (
@@ -40,33 +42,31 @@ def load_data():
                     "$match": {
                         "osm_version": {"$eq": "0.0.1"},
                         # "work.pmid": {"$regex":r"^2"},
-                        "metrics.year": {"$gt": 2000},
+                        # "metrics.year": {"$gt": 2000},
                         # "metrics.is_data_pred": {"$eq": True},
                     },
                 },
                 {
                     "$project": {
                         # "osm_version": True,
-                        # "user_comment": True,
-                        # "client.compute_context_id": True,
-                        "work.user_defined_id": True,
+                        "funder": True,
+                        "data_tags": True,
+                        "work.pmid": True,
                         "metrics.year": True,
                         "metrics.is_code_pred": True,
                         "metrics.is_data_pred": True,
                         "metrics.affiliation_country": True,
-                        "metrics.score": True,
-                        "metrics.eigenfactor_score": True,
-                        "metrics.fund_pmc_anysource": True,
-                        "metrics.fund_pmc_institute": True,
-                        "metrics.fund_pmc_source": True,
                         "metrics.journal": True,
+                        "created_at": True,
                     },
                 },
             ]
         )
         .__iter__()
     )
-    return pd.DataFrame(flatten_dict(match) for match in matches)
+    df = pd.DataFrame(flatten_dict(match) for match in matches)
+    df.to_feather(local_path)
+    return df
 
 
 def dashboard_page():
