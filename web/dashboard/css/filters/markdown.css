@@ -1,0 +1,18 @@
+:host(.filters-section-header.markdown) {
+    padding:0px 0px 0px 0.5em !important;
+    margin:0px !important;
+    color: rgba(0, 0, 0, 0.87);
+
+}
+:host(.filters-section-header) h3 {
+
+    margin:0px;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 266%;
+    
+    letter-spacing: 1px;
+    text-transform: uppercase;
+
+}

@@ -14,7 +14,10 @@ groups = {"year": "int"}
 
 extraction_tools_params = {
     "RTransparent": {
-        "metrics": ["is_data_pred", "is_code_pred", "score", "eigenfactor_score"],
+        "metrics": [
+            "is_data_pred",
+            "is_code_pred",
+        ],
         "splitting_vars": [
             "None",
             "journal",
@@ -27,8 +30,8 @@ extraction_tools_params = {
 dims_aggregations = {
     "is_data_pred": ["percent", "count_true"],
     "is_code_pred": ["percent", "count_true"],
-    "score": ["mean"],
-    "eigenfactor_score": ["mean"],
+    # "score": ["mean"],
+    # "eigenfactor_score": ["mean"],
 }
 
 metrics_titles = {
@@ -346,10 +349,14 @@ class MainDashboard(param.Parameterized):
 
         # The text inputs only reflect and update the value of the slider's bounds
         start_pubdate_input = pn.widgets.TextInput(
-            value=str(int(self.param.filter_pubdate.bounds[0])), width=80
+            value=str(int(self.param.filter_pubdate.bounds[0])),
+            name="From",
+            css_classes=["filters-text-input", "pubdate-input"],
         )
         end_pubdate_input = pn.widgets.TextInput(
-            value=str(int(self.param.filter_pubdate.bounds[1])), width=80
+            value=str(int(self.param.filter_pubdate.bounds[1])),
+            name="To",
+            css_classes=["filters-text-input", "pubdate-input"],
         )
 
         # When the slider's value change, update the TextInputs
@@ -426,7 +433,9 @@ class MainDashboard(param.Parameterized):
             pn.pane.Markdown("### Applied Filters"),
             pn.pane.Markdown("(todo)"),
             pn.layout.Divider(),
-            pn.pane.Markdown("### Publication Details"),
+            pn.pane.Markdown(
+                "### Publication Details", css_classes=["filters-section-header"]
+            ),
             # pn.pane.Markdown("#### Publication Date"),
             self.get_pubdate_filter(),
             pn.layout.Divider(),
@@ -446,6 +455,32 @@ class MainDashboard(param.Parameterized):
             pn.widgets.Select.from_param(self.param.extraction_tool),
             pn.widgets.Select.from_param(self.param.metrics),
             pn.widgets.Select.from_param(self.param.splitting_var),
+        )
+
+    def get_intro_block(self):
+        explore_data_button = pn.widgets.Button(
+            name="EXPLORE THE DATA", width=180, button_style="solid"
+        )
+
+        learn_more_button = pn.widgets.Button(
+            name="LEARN MORE",
+            width=180,
+            button_style="solid",
+            button_type="light",
+        )
+        github_button = pn.widgets.Button(
+            name="GITHUB",
+            width=180,
+            button_style="solid",
+            button_type="light",
+        )
+
+        return pn.Column(
+            pn.pane.Markdown("#OpenSciMetrics Dashboard"),
+            pn.pane.Markdown(
+                "OpenSciMetrics is a tool designed to evaluate open science practices in biomedical publications, such as data sharing, code availability, and research transparency. Our goal is to provide insights into how these practices evolve over time and across different fields, journals, and countries. Use the dashboard below to explore key metrics and trends."
+            ),
+            pn.Row(explore_data_button, learn_more_button, github_button),
         )
 
     @pn.depends(
