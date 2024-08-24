@@ -121,7 +121,7 @@ class OSMApp(param.Parameterized):
     def dashboard_page(self):
         template = self.get_template()
         dashboard = MainDashboard({"RTransparent": pn.state.cache["data"]})
-        template.main.append(dashboard.get_intro_block())
+        # template.main.append(dashboard.get_intro_block())
         template.main.append(dashboard.get_dashboard())
         template.sidebar.append(dashboard.get_sidebar())
 
