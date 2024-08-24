@@ -1,0 +1,9 @@
+# Treat all .png files as binary
+*.png binary
+
+# Use Git's built-in diff driver for PNG files
+*.png diff=exif
+
+# Enable binary delta compression for PNG files
+*.png -delta
+
