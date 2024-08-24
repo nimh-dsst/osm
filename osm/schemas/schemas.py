@@ -1,9 +1,12 @@
 import base64
-from datetime import datetime
+import datetime
 from typing import Optional
 
+import pandas as pd
 from odmantic import EmbeddedModel, Field, Model
 from pydantic import EmailStr, field_validator
+
+from osm._utils import coerce_to_string
 
 from .custom_fields import LongBytes
 from .metrics_schemas import RtransparentMetrics
@@ -43,7 +46,7 @@ class Work(EmbeddedModel):
     """
 
     model_config = {"extra": "forbid"}
-    user_defined_id: str
+    user_defined_id: Optional[str] = None
     pmid: Optional[int] = None
     doi: Optional[str] = None
     openalex_id: Optional[str] = None
@@ -51,15 +54,13 @@ class Work(EmbeddedModel):
     filename: str = ""
     content_hash: Optional[str] = None
 
-    @field_validator("user_defined_id")
-    def coerce_to_string(cls, v):
-        if isinstance(v, (int, float, bool)):
-            return str(v)
-        elif not isinstance(v, str):
-            raise ValueError(
-                "string required or a type that can be coerced to a string"
-            )
-        return v
+    @field_validator("user_defined_id", mode="before")
+    def fix_string(cls, v, *args, **kwargs):
+        return coerce_to_string(v)
+
+    @field_validator("pmid", mode="before")
+    def handle_pd_na(cls, v, *args, **kwargs):
+        return None if pd.isna(v) else v
 
 
 class Invocation(Model):
@@ -70,11 +71,13 @@ class Invocation(Model):
 
     model_config = {"extra": "forbid"}
     metrics: RtransparentMetrics
-    components: Optional[list[Component]] = None
+    components: Optional[list[Component]] = []
     work: Work
     client: Client
     user_comment: str = ""
     osm_version: str
-    funder: Optional[list[str]] = None
+    funder: Optional[list[str]] = []
     data_tags: list[str] = []
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime.datetime = Field(
+        default_factory=lambda: datetime.datetime.now(datetime.UTC)
+    )
