@@ -80,6 +80,9 @@ class SelectPicker(ReactiveHTML, Widget):
                     background-color: var(--accent-fill-active);
                 }
 
+                input[type="checkbox"]:checked::before {
+                    content:"" !important;
+                }
                 input[type="checkbox"]:checked::after {
                     content:"✓";
 
@@ -183,13 +186,13 @@ class SelectPicker(ReactiveHTML, Widget):
 
 
         div.sp_options_list_container {
-            background-color: lightgray;
+            background-color: var(--container-background);
             box-shadow: rgba(0, 0, 0, 0.2) 0px 5px 5px -3px,
                         rgba(0, 0, 0, 0.14) 0px 8px 10px 1px,
                         rgba(0, 0, 0, 0.12) 0px 3px 14px 2px;
             position: absolute;
             z-index: 1001;
-            width: 300px;
+            width: 270px;
             top: 30%;
             left: 15%;
         }
@@ -212,6 +215,7 @@ class SelectPicker(ReactiveHTML, Widget):
             fill: var(--bs-body-color);
             margin: 8px 20px;
             margin-right: 2px;
+            width:18px;
         }
 
         .sp_select_all {
@@ -221,6 +225,7 @@ class SelectPicker(ReactiveHTML, Widget):
 
         .sp_filter_text_input_container {
             margin-left:10px;
+            width:65%;
         }
 
         .sp_filter_text_input_container .bk-input-group {
@@ -238,21 +243,27 @@ class SelectPicker(ReactiveHTML, Widget):
         }
 
         .sp_filter_text_input_container input, .sp_filter_text_input_container input:focus-visible {
-            padding-left: 10px;
+            margin-left: 10px;
             background-color:rgba(0,0,0,0);
             border: none;
             height:100%;
             outline:none;
+            width: 90%;
         }
 
         .sp_options_list_container label {
             display:flex;
             margin-top:3px;
+            height: 25px;
         }
 
         .sp_options_list_container label span {
             display:block;
             height:100%;
+            margin-left: 6px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
         }
 
         .sp_filter_clear_btn {
@@ -264,10 +275,14 @@ class SelectPicker(ReactiveHTML, Widget):
             border: lightgray solid 2px;
             fill: lightgray;
         }
-        .sp_filter_clear_btn .bk-btn :hover{
-            border: black solid 2px;
-            fill: black;
+        .sp_filter_clear_btn .bk-btn:hover{
+            border: gray solid 2px;
         }
+        .sp_filter_clear_btn .bk-btn:active{
+            background-color: gray;
+        }
+
+
         /*
         .sp_options_list_container input[type="checkbox"].intermediary::after {
             content: "-";
@@ -353,6 +368,7 @@ class SelectPicker(ReactiveHTML, Widget):
                 }
             });
             data.value = new_value;
+
 
             setTimeout(function() {
                 self.update_select_all_checkbox()
