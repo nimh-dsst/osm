@@ -268,9 +268,16 @@ class MainDashboard(param.Parameterized):
 
         return result
 
-    @pn.depends("splitting_var", "filter_pubdate", "metrics", watch=True)
+    @pn.depends(
+        "splitting_var",
+        "filter_pubdate",
+        "metrics",
+        "filter_affiliation_country",
+        "filter_journal",
+        watch=True,
+    )
     def updated_echart_plot(self):
-        print("updateECHART_PLOT")
+        print("ECHART_PLOT")
 
         if self.filter_pubdate is None:
             # The filters are not yet initialized
