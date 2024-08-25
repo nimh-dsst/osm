@@ -432,28 +432,35 @@ class MainDashboard(param.Parameterized):
         self.end_pubdate_input.param.watch(update_pubdate_slider, "value")
 
         self.last_year_button = pn.widgets.Button(
-            name="Last year", width=80, button_type="light", button_style="solid"
+            name="Last year", width=80, css_classes=["last-year-button", "year-button"]
         )
         self.past_5years_button = pn.widgets.Button(
-            name="Past 5 years", width=80, button_type="light", button_style="solid"
+            name="Past 5 years",
+            width=80,
+            css_classes=["past-5years-button", "year-button"],
         )
         self.past_10years_button = pn.widgets.Button(
-            name="Past 10 years", width=80, button_type="light", button_style="solid"
+            name="Past 10 years",
+            width=80,
+            css_classes=["past-10years-button", "year-button"],
         )
 
         def did_click_shortcut_button(event):
             print(event)
             if event.obj.name == "Last year":
-                self.pubdate_slider.value = (datetime.now().year, datetime.now().year)
+                self.start_pubdate_input.value, self.end_pubdate_input.value = (
+                    str(datetime.now().year),
+                    str(datetime.now().year),
+                )
             elif event.obj.name == "Past 5 years":
-                self.pubdate_slider.value = (
-                    datetime.now().year - 5,
-                    datetime.now().year,
+                self.start_pubdate_input.value, self.end_pubdate_input.value = (
+                    str(datetime.now().year - 5),
+                    str(datetime.now().year),
                 )
             elif event.obj.name == "Past 10 years":
-                self.pubdate_slider.value = (
-                    datetime.now().year - 10,
-                    datetime.now().year,
+                self.start_pubdate_input.value, self.end_pubdate_input.value = (
+                    str(datetime.now().year - 10),
+                    str(datetime.now().year),
                 )
 
         self.last_year_button.on_click(did_click_shortcut_button)
@@ -480,8 +487,8 @@ class MainDashboard(param.Parameterized):
 
         items = [
             pn.pane.Markdown("## Filters"),
-            pn.pane.Markdown("### Applied Filters"),
-            pn.pane.Markdown("(todo)"),
+            # pn.pane.Markdown("### Applied Filters"),
+            # pn.pane.Markdown("(todo)"),
             pn.layout.Divider(),
             pn.pane.Markdown(
                 "### Publication Details", css_classes=["filters-section-header"]
@@ -493,6 +500,7 @@ class MainDashboard(param.Parameterized):
                     self.last_year_button,
                     self.past_5years_button,
                     self.past_10years_button,
+                    css_classes=["years-buttons"],
                 ),
             ),
             pn.layout.Divider(),
