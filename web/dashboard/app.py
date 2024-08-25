@@ -3,11 +3,11 @@ from pathlib import Path
 
 import panel as pn
 import param
+import pyarrow as pa
 import pyarrow.dataset as ds
 import ui
 from main_dashboard import MainDashboard
 from pyarrow import compute as pc
-from pyarrow import pa
 
 from osm.schemas import schema_helpers as osh
 
