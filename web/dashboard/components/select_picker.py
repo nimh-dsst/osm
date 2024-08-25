@@ -372,7 +372,7 @@ class SelectPicker(ReactiveHTML, Widget):
 
             setTimeout(function() {
                 self.update_select_all_checkbox()
-            }, 100);
+            }, 250);
 
         """,
         "update_select_all_checkbox": """

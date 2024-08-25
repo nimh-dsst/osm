@@ -49,6 +49,9 @@ css_modifiers = {
     "filters": [
         pn.widgets.TextInput,
         pn.pane.Markdown,
+        pn.widgets.IntRangeSlider,
+        pn.Row,
+        pn.widgets.Button,
     ],
 }
 
