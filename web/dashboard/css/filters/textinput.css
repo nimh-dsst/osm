@@ -1,6 +1,6 @@
 
 :host(.filters-text-input) {
-    /* background-color: red; */
+    --border-color: rgba(0,0,0, 0.23);
 }
 
 :host(.filters-text-input.pubdate-input) {
@@ -26,7 +26,10 @@
     
 }
 
-
 .bk-input-group input {
-    border-color: var(--secondary-bg-color) !important;
+    border-color: var(--border-color) !important;
 } 
+
+.bk-input-container .bk-input {
+    height: 40px;
+}
