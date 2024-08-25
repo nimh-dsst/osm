@@ -29,6 +29,7 @@ osm -f path/to/pdf-or-xml2 -u uuid2 --user-managed-compose
 # Contributing
 
 If you wish to contribute to this project you can set up a development environment with the following:
+On apple silicon: set DOCKER_DEFAULT_PLATFORM=linux/amd64 (`export DOCKER_DEFAULT_PLATFORM=linux/amd64`)
 
 ```
 pip install -e .

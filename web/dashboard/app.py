@@ -120,9 +120,10 @@ def on_load():
         "affiliation_country",
         pa.array(split_col, type=pa.list_(pa.string())),
     )
-    tb.add_column(0, pa.array(["RTransparent"] * len(tb), pa.string()), "metrics")
+    # tb.add_column(0, pa.array(["RTransparent"] * len(tb), pa.string()), "metrics")
+    df = tb.to_pandas().assign(metrics="RTransparent")
 
-    pn.state.cache["data"] = tb.to_pandas()
+    pn.state.cache["data"] = df
 
 
 if __name__ == "__main__":
