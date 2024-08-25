@@ -1,76 +1,42 @@
 import os
 from pathlib import Path
 
-import pandas as pd
 import panel as pn
 import param
+import pyarrow as pa
 import pyarrow.dataset as ds
 import ui
 from main_dashboard import MainDashboard
-from odmantic import SyncEngine
-from pymongo import MongoClient
+from pyarrow import compute as pc
 
-from osm import schemas
-
-
-def flatten_dict(d):
-    """
-    Recursively flattens a nested dictionary without prepending parent keys.
-
-    :param d: Dictionary to flatten.
-    :return: Flattened dictionary.
-    """
-    items = []
-    for k, v in d.items():
-        if isinstance(v, dict):
-            # If the value is a dictionary, flatten it without the parent key
-            items.extend(flatten_dict(v).items())
-        else:
-            items.append((k, v))
-    return dict(items)
+from osm.schemas import schema_helpers as osh
 
 
 def load_data():
     local_path = os.environ.get("LOCAL_DATA_PATH")
     if local_path is not None and Path(local_path).exists():
-        # return pd.read_feather(local_path)
+        dset = ds.dataset(local_path, format="parquet")
+    else:
+        dset = ds.dataset(osh.matches_to_table(osh.get_data_from_mongo()))
 
-        return ds.dataset(local_path, format="parquet").to_table().to_pandas()
-    client = MongoClient(os.environ["MONGODB_URI"])
-    engine = SyncEngine(client=client, database="osm")
-    matches = (
-        engine.get_collection(schemas.Invocation)
-        .aggregate(
-            [
-                {
-                    "$match": {
-                        "osm_version": {"$eq": "0.0.1"},
-                        # "work.pmid": {"$regex":r"^2"},
-                        # "metrics.year": {"$gt": 2000},
-                        # "metrics.is_data_pred": {"$eq": True},
-                    },
-                },
-                {
-                    "$project": {
-                        # "osm_version": True,
-                        "funder": True,
-                        "data_tags": True,
-                        "work.pmid": True,
-                        "metrics.year": True,
-                        "metrics.is_code_pred": True,
-                        "metrics.is_data_pred": True,
-                        "metrics.affiliation_country": True,
-                        "metrics.journal": True,
-                        "created_at": True,
-                    },
-                },
-            ]
-        )
-        .__iter__()
+    tb = dset.to_table()
+    split_col = pc.split_pattern(
+        pc.if_else(
+            pc.is_null(tb["affiliation_country"]),
+            pa.scalar(""),
+            tb["affiliation_country"],
+        ),
+        pattern=";",
     )
-    df = pd.DataFrame(flatten_dict(match) for match in matches)
-    df.to_feather(local_path)
-    return df
+    tb = tb.set_column(
+        tb.column_names.index("affiliation_country"),
+        "affiliation_country",
+        pa.array(split_col, type=pa.list_(pa.string())),
+    )
+    raw_data = tb.to_pandas()
+    raw_data["metrics"] = "RTransparent"
+    raw_data = raw_data[raw_data.year >= 2000]
+    return raw_data
 
 
 class OSMApp(param.Parameterized):
@@ -100,8 +66,8 @@ class OSMApp(param.Parameterized):
                      """
 
         template = pn.template.FastListTemplate(
-            site="NIH",
-            title="OpenSciMetrics",
+            site="OpenSciMetrics",
+            title="Measuring Open Science",
             favicon="https://www.nih.gov/favicon.ico",
             sidebar=[],
             accent=ui.MAIN_COLOR,
@@ -162,18 +128,6 @@ def on_load():
     pn.config.browser_info = True
     pn.config.notifications = True
     raw_data = load_data()
-
-    # Harcoded for now, will be added to the raw data later
-    raw_data["metrics"] = "RTransparent"
-
-    # Cleanup - might be handlded upstream in the future
-    raw_data.affiliation_country = raw_data.affiliation_country.apply(
-        lambda cntry: (
-            tuple(set(map(str.strip, cntry.split(";")))) if cntry is not None else cntry
-        )
-    )
-
-    raw_data = raw_data[raw_data.year >= 2000]
 
     pn.state.cache["data"] = raw_data
 
