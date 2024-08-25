@@ -1,0 +1,29 @@
+:host(.bk-panel-models-widgets-Button.year-button) .bk-btn-group button {
+    
+    background-color: transparent;
+
+    /* button/small */
+    font-family: 'Roboto';
+    font-style: normal;
+    font-weight: 500;
+    font-size: 13px;
+    line-height: 22px;
+    /* identical to box height, or 169% */
+    letter-spacing: 0.46px;
+    text-transform: uppercase;
+
+    color: #2196F3;
+    padding:0px;
+}
+
+:host(.bk-panel-models-widgets-Button.year-button) .bk-btn-group {
+    width:fit-content;
+}
+
+:host(.bk-panel-models-widgets-Button.year-button){
+    margin-left:0px;
+    margin-right:0px;    
+    width:fit-content;
+    min-width: unset;
+    max-width: unset;
+}

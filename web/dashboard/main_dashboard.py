@@ -1,31 +1,51 @@
+from datetime import datetime
+from functools import lru_cache
+
 import pandas as pd
 import panel as pn
 import param
+from components.select_picker import SelectPicker
+from ui import divider
 
 pn.extension("echarts")
 
-
 pd.options.display.max_columns = None
-
-# filters = {
-#     "journal" : "category",
-#     "metrics" : "select",
-# }
 
 
 groups = {"year": "int"}
 
-
-datasets_metrics = {
-    "RTransparent": ["is_data_pred", "is_code_pred", "score", "eigenfactor_score"]
+extraction_tools_params = {
+    "RTransparent": {
+        "metrics": [
+            "is_open_data",
+            "is_open_code",
+        ],
+        "splitting_vars": [
+            "None",
+            "journal",
+            "affiliation_country",
+            "fund_pmc_institute",
+        ],
+    }
 }
 
 dims_aggregations = {
-    "is_data_pred": ["percent", "count_true", "count"],
-    "is_code_pred": ["percent", "count_true"],
-    "score": ["mean"],
-    "eigenfactor_score": ["mean"],
+    "is_open_data": ["percent", "count_true"],
+    "is_open_code": ["percent", "count_true"],
+    # "score": ["mean"],
+    # "eigenfactor_score": ["mean"],
 }
+
+metrics_titles = {
+    "percent_is_open_data": "Data Sharing (%)",
+    "percent_is_open_code": "Code Sharing (%)",
+    "count_true_is_open_data": "Data Sharing",
+    "count_true_is_open_code": "Code Sharing",
+    "mean_score": "Mean Score",
+    "mean_eigenfactor_score": "Mean Eigenfactor Score",
+}
+
+metrics_by_title = {v: k for k, v in metrics_titles.items()}
 
 
 aggregation_formulas = {
@@ -42,9 +62,9 @@ class MainDashboard(param.Parameterized):
     """
 
     # High-level parameters.
-    dataset = param.Selector(default="", objects=[], label="Dataset")
+    extraction_tool = param.Selector(default="", objects=[], label="Extraction tool")
 
-    metrics = param.ListSelector(default=[], objects=[], label="Metrics")
+    metrics = param.Selector(default=[], objects=[], label="Metrics")
 
     splitting_var = param.Selector(
         default="year",
@@ -55,16 +75,16 @@ class MainDashboard(param.Parameterized):
     # Filters
     filter_pubdate = param.Range(step=1, label="Publication date")
 
-    filter_journal = param.Selector(
-        default="All journals (including empty)",
-        objects=[
-            "All journals (including empty)",
-            "All journals (excluding empty values)",
-            "Only selected journals",
-        ],
-        label="Journal",
+    filter_journal = param.ListSelector(default=[], objects=[], label="Journal")
+
+    filter_affiliation_country = param.ListSelector(
+        default=[], objects=[], label="Country"
     )
-    filter_selected_journals = param.ListSelector(default=[], objects=[], label="")
+
+    # UI elements
+    echarts_pane = pn.pane.ECharts(
+        {}, height=640, width=960, renderer="svg", options={"replaceMerge": ["series"]}
+    )
 
     def __init__(self, datasets, **params):
         super().__init__(**params)
@@ -73,38 +93,146 @@ class MainDashboard(param.Parameterized):
 
         # By default, take the first dataset.
         # Currently, there's only RTransparent
-        self.param.dataset.objects = list(self.datasets.keys())
-        self.dataset = self.param.dataset.objects[0]
+        self.param.extraction_tool.objects = list(self.datasets.keys())
+        self.extraction_tool = self.param.extraction_tool.objects[0]
 
-    @pn.depends("dataset", watch=True)
-    def did_change_dataset(self):
-        self.metrics = datasets_metrics[self.dataset]
-        self.raw_data = self.datasets[self.dataset]
+        self.journal_select_picker = SelectPicker.from_param(
+            self.param.filter_journal,
+            update_title_callback=lambda select_picker,
+            values,
+            options: self.new_picker_title("journals", select_picker, values, options),
+        )
 
-        # Hardcoded for RTransparent for the moment, update to more generic later
+        self.affiliation_country_select_picker = SelectPicker.from_param(
+            self.param.filter_affiliation_country,
+            update_title_callback=lambda select_picker,
+            values,
+            options: self.new_picker_title(
+                "affiliation countries", select_picker, values, options
+            ),
+        )
 
+        self.build_pubdate_filter()
+
+    @pn.depends("extraction_tool", watch=True)
+    def did_change_extraction_tool(self):
+        print("DID_CHANGE_EXTRACTION_TOOL")
+
+        # Update the raw data
+        self.raw_data = self.datasets[self.extraction_tool]
+
+        # Updated the metrics param
+        new_extraction_tools_metrics = extraction_tools_params[self.extraction_tool][
+            "metrics"
+        ]
+
+        new_metrics = []
+        for m in new_extraction_tools_metrics:
+            for agg in dims_aggregations[m]:
+                new_metrics.append(metrics_titles[f"{agg}_{m}"])
+
+        self.param.metrics.objects = new_metrics
+        self.metrics = self.param.metrics.objects[0]
+
+        # Update the splitting_var param
+        new_extraction_tools_splitting_vars = extraction_tools_params[
+            self.extraction_tool
+        ]["splitting_vars"]
+        self.param.splitting_var.objects = new_extraction_tools_splitting_vars
+
+        # Update the filters
+        ## filter_pubdate
         self.param.filter_pubdate.bounds = (
             self.raw_data.year.min(),
-            self.raw_data.year.max(),
+            # self.raw_data.year.max(),
+            # Use current year instead, so the "Past X years" buttons work
+            datetime.now().year,
         )
         self.param.filter_pubdate.default = (
             self.raw_data.year.min(),
             self.raw_data.year.max(),
         )
+        self.filter_pubdate = (self.raw_data.year.min(), self.raw_data.year.max())
 
-        self.param.filter_selected_journals.objects = self.raw_data.journal.unique()
-        # As default, takes the journals with the biggest number of occurences
-        self.filter_selected_journals = list(
-            self.raw_data.journal.value_counts().iloc[:10].index
+        ## filter_journal
+        self.param.filter_journal.objects = self.raw_data.journal.unique()
+
+        ## affiliation country
+        ## Keeping "None" as a string on purpose, to represent it in the SelectPicker
+        countries_with_count = self.get_countries_with_count()
+
+        def country_sorter(c):
+            return countries_with_count[c]
+
+        self.param.filter_affiliation_country.objects = sorted(
+            countries_with_count.keys(), key=country_sorter, reverse=True
         )
 
+        # This triggers function "did_change_splitting_var"
+        # which updates the filter_journal and filter_affiliation_country
+        self.splitting_var = self.param.splitting_var.objects[0]
+
+    @lru_cache
+    def get_countries_with_count(self):
+        countries = {}
+        for row in self.raw_data.affiliation_country.values:
+            if row is None:
+                countries["None"] = countries.get("None", 0) + 1
+            else:
+                for c in row:
+                    countries[c] = countries.get(c, 0) + 1
+        return countries
+
+    @pn.depends("splitting_var", watch=True)
+    def did_change_splitting_var(self):
+        print("DID_CHANGE_SPLITTING_VAR", self.splitting_var)
+
+        if self.splitting_var == "journal":
+            # We want to show all journals, but pre-select only the top 10
+            self.filter_journal = list(
+                self.raw_data.journal.value_counts().iloc[:10].index
+            )
+            notif_msg = "Splitting by journal. Top 10 journals selected by default."
+        else:
+            self.filter_journal = self.param.filter_journal.objects
+
+        if self.splitting_var == "affiliation_country":
+            # We want to show all countries, but pre-select only the top 10
+            countries_with_count = self.get_countries_with_count()
+            countries_with_count = {
+                country: count
+                for country, count in countries_with_count.items()
+                if count > 10
+            }
+
+            top_10_min = sorted(
+                [count for _, count in countries_with_count.items()], reverse=True
+            )[10]
+            selected_countries = [
+                country
+                for country, count in countries_with_count.items()
+                if count >= top_10_min
+            ]
+            self.filter_affiliation_country = selected_countries
+
+            notif_msg = "Splitting by affiliation country. Top 10 countries selected by default."
+        else:
+            self.filter_affiliation_country = (
+                self.param.filter_affiliation_country.objects
+            )
+
+        if self.splitting_var == "None":
+            notif_msg = "No more splitting. Filters reset to default"
+
+        pn.state.notifications.info(notif_msg, duration=5000)
+
     def filtered_grouped_data(self):
+        print("FILTERED_GROUPED_DATA")
+
         filters = []
 
-        if self.filter_journal == "All journals (excluding empty values)":
-            filters.append(("journal.notnull()"))
-        elif self.filter_journal == "Only selected journals":
-            filters.append(f"journal in {self.filter_selected_journals}")
+        if len(self.filter_journal) != self.param.filter_journal.objects:
+            filters.append(f"journal in {self.filter_journal}")
 
         if self.filter_pubdate is not None:
             filters.append(f"year >= {self.filter_pubdate[0]}")
@@ -114,35 +242,119 @@ class MainDashboard(param.Parameterized):
             self.raw_data.query(" and ".join(filters)) if filters else self.raw_data
         )
 
+        if len(self.filter_affiliation_country) != len(
+            self.param.filter_affiliation_country.objects
+        ):
+            # the filter on countries is a bit different as the rows
+            # are list of countries
+            def country_filter(cell):
+                if cell is None:
+                    return "None" in self.filter_affiliation_country
+                return any(c in self.filter_affiliation_country for c in cell)
+
+            filtered_df = filtered_df[
+                filtered_df.affiliation_country.apply(country_filter)
+            ]
+
         aggretations = {}
         for field, aggs in dims_aggregations.items():
             for agg in aggs:
                 aggretations[f"{agg}_{field}"] = (field, aggregation_formulas[agg])
 
-        result = (
-            filtered_df.groupby(self.splitting_var).agg(**aggretations).reset_index()
-        )
+        groupers = ["year"]
+        if self.splitting_var != "None":
+            groupers.append(self.splitting_var)
+
+        result = filtered_df.groupby(groupers).agg(**aggretations).reset_index()
 
         return result
 
-    @pn.depends("dataset", "splitting_var", "filter_pubdate")
-    def get_echart_plot(self):
+    @pn.depends(
+        # "splitting_var",
+        "filter_pubdate",
+        "metrics",
+        "filter_affiliation_country",
+        "filter_journal",
+        watch=True,
+    )
+    def updated_echart_plot(self):
+        print("ECHART_PLOT")
+
+        if self.filter_pubdate is None:
+            # The filters are not yet initialized
+            # Let's return an empty plot
+            return self.echarts_pane
+
+        self.echarts_pane.loading = True
+
         df = self.filtered_grouped_data()
 
-        xAxis = df[self.splitting_var].tolist()
-        series = [
-            {
-                "id": serie,
-                "name": serie,
-                "type": "line",
-                "data": df[serie].tolist(),
-            }
-            for serie in ["percent_is_data_pred", "percent_is_code_pred"]
-        ]
+        raw_metric = metrics_by_title[self.metrics]
+
+        xAxis = df["year"].unique().tolist()
+
+        if self.splitting_var == "None":
+            title = f"{self.metrics} ({int(self.filter_pubdate[0])}-{int(self.filter_pubdate[1])})"
+            series = [
+                {
+                    "id": self.metrics,
+                    "name": self.metrics,
+                    "type": "line",
+                    "data": df[raw_metric].tolist(),
+                }
+            ]
+            legend_data = [
+                {"name": self.metrics, "icon": "path://M 0 0 H 20 V 20 H 0 Z"},
+            ]
+        else:
+            title = f"{self.metrics} by {self.splitting_var} ({int(self.filter_pubdate[0])}-{int(self.filter_pubdate[1])})"
+
+            series = []
+            legend_data = []
+
+            if self.splitting_var == "affiliation_country":
+                splitting_var_filter = self.filter_affiliation_country
+                splitting_var_column = "affiliation_country"
+                splitting_var_query = lambda cell, selected_item: selected_item in cell
+
+            elif self.splitting_var == "fund_pmc_institute":
+                splitting_var_filter = self.filter_fund_pmc_institute
+                splitting_var_column = "fund_pmc_institute"
+                splitting_var_query = lambda cell, selected_item: cell == selected_item
+            else:
+                print("Defaulting to splitting var 'journal' ")
+                splitting_var_filter = self.filter_journal
+                splitting_var_column = "journal"
+                splitting_var_query = lambda cell, selected_item: cell == selected_item
+
+            for selected_item in sorted(splitting_var_filter):
+                # sub_df = df.query(f"{splitting_var_column} == '{selected_item}'")
+                sub_df = (
+                    df[
+                        df[splitting_var_column].apply(
+                            lambda x: splitting_var_query(x, selected_item)
+                        )
+                    ]
+                    .groupby("year")
+                    .agg({raw_metric: "mean"})  # todo fix this
+                    .reset_index()
+                )
+
+                series.append(
+                    {
+                        "id": selected_item,
+                        "name": selected_item,
+                        "type": "line",
+                        "data": sub_df[raw_metric].tolist(),
+                    }
+                )
+                legend_data.append(
+                    {"name": selected_item, "icon": "path://M 0 0 H 20 V 20 H 0 Z"}
+                )
 
         echarts_config = {
             "title": {
-                "text": "Percentage of Publications Following Open Science Practices Over Time",
+                "text": title,
             },
             "tooltip": {
                 "show": True,
@@ -152,8 +364,7 @@ class MainDashboard(param.Parameterized):
                 #                 {{a1}} : {{c1}} """,
             },
             "legend": {
-                #'data':['Sales']
-                "data": ["is_data_pred", "is_code_pred"],
+                "data": legend_data,
                 "orient": "vertical",
                 "right": 10,
                 "top": 20,
@@ -162,7 +373,7 @@ class MainDashboard(param.Parameterized):
             },
             "xAxis": {
                 "data": xAxis,
-                "name": self.splitting_var,
+                "name": "year",
                 "nameLocation": "center",
                 "nameGap": 30,
             },
@@ -173,85 +384,176 @@ class MainDashboard(param.Parameterized):
             },
             "series": series,
         }
-        echarts_pane = pn.pane.ECharts(
-            echarts_config, height=640, width=840, renderer="svg"
-        )
-        return echarts_pane
+
+        self.echarts_pane.object = echarts_config
+        self.echarts_pane.loading = False
 
     # Below are all the functions returning the different parts of the dashboard :
     # Sidebar, Top Bar and the plot area (in function get_dashboard)
 
-    @pn.depends("filter_pubdate.bounds")
-    def get_pubdate_filter(self):
-        start_pubdate_input = pn.widgets.TextInput(
-            value=str(int(self.param.filter_pubdate.bounds[0])), width=80
-        )
-        end_pubdate_input = pn.widgets.TextInput(
-            value=str(int(self.param.filter_pubdate.bounds[1])), width=80
+    def build_pubdate_filter(self):
+        print("BUILD_PUBDATE_FILTER")
+
+        # The text input only reflect and update the values of the slider bounds
+        # self.pubdate_slider = pn.widgets.RangeSlider.from_param(self.param.filter_pubdate)
+        self.pubdate_slider = pn.widgets.IntRangeSlider(
+            start=int(self.param.filter_pubdate.bounds[0]),
+            end=int(self.param.filter_pubdate.bounds[1]),
+            step=1,
         )
 
-        pubdate_slider = pn.widgets.RangeSlider.from_param(self.param.filter_pubdate)
+        # It's the textInputs that controls the filter_pubdate param
+        self.start_pubdate_input = pn.widgets.TextInput(
+            value=str(int(self.param.filter_pubdate.bounds[0])),
+            name="From",
+            css_classes=["filters-text-input", "pubdate-input"],
+        )
+        self.end_pubdate_input = pn.widgets.TextInput(
+            value=str(int(self.param.filter_pubdate.bounds[1])),
+            name="To",
+            css_classes=["filters-text-input", "pubdate-input"],
+        )
 
+        # When the slider's value change, update the TextInputs
         def update_pubdate_text_inputs(event):
-            start_pubdate_input.value = str(pubdate_slider.value[0])
-            end_pubdate_input.value = str(pubdate_slider.value[1])
+            self.start_pubdate_input.value = str(self.pubdate_slider.value[0])
+            self.end_pubdate_input.value = str(self.pubdate_slider.value[1])
 
-        pubdate_slider.param.watch(update_pubdate_text_inputs, "value")
+        self.pubdate_slider.param.watch(update_pubdate_text_inputs, "value_throttled")
 
+        # When the TextInputs' value change, update the slider,
+        # and update filter_pubdate
         def update_pubdate_slider(event):
-            pubdate_slider.value = (
-                int(start_pubdate_input.value or self.param.filter_pubdate.bounds[0]),
-                int(end_pubdate_input.value or self.param.filter_pubdate.bounds[1]),
+            self.pubdate_slider.value = (
+                int(self.start_pubdate_input.value),
+                int(self.end_pubdate_input.value),
             )
+            self.filter_pubdate = self.pubdate_slider.value
 
-        start_pubdate_input.param.watch(update_pubdate_slider, "value")
-        end_pubdate_input.param.watch(update_pubdate_slider, "value")
+        self.start_pubdate_input.param.watch(update_pubdate_slider, "value")
+        self.end_pubdate_input.param.watch(update_pubdate_slider, "value")
 
-        return pn.Column(pn.Row(start_pubdate_input, end_pubdate_input), pubdate_slider)
+        self.last_year_button = pn.widgets.Button(
+            name="Last year", width=80, css_classes=["last-year-button", "year-button"]
+        )
+        self.past_5years_button = pn.widgets.Button(
+            name="Past 5 years",
+            width=80,
+            css_classes=["past-5years-button", "year-button"],
+        )
+        self.past_10years_button = pn.widgets.Button(
+            name="Past 10 years",
+            width=80,
+            css_classes=["past-10years-button", "year-button"],
+        )
 
-    @pn.depends("dataset", "filter_journal")
-    def get_sidebar(self):
-        items = [
-            pn.pane.Markdown("## Filters"),
-            pn.pane.Markdown("### Applied Filters"),
-            pn.pane.Markdown("(todo)"),
-            pn.layout.Divider(),
-            pn.pane.Markdown("### Publication Details"),
-            # pn.pane.Markdown("#### Publication Date"),
-            self.get_pubdate_filter,
-            pn.layout.Divider(),
-            pn.widgets.Select.from_param(self.param.filter_journal),
-        ]
-
-        if self.filter_journal == "Only selected journals":
-            items.append(
-                pn.widgets.MultiChoice.from_param(
-                    self.param.filter_selected_journals, max_items=10
+        def did_click_shortcut_button(event):
+            print(event)
+            if event.obj.name == "Last year":
+                self.start_pubdate_input.value, self.end_pubdate_input.value = (
+                    str(datetime.now().year),
+                    str(datetime.now().year),
                 )
-            )
+            elif event.obj.name == "Past 5 years":
+                self.start_pubdate_input.value, self.end_pubdate_input.value = (
+                    str(datetime.now().year - 5),
+                    str(datetime.now().year),
+                )
+            elif event.obj.name == "Past 10 years":
+                self.start_pubdate_input.value, self.end_pubdate_input.value = (
+                    str(datetime.now().year - 10),
+                    str(datetime.now().year),
+                )
+
+        self.last_year_button.on_click(did_click_shortcut_button)
+        self.past_5years_button.on_click(did_click_shortcut_button)
+        self.past_10years_button.on_click(did_click_shortcut_button)
+
+    def new_picker_title(self, entity, picker, values, options):
+        value_count = len(picker.value)
+        options_count = len(picker.options)
+
+        if value_count == options_count:
+            title = f"All {entity} ({ value_count })"
+
+        elif value_count == 0:
+            title = f"No {entity} (0 out of { options_count })"
+
+        else:
+            title = f"{ value_count } {entity} out of { options_count }"
+
+        return title
+
+    def get_sidebar(self):
+        print("GET_SIDEBAR")
+
+        items = [
+            pn.pane.Markdown(
+                "### Publication Details", css_classes=["filters-section-header"]
+            ),
+            pn.Column(
+                pn.Row(self.start_pubdate_input, self.end_pubdate_input),
+                self.pubdate_slider,
+                pn.Row(
+                    self.last_year_button,
+                    self.past_5years_button,
+                    self.past_10years_button,
+                    css_classes=["years-buttons"],
+                ),
+            ),
+            divider(),
+            self.journal_select_picker,
+            self.affiliation_country_select_picker,
+        ]
 
         sidebar = pn.Column(*items)
 
         return sidebar
 
-    @pn.depends("dataset")
     def get_top_bar(self):
+        print("GET_TOP_BAR")
+
         return pn.Row(
-            pn.widgets.Select.from_param(self.param.dataset),
-            pn.widgets.CheckBoxGroup.from_param(self.param.metrics),
+            pn.widgets.Select.from_param(self.param.extraction_tool),
+            pn.widgets.Select.from_param(self.param.metrics),
             pn.widgets.Select.from_param(self.param.splitting_var),
         )
 
-    @pn.depends(
-        "dataset", "filter_journal", "filter_selected_journals", "splitting_var"
-    )
+    def get_intro_block(self):
+        add_intro_block = pn.pane.HTML(
+            """
+            <script type="text/javascript">
+                const intro_block = document.createElement("div");
+                intro_block.innerHTML = `
+                    <div class="intro-block">
+                        <h1>OpenSciMetrics Dashboard</h1>
+                        <p>OpenSciMetrics is a tool designed to evaluate open science practices in biomedical publications, such as data sharing, code availability, and research transparency. Our goal is to provide insights into how these practices evolve over time and across different fields, journals, and countries. Use the dashboard below to explore key metrics and trends.</p>
+                        <div class="intro-buttons">
+                            <button class="explore-data-button">Explore the data</button>
+                            <button class="learn-more-button">LEARN MORE</button>
+                            <button class="github-button">GITHUB</button>
+                        </div>
+                    </div>
+                `;
+                console.log(intro_block);
+                console.log(document.querySelector('#header-design-provider'));
+                document.querySelector('#header-design-provider').appendChild(intro_block);
+            </script>
+            """
+        )
+        print(add_intro_block)
+        return add_intro_block
+
     def get_dashboard(self):
+        print("GET_DASHBOARD")
+
         # Layout the dashboard
         dashboard = pn.Column(
-            "# Data and code transparency",
-            pn.Column(
-                self.get_top_bar, self.get_echart_plot, sizing_mode="stretch_width"
-            ),
+            self.get_top_bar(),
+            divider(),
+            self.echarts_pane,
+            # self.get_intro_block(),
+            css_classes=["dashboard-column"],
         )
 
         return dashboard

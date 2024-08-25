@@ -1,0 +1,31 @@
+
+:host(.filters-text-input.pubdate-input) {
+    width:45%;
+    max-width: 45%;
+    min-width: 45%;
+    margin-top:0px;
+
+
+}
+
+:host(.filters-text-input) .bk-input-group {
+    width:unset;
+}
+
+.bk-input-group label {
+
+    color: var(--secondary-text-color);
+    transform: translate(9px, 9px);
+    background: var(--background-color);
+    z-index: 1;
+    padding: 0 4px;
+    
+}
+
+.bk-input-group input {
+    border-color: var(--border-color) !important;
+} 
+
+.bk-input-container .bk-input {
+    height: 40px;
+}
