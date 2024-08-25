@@ -102,12 +102,13 @@ class OSMApp(param.Parameterized):
             title="OpenSciMetrics",
             favicon="https://www.nih.gov/favicon.ico",
             sidebar=[],
-            accent_base_color=ui.MAIN_COLOR,
+            accent=ui.MAIN_COLOR,
             theme_toggle=False,
-            raw_css=[ui.CSS_VARS, preload_css],
+            raw_css=[ui.CSS_VARS, ui.CSS_GLOBAL, preload_css],
             css_files=[
                 "https://rsms.me/inter/inter.css",
                 "https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap",
+                "css/global/intro.css",
             ],
         )
         # <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -122,7 +123,6 @@ class OSMApp(param.Parameterized):
     def dashboard_page(self):
         template = self.get_template()
         dashboard = MainDashboard({"RTransparent": pn.state.cache["data"]})
-        # template.main.append(dashboard.get_intro_block())
         template.main.append(dashboard.get_dashboard())
         template.sidebar.append(dashboard.get_sidebar())
 

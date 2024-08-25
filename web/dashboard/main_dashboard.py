@@ -507,30 +507,29 @@ class MainDashboard(param.Parameterized):
         )
 
     def get_intro_block(self):
-        explore_data_button = pn.widgets.Button(
-            name="EXPLORE THE DATA", width=180, button_style="solid"
+        add_intro_block = pn.pane.HTML(
+            """
+            <script type="text/javascript">
+                const intro_block = document.createElement("div");
+                intro_block.innerHTML = `
+                    <div class="intro-block">
+                        <h1>OpenSciMetrics Dashboard</h1>
+                        <p>OpenSciMetrics is a tool designed to evaluate open science practices in biomedical publications, such as data sharing, code availability, and research transparency. Our goal is to provide insights into how these practices evolve over time and across different fields, journals, and countries. Use the dashboard below to explore key metrics and trends.</p>
+                        <div class="intro-buttons">
+                            <button class="explore-data-button">Explore the data</button>
+                            <button class="learn-more-button">LEARN MORE</button>
+                            <button class="github-button">GITHUB</button>
+                        </div>
+                    </div>
+                `;
+                console.log(intro_block);
+                console.log(document.querySelector('#header-design-provider'));
+                document.querySelector('#header-design-provider').appendChild(intro_block);
+            </script>
+            """
         )
-
-        learn_more_button = pn.widgets.Button(
-            name="LEARN MORE",
-            width=180,
-            button_style="solid",
-            button_type="light",
-        )
-        github_button = pn.widgets.Button(
-            name="GITHUB",
-            width=180,
-            button_style="solid",
-            button_type="light",
-        )
-
-        return pn.Column(
-            pn.pane.Markdown("#OpenSciMetrics Dashboard"),
-            pn.pane.Markdown(
-                "OpenSciMetrics is a tool designed to evaluate open science practices in biomedical publications, such as data sharing, code availability, and research transparency. Our goal is to provide insights into how these practices evolve over time and across different fields, journals, and countries. Use the dashboard below to explore key metrics and trends."
-            ),
-            pn.Row(explore_data_button, learn_more_button, github_button),
-        )
+        print(add_intro_block)
+        return add_intro_block
 
     def get_dashboard(self):
         print("GET_DASHBOARD")
@@ -539,7 +538,10 @@ class MainDashboard(param.Parameterized):
         dashboard = pn.Column(
             "# Data and code transparency",
             pn.Column(
-                self.get_top_bar(), self.echarts_pane, sizing_mode="stretch_width"
+                self.get_top_bar(),
+                self.echarts_pane,
+                # self.get_intro_block(),
+                sizing_mode="stretch_width",
             ),
         )
 
