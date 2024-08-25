@@ -4,7 +4,7 @@ WORKDIR /app
 
 
 # Create the environment
-RUN pip install holoviews panel pymongo odmantic pandas pyarrow pydantic[email]
+RUN pip install holoviews panel pymongo odmantic pandas pyarrow pydantic[email] pyarrow
 
 RUN mkdir -p /opt/data
 ENV LOCAL_DATA_PATH=/opt/data/matches.parquet
