@@ -1,0 +1,11 @@
+:host(.years-buttons) {
+    margin-top: 20px;
+
+    display: flex;
+    justify-content: center; 
+    align-items: center;     
+    gap: 10px;               
+    width:100%;   
+}
+
+    
