@@ -12,6 +12,7 @@ keywords = [
 dynamic = ["version"]
 dependencies = [
   "pandas",
+  "pyarrow",
   "pydantic",
   "pydantic[email]",
   "odmantic",
