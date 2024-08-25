@@ -57,7 +57,7 @@ def build_and_push_docker_images():
     run_command(
         f"DOCKER_BUILDKIT=1 docker build -t nimhdsst/rtransparent:{os.getenv('ENVIRONMENT')} -f ./external_components/rtransparent/Dockerfile ."
     )
-    run_command(f"docker push {os.getenv('DASHBOARD_IMAGE_TAG')}")
+    run_command(f"docker push nimhdsst/rtransparent:{os.getenv('ENVIRONMENT')}")
 
 
 def deploy_terraform(environment):

@@ -1,8 +1,9 @@
-import types
 from typing import Optional
 
 from odmantic import EmbeddedModel
 from pydantic import field_validator
+
+from osm._utils import coerce_to_string
 
 from .custom_fields import LongStr
 
@@ -11,6 +12,11 @@ from .custom_fields import LongStr
 #  all_indicators.csv from the rtransparent publication has both but has the following extra fields:
 # code_text,com_code,com_data_availibility,com_file_formats,com_general_db,com_github_data,com_specific_db,com_suppl_code,com_supplemental_data,data_text,dataset,eigenfactor_score,field,is_art,is_code_pred,is_data_pred,is_relevant_code,is_relevant_data,jif,n_cite,score,year,
 class RtransparentMetrics(EmbeddedModel):
+    model_config = {
+        "json_encoders": {
+            LongStr: lambda v: v.get_value(),
+        },
+    }
     # Mandatory fields
     is_open_code: Optional[bool]
     is_open_data: Optional[bool]
@@ -146,7 +152,7 @@ class RtransparentMetrics(EmbeddedModel):
     is_success: Optional[bool] = None
     is_art: Optional[bool] = None
     field: Optional[str] = None
-    score: Optional[int] = None
+    score: Optional[float] = None
     jif: Optional[float] = None
     eigenfactor_score: Optional[float] = None
     n_cite: Optional[float] = None
@@ -189,36 +195,5 @@ class RtransparentMetrics(EmbeddedModel):
     is_code_pred: Optional[bool] = None
 
     @field_validator("article")
-    def coerce_to_string(cls, v):
-        if isinstance(v, (int, float, bool)):
-            return str(v)
-        elif isinstance(v, types.NoneType):
-            return None
-        elif not isinstance(v, str):
-            raise ValueError(
-                "string required or a type that can be coerced to a string"
-            )
-        return v
-
-
-# Tried to define  programmatically but both ways seemed to yield a model class without type annotated fields...
-
-# 1
-#  RtransparentMetrics = type(
-#     "RtransparentMetrics",
-#     (Model,),
-#     {n: Optional[t] for n, t in rtransparent_metric_types.items()},
-# )
-
-# 2
-# Use Field to explicitly define the fields in the model
-# namespace = {
-#     n: (Optional[t], Field(default=None))
-#     for n, t in rtransparent_metric_types.items()
-# }
-# Dynamically create the Pydantic/ODMantic model
-# RtransparentMetrics: Type[Model] = type(
-#     "RtransparentMetrics",
-#     (Model,),
-#     namespace,
-# )
+    def fix_string(cls, v):
+        return coerce_to_string(v)

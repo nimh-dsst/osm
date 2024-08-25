@@ -6,14 +6,37 @@ import os
 import shlex
 import subprocess
 import time
+import types
 from pathlib import Path
 
+import pandas as pd
 import requests
 
 from osm._version import __version__
 
 DEFAULT_OUTPUT_DIR = "./osm_output"
 logger = logging.getLogger(__name__)
+
+ERROR_CSV_PATH = Path("error_log.csv")
+ERROR_LOG_PATH = Path("error.log")
+
+
+def write_error_to_file(row: pd.Series, error: Exception):
+    with ERROR_CSV_PATH.open("a") as csv_file, ERROR_LOG_PATH.open("a") as log_file:
+        # Write the problematic row data to the CSV, add header if not yet populated.
+        row.to_csv(
+            csv_file,
+            header=not ERROR_CSV_PATH.exists() or ERROR_CSV_PATH.stat().st_size == 0,
+            index=False,
+        )
+
+        # Drop string values as they tend to be too long
+        display_row = (
+            row.apply(lambda x: x if not isinstance(x, str) else None)
+            .dropna()
+            .to_dict()
+        )
+        log_file.write(f"Error processing data:\n {display_row}\nError: {error}\n\n")
 
 
 def _get_metrics_dir(output_dir: Path = DEFAULT_OUTPUT_DIR) -> Path:
@@ -81,7 +104,7 @@ def wait_for_containers():
 
 
 def compose_up():
-    cmd = shlex.split("docker-compose up -d --build")
+    cmd = shlex.split("docker compose up -d --build")
     subprocess.run(
         cmd,
         check=True,
@@ -89,7 +112,7 @@ def compose_up():
 
 
 def compose_down():
-    cmd = shlex.split("docker-compose down")
+    cmd = shlex.split("docker compose down")
     subprocess.run(
         cmd,
         check=True,
@@ -119,3 +142,32 @@ def _setup(args):
     print("Waiting for containers to be ready...")
     wait_for_containers()
     return xml_path, metrics_path
+
+
+def coerce_to_string(v):
+    if isinstance(v, (int, float, bool)):
+        return str(v)
+    elif isinstance(v, types.NoneType):
+        return None
+    elif pd.isna(v):
+        return None
+    elif not isinstance(v, str):
+        raise ValueError("string required or a type that can be coerced to a string")
+    return v
+
+
+def flatten_dict(d):
+    """
+    Recursively flattens a nested dictionary without prepending parent keys.
+
+    :param d: Dictionary to flatten.
+    :return: Flattened dictionary.
+    """
+    items = []
+    for k, v in d.items():
+        if isinstance(v, dict):
+            # If the value is a dictionary, flatten it without the parent key
+            items.extend(flatten_dict(v).items())
+        else:
+            items.append((k, v))
+    return dict(items)
