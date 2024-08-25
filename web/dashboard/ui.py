@@ -13,7 +13,7 @@ def css(selector: Union[str, Iterable[str]], declarations: dict[str, str]) -> st
     )
 
 
-MAIN_COLOR = "#1e81f0"
+MAIN_COLOR = "#1e81f0"  # rgb 30, 129, 240
 
 CSS_VARS = css(
     ":root",
@@ -22,6 +22,8 @@ CSS_VARS = css(
         "--accent-color": f"{MAIN_COLOR} !important",
     },
 )
+
+CSS_GLOBAL = css("#header.shadow", {"box-shadow": "unset"})
 
 """
 the structure of css_modifiers is as follows:
