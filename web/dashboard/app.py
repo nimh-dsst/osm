@@ -4,6 +4,7 @@ from pathlib import Path
 import pandas as pd
 import panel as pn
 import param
+import pyarrow.dataset as ds
 import ui
 from main_dashboard import MainDashboard
 from odmantic import SyncEngine
@@ -32,7 +33,9 @@ def flatten_dict(d):
 def load_data():
     local_path = os.environ.get("LOCAL_DATA_PATH")
     if local_path is not None and Path(local_path).exists():
-        return pd.read_feather(local_path)
+        # return pd.read_feather(local_path)
+
+        return ds.dataset(local_path, format="parquet").to_table().to_pandas()
     client = MongoClient(os.environ["MONGODB_URI"])
     engine = SyncEngine(client=client, database="osm")
     matches = (
@@ -107,6 +110,8 @@ class OSMApp(param.Parameterized):
             css_files=[
                 "https://rsms.me/inter/inter.css",
                 "https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap",
+                "css/global/vars.css",
+                "css/global/flat.css",
                 "css/global/intro.css",
             ],
         )
@@ -157,19 +162,18 @@ def on_load():
     pn.config.browser_info = True
     pn.config.notifications = True
     raw_data = load_data()
-    raw_data = raw_data[raw_data != 999999]
 
     # Harcoded for now, will be added to the raw data later
     raw_data["metrics"] = "RTransparent"
 
     # Cleanup - might be handlded upstream in the future
-    # raw_countries = raw_data.affiliation_country.unique()
-
     raw_data.affiliation_country = raw_data.affiliation_country.apply(
         lambda cntry: (
             tuple(set(map(str.strip, cntry.split(";")))) if cntry is not None else cntry
         )
     )
+
+    raw_data = raw_data[raw_data.year >= 2000]
 
     pn.state.cache["data"] = raw_data
 

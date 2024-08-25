@@ -45,6 +45,7 @@ css_modifiers = {
         pn.widgets.Select,
         pn.widgets.Button,
         pn.layout.Divider,
+        pn.Column,
     ],
     "filters": [
         pn.widgets.TextInput,

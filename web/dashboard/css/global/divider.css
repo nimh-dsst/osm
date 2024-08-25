@@ -1,5 +1,5 @@
 :host(.default_divider) {
-  padding: 0em 1em;
+  /* padding: 0em 1em; */
 }
 
 :host(.default_divider) hr {

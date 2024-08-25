@@ -1,3 +1,15 @@
 .bk-input {
-  border-color: var(--neutral-color) !important;
+  border-color: var(--border-color) !important;
+  height: 40px !important;
+  /* background-color: coral; */
+}
+
+.bk-input-group label {
+
+  color: var(--secondary-text-color);
+  transform: translate(9px, 9px);
+  background: var(--background-color);
+  z-index: 1;
+  padding: 0 4px;
+
 }

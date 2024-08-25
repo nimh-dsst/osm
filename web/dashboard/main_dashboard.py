@@ -5,6 +5,7 @@ import pandas as pd
 import panel as pn
 import param
 from components.select_picker import SelectPicker
+from ui import divider
 
 pn.extension("echarts")
 
@@ -16,8 +17,8 @@ groups = {"year": "int"}
 extraction_tools_params = {
     "RTransparent": {
         "metrics": [
-            "is_data_pred",
-            "is_code_pred",
+            "is_open_data",
+            "is_open_code",
         ],
         "splitting_vars": [
             "None",
@@ -29,17 +30,17 @@ extraction_tools_params = {
 }
 
 dims_aggregations = {
-    "is_data_pred": ["percent", "count_true"],
-    "is_code_pred": ["percent", "count_true"],
+    "is_open_data": ["percent", "count_true"],
+    "is_open_code": ["percent", "count_true"],
     # "score": ["mean"],
     # "eigenfactor_score": ["mean"],
 }
 
 metrics_titles = {
-    "percent_is_data_pred": "Data Sharing (%)",
-    "percent_is_code_pred": "Code Sharing (%)",
-    "count_true_is_data_pred": "Data Sharing",
-    "count_true_is_code_pred": "Code Sharing",
+    "percent_is_open_data": "Data Sharing (%)",
+    "percent_is_open_code": "Code Sharing (%)",
+    "count_true_is_open_data": "Data Sharing",
+    "count_true_is_open_code": "Code Sharing",
     "mean_score": "Mean Score",
     "mean_eigenfactor_score": "Mean Eigenfactor Score",
 }
@@ -82,7 +83,7 @@ class MainDashboard(param.Parameterized):
 
     # UI elements
     echarts_pane = pn.pane.ECharts(
-        {}, height=640, width=840, renderer="svg", options={"replaceMerge": ["series"]}
+        {}, height=640, width=960, renderer="svg", options={"replaceMerge": ["series"]}
     )
 
     def __init__(self, datasets, **params):
@@ -269,7 +270,7 @@ class MainDashboard(param.Parameterized):
         return result
 
     @pn.depends(
-        "splitting_var",
+        # "splitting_var",
         "filter_pubdate",
         "metrics",
         "filter_affiliation_country",
@@ -293,6 +294,7 @@ class MainDashboard(param.Parameterized):
         xAxis = df["year"].unique().tolist()
 
         if self.splitting_var == "None":
+            title = f"{self.metrics} ({int(self.filter_pubdate[0])}-{int(self.filter_pubdate[1])})"
             series = [
                 {
                     "id": self.metrics,
@@ -305,6 +307,8 @@ class MainDashboard(param.Parameterized):
                 {"name": self.metrics, "icon": "path://M 0 0 H 20 V 20 H 0 Z"},
             ]
         else:
+            title = f"{self.metrics} by {self.splitting_var} ({int(self.filter_pubdate[0])}-{int(self.filter_pubdate[1])})"
+
             series = []
             legend_data = []
 
@@ -347,8 +351,6 @@ class MainDashboard(param.Parameterized):
                 legend_data.append(
                     {"name": selected_item, "icon": "path://M 0 0 H 20 V 20 H 0 Z"}
                 )
-
-        title = f"{self.metrics} by {self.splitting_var} ({int(self.filter_pubdate[0])}-{int(self.filter_pubdate[1])})"
 
         echarts_config = {
             "title": {
@@ -486,10 +488,6 @@ class MainDashboard(param.Parameterized):
         print("GET_SIDEBAR")
 
         items = [
-            pn.pane.Markdown("## Filters"),
-            # pn.pane.Markdown("### Applied Filters"),
-            # pn.pane.Markdown("(todo)"),
-            pn.layout.Divider(),
             pn.pane.Markdown(
                 "### Publication Details", css_classes=["filters-section-header"]
             ),
@@ -503,7 +501,7 @@ class MainDashboard(param.Parameterized):
                     css_classes=["years-buttons"],
                 ),
             ),
-            pn.layout.Divider(),
+            divider(),
             self.journal_select_picker,
             self.affiliation_country_select_picker,
         ]
@@ -551,13 +549,11 @@ class MainDashboard(param.Parameterized):
 
         # Layout the dashboard
         dashboard = pn.Column(
-            "# Data and code transparency",
-            pn.Column(
-                self.get_top_bar(),
-                self.echarts_pane,
-                # self.get_intro_block(),
-                sizing_mode="stretch_width",
-            ),
+            self.get_top_bar(),
+            divider(),
+            self.echarts_pane,
+            # self.get_intro_block(),
+            css_classes=["dashboard-column"],
         )
 
         return dashboard

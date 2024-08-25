@@ -59,6 +59,11 @@ class SelectPicker(ReactiveHTML, Widget):
 
     _checkbox_group_css = """
                 <style>
+
+                :host {
+                    width: 100%;
+                }
+
                 input[type="checkbox"]{
                     -webkit-appearance: initial;
                     appearance: initial;
@@ -66,8 +71,6 @@ class SelectPicker(ReactiveHTML, Widget):
                     height: 20px;
                     border: 2px solid black;
                     position: relative;
-                    margin-left: 10px;
-                    margin-right: 10px;
                     background-color: var(--accent-fill-active);
 
                 }
@@ -116,7 +119,7 @@ class SelectPicker(ReactiveHTML, Widget):
 
         div.sp_header {
             background-color: var(--bs-form-control-bg);
-            border: 1px solid var(--accent-fill-rest);
+            border: 1px solid var(--border-color);
             border-radius: calc(var(--corner-radius) * 1px);
             color: var(--neutral-foreground-rest);
             font-family: var(--body-font);

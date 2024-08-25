@@ -1,8 +1,4 @@
 
-:host(.filters-text-input) {
-    --border-color: rgba(0,0,0, 0.23);
-}
-
 :host(.filters-text-input.pubdate-input) {
     width:45%;
     max-width: 45%;
