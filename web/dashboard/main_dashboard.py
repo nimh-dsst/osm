@@ -24,7 +24,7 @@ extraction_tools_params = {
             "None",
             "journal",
             "affiliation_country",
-            "fund_pmc_institute",
+            "funder",
         ],
     }
 }
@@ -67,8 +67,7 @@ class MainDashboard(param.Parameterized):
     metrics = param.Selector(default=[], objects=[], label="Metrics")
 
     splitting_var = param.Selector(
-        default="year",
-        objects=["year", "fund_pmc_institute"],
+        objects=[],
         label="Splitting Variable",
     )
 
@@ -80,6 +79,8 @@ class MainDashboard(param.Parameterized):
     filter_affiliation_country = param.ListSelector(
         default=[], objects=[], label="Country"
     )
+
+    filter_funder = param.ListSelector(default=[], objects=[], label="Funder")
 
     # UI elements
     echarts_pane = pn.pane.ECharts(
@@ -110,6 +111,13 @@ class MainDashboard(param.Parameterized):
             options: self.new_picker_title(
                 "affiliation countries", select_picker, values, options
             ),
+        )
+
+        self.funder_select_picker = SelectPicker.from_param(
+            self.param.filter_funder,
+            update_title_callback=lambda select_picker,
+            values,
+            options: self.new_picker_title("funders", select_picker, values, options),
         )
 
         self.build_pubdate_filter()
@@ -158,7 +166,6 @@ class MainDashboard(param.Parameterized):
         self.param.filter_journal.objects = self.raw_data.journal.unique()
 
         ## affiliation country
-        ## Keeping "None" as a string on purpose, to represent it in the SelectPicker
         countries_with_count = self.get_countries_with_count()
 
         def country_sorter(c):
@@ -168,15 +175,38 @@ class MainDashboard(param.Parameterized):
             countries_with_count.keys(), key=country_sorter, reverse=True
         )
 
+        ## funder
+        funders_with_count = self.get_funders_with_count()
+
+        def funder_sorter(c):
+            return funders_with_count[c]
+
+        self.param.filter_funder.objects = sorted(
+            funders_with_count.keys(), key=funder_sorter, reverse=True
+        )
+
         # This triggers function "did_change_splitting_var"
-        # which updates the filter_journal and filter_affiliation_country
+        # which updates filter_journal, filter_affiliation_country and filter_funder
         self.splitting_var = self.param.splitting_var.objects[0]
+
+    @lru_cache
+    def get_funders_with_count(self):
+        funders = {}
+        for row in self.raw_data.funder.values:
+            if len(row) == 0 or len(row) == 1 and row[0] == "":
+                ## Keeping "None" as a string on purpose, to represent it in the SelectPicker
+                funders["None"] = funders.get("None", 0) + 1
+            else:
+                for c in row:
+                    funders[c] = funders.get(c, 0) + 1
+        return funders
 
     @lru_cache
     def get_countries_with_count(self):
         countries = {}
         for row in self.raw_data.affiliation_country.values:
             if row is None:
+                ## Keeping "None" as a string on purpose, to represent it in the SelectPicker
                 countries["None"] = countries.get("None", 0) + 1
             else:
                 for c in row:
@@ -187,18 +217,27 @@ class MainDashboard(param.Parameterized):
     def did_change_splitting_var(self):
         print("DID_CHANGE_SPLITTING_VAR", self.splitting_var)
 
+        # already set the echarts pane as loading for a better UX
+        self.echarts_pane.loading = True
+
+        notif_msg = None
         if self.splitting_var == "journal":
             # We want to show all journals, but pre-select only the top 10
-            self.filter_journal = list(
-                self.raw_data.journal.value_counts().iloc[:10].index
+            selected_journals = list(
+                self.raw_data.query("journal != 'None'")
+                .journal.value_counts()
+                .iloc[:10]
+                .index
             )
             notif_msg = "Splitting by journal. Top 10 journals selected by default."
         else:
-            self.filter_journal = self.param.filter_journal.objects
+            selected_journals = self.param.filter_journal.objects
 
         if self.splitting_var == "affiliation_country":
             # We want to show all countries, but pre-select only the top 10
             countries_with_count = self.get_countries_with_count()
+
+            # pre-filter the countries because there are a lot
             countries_with_count = {
                 country: count
                 for country, count in countries_with_count.items()
@@ -206,25 +245,61 @@ class MainDashboard(param.Parameterized):
             }
 
             top_10_min = sorted(
-                [count for _, count in countries_with_count.items()], reverse=True
+                [
+                    count
+                    for country, count in countries_with_count.items()
+                    if country != "None"
+                ],
+                reverse=True,
             )[10]
             selected_countries = [
                 country
                 for country, count in countries_with_count.items()
-                if count >= top_10_min
+                if count > top_10_min and country != "None"
             ]
-            self.filter_affiliation_country = selected_countries
 
             notif_msg = "Splitting by affiliation country. Top 10 countries selected by default."
         else:
-            self.filter_affiliation_country = (
-                self.param.filter_affiliation_country.objects
-            )
+            selected_countries = self.param.filter_affiliation_country.objects
+
+        if self.splitting_var == "funder":
+            # We want to show all funders, but pre-select only the top 10
+            funders_with_count = self.get_funders_with_count()
+
+            top_5_min = sorted(
+                [
+                    count
+                    for funder, count in funders_with_count.items()
+                    if funder != "None"
+                ],
+                reverse=True,
+            )[5]
+            selected_funders = [
+                funder
+                for funder, count in funders_with_count.items()
+                if count > top_5_min and funder != "None"
+            ]
+
+            notif_msg = "Splitting by funder. Top 5 Funders selected by default."
+        else:
+            selected_funders = self.param.filter_funder.objects
+
+        # Trigger a batch update of the filters value,
+        # preventing from re-rendering the dashboard several times
+        # and preventing intermediate states where the dashboard renders onces
+        # with all funders for instance, and then restricting on the selected funders.
+        print("TRIGGER UPDATE")
+        self.param.update(
+            filter_journal=selected_journals,
+            filter_affiliation_country=selected_countries,
+            filter_funder=selected_funders,
+        )
 
         if self.splitting_var == "None":
             notif_msg = "No more splitting. Filters reset to default"
 
-        pn.state.notifications.info(notif_msg, duration=5000)
+        if notif_msg is not None:
+            pn.state.notifications.info(notif_msg, duration=5000)
 
     def filtered_grouped_data(self):
         print("FILTERED_GROUPED_DATA")
@@ -256,6 +331,17 @@ class MainDashboard(param.Parameterized):
                 filtered_df.affiliation_country.apply(country_filter)
             ]
 
+        if len(filtered_df) > 0 and len(self.filter_funder) != len(
+            self.param.filter_funder.objects
+        ):
+            # the filter on funders is similar to the filter on countries
+            def funder_filter(cell):
+                if len(cell) == 0 or len(cell) == 1 and cell[0] == "":
+                    return "None" in self.filter_funder
+                return any(c in self.filter_funder for c in cell)
+
+            filtered_df = filtered_df[filtered_df.funder.apply(funder_filter)]
+
         aggretations = {}
         for field, aggs in dims_aggregations.items():
             for agg in aggs:
@@ -270,11 +356,11 @@ class MainDashboard(param.Parameterized):
         return result
 
     @pn.depends(
-        # "splitting_var",
-        "filter_pubdate",
         "metrics",
+        "filter_pubdate",
         "filter_affiliation_country",
         "filter_journal",
+        "filter_funder",
         watch=True,
     )
     def updated_echart_plot(self):
@@ -317,10 +403,10 @@ class MainDashboard(param.Parameterized):
                 splitting_var_column = "affiliation_country"
                 splitting_var_query = lambda cell, selected_item: selected_item in cell
 
-            elif self.splitting_var == "fund_pmc_institute":
-                splitting_var_filter = self.filter_fund_pmc_institute
-                splitting_var_column = "fund_pmc_institute"
-                splitting_var_query = lambda cell, selected_item: cell == selected_item
+            elif self.splitting_var == "funder":
+                splitting_var_filter = self.filter_funder
+                splitting_var_column = "funder"
+                splitting_var_query = lambda cell, selected_item: selected_item in cell
             else:
                 print("Defaulting to splitting var 'journal' ")
                 splitting_var_filter = self.filter_journal
@@ -329,28 +415,31 @@ class MainDashboard(param.Parameterized):
 
             for selected_item in sorted(splitting_var_filter):
                 # sub_df = df.query(f"{splitting_var_column} == '{selected_item}'")
-                sub_df = (
-                    df[
-                        df[splitting_var_column].apply(
-                            lambda x: splitting_var_query(x, selected_item)
-                        )
-                    ]
-                    .groupby("year")
-                    .agg({raw_metric: "mean"})  # todo fix this
-                    .reset_index()
-                )
 
-                series.append(
-                    {
-                        "id": selected_item,
-                        "name": selected_item,
-                        "type": "line",
-                        "data": sub_df[raw_metric].tolist(),
-                    }
-                )
-                legend_data.append(
-                    {"name": selected_item, "icon": "path://M 0 0 H 20 V 20 H 0 Z"}
-                )
+                sub_df = df[
+                    df[splitting_var_column].apply(
+                        lambda x: splitting_var_query(x, selected_item)
+                    )
+                ]
+
+                if len(sub_df) > 0:
+                    sub_df = (
+                        sub_df.groupby("year")
+                        .agg({raw_metric: "mean"})  # todo fix this
+                        .reset_index()
+                    )
+
+                    series.append(
+                        {
+                            "id": selected_item,
+                            "name": selected_item,
+                            "type": "line",
+                            "data": sub_df[raw_metric].tolist(),
+                        }
+                    )
+                    legend_data.append(
+                        {"name": selected_item, "icon": "path://M 0 0 H 20 V 20 H 0 Z"}
+                    )
 
         echarts_config = {
             "title": {
@@ -394,8 +483,8 @@ class MainDashboard(param.Parameterized):
     def build_pubdate_filter(self):
         print("BUILD_PUBDATE_FILTER")
 
-        # The text input only reflect and update the values of the slider bounds
-        # self.pubdate_slider = pn.widgets.RangeSlider.from_param(self.param.filter_pubdate)
+        # The text input only reflect the values of the slider bounds,
+        # and update the slider bounds when their text value is changed.
         self.pubdate_slider = pn.widgets.IntRangeSlider(
             start=int(self.param.filter_pubdate.bounds[0]),
             end=int(self.param.filter_pubdate.bounds[1]),
@@ -504,6 +593,7 @@ class MainDashboard(param.Parameterized):
             divider(),
             self.journal_select_picker,
             self.affiliation_country_select_picker,
+            self.funder_select_picker,
         ]
 
         sidebar = pn.Column(*items)

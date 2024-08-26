@@ -36,6 +36,14 @@ def load_data():
     raw_data = tb.to_pandas()
     raw_data["metrics"] = "RTransparent"
     raw_data = raw_data[raw_data.year >= 2000]
+
+    # necessary conversion to tuples, which is hashable type
+    # needed for grouping
+    raw_data.affiliation_country = raw_data.affiliation_country.apply(
+        lambda cntry: tuple(cntry)
+    )
+    raw_data.funder = raw_data.funder.apply(lambda fndrs: tuple(fndrs))
+
     return raw_data
 
 
@@ -79,6 +87,7 @@ class OSMApp(param.Parameterized):
                 "css/global/vars.css",
                 "css/global/flat.css",
                 "css/global/intro.css",
+                "css/global/vars.css",
             ],
         )
         # <link rel="preconnect" href="https://fonts.googleapis.com">
