@@ -3,12 +3,13 @@ import argparse
 from osm._utils import DEFAULT_OUTPUT_DIR, _existing_file, _setup, compose_down
 from osm.pipeline.core import Pipeline, Savers
 from osm.pipeline.extractors import RTransparentExtractor
-from osm.pipeline.parsers import NoopParser, ScienceBeamParser
+from osm.pipeline.parsers import NoopParser, PMCParser, ScienceBeamParser
 from osm.pipeline.savers import FileSaver, JSONSaver, OSMSaver
 
 PARSERS = {
     "sciencebeam": ScienceBeamParser,
     "no-op": NoopParser,
+    "pmc": PMCParser,
 }
 EXTRACTORS = {
     "rtransparent": RTransparentExtractor,
@@ -41,7 +42,7 @@ def parse_args():
         choices=PARSERS.keys(),
         default=["sciencebeam"],
         nargs="+",
-        help="Select the tool for parsing the input document. Default is 'sciencebeam'.",
+        help="Select the tool for parsing the input document. Default is 'sciencebeam'. Choose 'pmc' for xml files from pubmed central.",
     )
     parser.add_argument(
         "--metrics-type",
@@ -76,7 +77,7 @@ def main():
         xml_path, metrics_path = _setup(args)
 
         pipeline = Pipeline(
-            filepath=args.filepath,
+            input_path=args.filepath,
             xml_path=xml_path,
             metrics_path=metrics_path,
             parsers=[PARSERS[p]() for p in args.parser],

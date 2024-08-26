@@ -15,8 +15,13 @@ class Component(ABC):
         self._orm_model = None
 
     @abstractmethod
-    def run(self, data: Any, **kwargs) -> Any:
+    def _run(self, data: bytes, **kwargs) -> Any:
+        """Abstract method that subclasses must implement."""
         pass
+
+    def run(self, data: bytes, *args, **kwargs) -> Any:
+        print(f"{self.name} (version {self.version}) is running.")
+        return self._run(data, *args, **kwargs)
 
     def _get_orm_fields(self) -> dict[str, Any]:
         fields = {}
@@ -60,19 +65,19 @@ class Savers:
         yield self.osm_saver
 
     def save_file(self, data: str, path: Path):
-        self.file_saver.run(data, path)
+        self.file_saver.run(data, path=path)
 
     def save_json(self, data: dict, path: Path):
-        self.json_saver.run(data, path)
+        self.json_saver.run(data, path=path)
 
     def save_osm(
         self,
-        file_in: bytes,
+        data: bytes,
         metrics: dict,
         components: list,
     ):
         # Call the method to save or upload the data
-        self.osm_saver.run(file_in, metrics, components)
+        self.osm_saver.run(data, metrics=metrics, components=components)
 
 
 class Pipeline:
@@ -82,14 +87,14 @@ class Pipeline:
         parsers: list[Component],
         extractors: list[Component],
         savers: Savers,
-        filepath: str,
+        input_path: str,
         xml_path: Optional[str] = None,
         metrics_path: Optional[str] = None,
     ):
         self.parsers = parsers
         self.extractors = extractors
         self.savers = savers
-        self.filepath = filepath
+        self.input_path = input_path
         self._file_data = None
         self.xml_path = xml_path
         self.metrics_path = metrics_path
@@ -100,22 +105,21 @@ class Pipeline:
             if isinstance(parsed_data, str):
                 self.savers.save_file(parsed_data, self.xml_path)
             for extractor in self.extractors:
-                # extracted_metrics = extractor.run(parsed_data,parser=parser.name)
-                extracted_metrics = extractor.run(parsed_data)
+                extracted_metrics = extractor.run(parsed_data, parser=parser.name)
                 self.savers.save_osm(
-                    file_in=self.file_data,
+                    data=self.file_data,
                     metrics=extracted_metrics,
                     components=[*self.parsers, *self.extractors, *self.savers],
                 )
                 self.savers.save_json(extracted_metrics, self.metrics_path)
 
     @staticmethod
-    def read_file(filepath: str) -> bytes:
-        with open(filepath, "rb") as file:
+    def read_file(input_path: str) -> bytes:
+        with open(input_path, "rb") as file:
             return file.read()
 
     @property
     def file_data(self):
         if not self._file_data:
-            self._file_data = self.read_file(self.filepath)
+            self._file_data = self.read_file(self.input_path)
         return self._file_data

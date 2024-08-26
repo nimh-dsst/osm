@@ -55,7 +55,8 @@ def rtransparent_metric_extraction(
     with tempfile.NamedTemporaryFile(delete=False, suffix=".xml") as temp_xml_file:
         temp_xml_file.write(xml_content)
         temp_xml_file_path = temp_xml_file.name
-    if parser == "pmc":
+    if parser == "PMCParser":
+        # XML files from pubmedcentral can have extra metadata exracted
         df = extract_from_pmc_xml(temp_xml_file_path, rtransparent)
     else:
         df = extract_from_xml(temp_xml_file_path, rtransparent)
@@ -81,7 +82,11 @@ def extract_from_xml(temp_xml_file_path, rtransparent):
 
 def extract_from_pmc_xml(temp_xml_file_path, rtransparent):
     raise NotImplementedError(
-        "Not all XML files provided at pubmedcentral include the datasharing statements."
+        """
+        Not all XML files provided at pubmedcentral include the datasharing
+        statements so this is a not a priority. The data returned contains R Na
+        types which need to be converted to an appropriate python type.
+        """
     )
     # dfs = {}
     # with (ro.default_converter + pandas2ri.converter).context():

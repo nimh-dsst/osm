@@ -2,13 +2,16 @@ import logging
 
 import requests
 
+from osm.schemas.custom_fields import LongBytes
+
 from .core import Component
 
 logger = logging.getLogger(__name__)
 
 
 class RTransparentExtractor(Component):
-    def run(self, data: str, parser: str = None) -> dict:
+    def _run(self, data: bytes, parser: str = None) -> dict:
+        self.sample = LongBytes(data)
         headers = {"Content-Type": "application/octet-stream"}
         response = requests.post(
             "http://localhost:8071/extract-metrics",

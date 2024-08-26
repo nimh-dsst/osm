@@ -9,8 +9,3 @@ services:
     image: nimhdsst/rtransparent:staging
     ports:
       - "8071:8071"
-    healthcheck:
-      test: ["CMD", "curl", "--include", "--request", "GET", "http://localhost:8071/health"]
-      interval: 1s
-      timeout: 3s
-      retries: 3

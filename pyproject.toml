@@ -16,6 +16,7 @@ dependencies = [
   "pyarrow",
   "pydantic",
   "pydantic[email]",
+  "python_on_whales",
   "odmantic",
   "requests",
 ]

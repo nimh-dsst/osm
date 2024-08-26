@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 class FileSaver(Component):
     """Basic saver that writes data to a file."""
 
-    def run(self, data: str, path: Path):
+    def _run(self, data: str, path: Path):
         """Write data to a file.
 
         Args:
@@ -35,7 +35,7 @@ class FileSaver(Component):
 class JSONSaver(Component):
     """Saver that writes JSON data to a file."""
 
-    def run(self, data: dict, path: Path):
+    def _run(self, data: dict, path: Path):
         """Write output metrics to a JSON file for the user.
 
         Args:
@@ -66,15 +66,16 @@ class OSMSaver(Component):
         self.user_defined_id = user_defined_id
         self.filename = filename
 
-    def run(self, file_in: bytes, metrics: dict, components: list[schemas.Component]):
+    def _run(self, data: bytes, metrics: dict, components: list[schemas.Component]):
         """Save the extracted metrics to the OSM API.
 
         Args:
-            file_in (bytes): Component input.
-            metrics (dict): Schema conformant metrics.
-            components (list[schemas.Component]): parsers, extractors, and savers that constitute the pipeline.
+            data: Component input.
+            metrics: Schema conformant metrics.
+            components: parsers, extractors, and savers that constitute the pipeline.
         """
         osm_api = os.environ.get("OSM_API", "https://osm.pythonaisolutions.com/api")
+        print(f"Using OSM API: {osm_api}")
         # Build the payload
         payload = {
             "osm_version": __version__,
@@ -82,7 +83,7 @@ class OSMSaver(Component):
             "work": {
                 "user_defined_id": self.user_defined_id,
                 "filename": self.filename,
-                "content_hash": hashlib.sha256(file_in).hexdigest(),
+                "content_hash": hashlib.sha256(data).hexdigest(),
             },
             "client": {
                 "compute_context_id": self.compute_context_id,
@@ -108,6 +109,8 @@ class OSMSaver(Component):
                 raise ValueError(
                     f"Failed to upload invocation data: \n {response.text}"
                 )
+        except requests.exceptions.ConnectionError:
+            raise EnvironmentError(f"Cannot connect to OSM API ({osm_api})")
         except (ValidationError, ValueError) as e:
             try:
                 # Quarantine the failed payload
