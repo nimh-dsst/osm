@@ -1,6 +1,4 @@
 import argparse
-import base64
-import hashlib
 import logging
 import os
 import shlex
@@ -11,8 +9,6 @@ from pathlib import Path
 
 import pandas as pd
 import requests
-
-from osm._version import __version__
 
 DEFAULT_OUTPUT_DIR = "./osm_output"
 logger = logging.getLogger(__name__)
@@ -62,35 +58,6 @@ def get_compute_context_id():
     return hash(f"{os.environ.get('HOSTNAME')}_{os.environ.get('USERNAME')}")
 
 
-def _upload_data(args, file_in, xml, metrics, components):
-    osm_api = os.environ.get("OSM_API", "http://localhost:80")
-
-    payload = {
-        "osm_version": __version__,
-        "user_comment": args.comment,
-        "work": {
-            "user_defined_id": args.uid,
-            "filename": args.file.name,
-            "file": base64.b64encode(file_in).decode("utf-8"),
-            "content_hash": hashlib.sha256(file_in).hexdigest(),
-        },
-        "client": {
-            "compute_context_id": get_compute_context_id(),
-            "email": args.email,
-        },
-        "metrics": metrics,
-        "components": components,
-    }
-    # Send POST request to OSM API
-    response = requests.put(f"{osm_api}/upload", json=payload)
-
-    # Check response status code
-    if response.status_code == 200:
-        print("Invocation data uploaded successfully")
-    else:
-        print(f"Failed to upload invocation data: \n {response.text}")
-
-
 def wait_for_containers():
     while True:
         try:
@@ -128,8 +95,10 @@ def _setup(args):
             raise FileExistsError(xml_path)
     elif args.filepath.name.endswith(".xml"):
         logger.warning(
-            """The input file is an xml file. Skipping the pdf to text
-            conversion and so ignoring requested parsers."""
+            """
+            The input file is an xml file. Skipping the pdf to text conversion
+            and so ignoring requested parsers.
+            """
         )
         args.parser = ["no-op"]
     metrics_path = _get_metrics_dir() / f"{args.uid}.json"
@@ -141,6 +110,7 @@ def _setup(args):
     logger.info("Waiting for containers to be ready...")
     print("Waiting for containers to be ready...")
     wait_for_containers()
+    print("Containers ready!")
     return xml_path, metrics_path
 
 

@@ -53,6 +53,7 @@ def parse_args():
     parser.add_argument(
         "--comment",
         required=False,
+        default="",
         help="Comment to provide more information about the provided publication.",
     )
     parser.add_argument(

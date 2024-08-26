@@ -25,7 +25,7 @@ import motor.motor_asyncio
 from fastapi import FastAPI, HTTPException
 from odmantic import AIOEngine, ObjectId
 
-from osm.schemas import Invocation
+from osm.schemas import Invocation, Quarantine
 
 app = FastAPI()
 dburi = os.environ.get("MONGODB_URI", "mongodb://localhost:27017")
@@ -37,6 +37,12 @@ engine = AIOEngine(client=client, database="test")
 async def upload_invocation(invocation: Invocation):
     await engine.save(invocation)
     return invocation
+
+
+@app.put("/quarantine/", response_model=Quarantine)
+async def upload_failed_invocation(quarantine: Quarantine):
+    await engine.save(quarantine)
+    return quarantine
 
 
 @app.get("/invocations/{id}", response_model=Invocation)

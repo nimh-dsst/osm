@@ -86,7 +86,7 @@ class LongStr(LongField[str]):
 
 
 class LongBytes(LongField[bytes]):
-    """A bytes type that displays '...' instead of the full content in logs or tracebacks."""
+    """Wrap byte streams to avoid messy output."""
 
     _inner_schema: ClassVar[CoreSchema] = core_schema.bytes_schema()
     _error_kind: ClassVar[str] = "bytes_type"

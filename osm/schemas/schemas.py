@@ -4,7 +4,7 @@ from typing import Optional
 
 import pandas as pd
 from odmantic import EmbeddedModel, Field, Model
-from pydantic import EmailStr, field_validator
+from pydantic import EmailStr, field_serializer, field_validator
 
 from osm._utils import coerce_to_string
 
@@ -15,9 +15,6 @@ from .metrics_schemas import RtransparentMetrics
 class Component(EmbeddedModel):
     model_config = {
         "extra": "forbid",
-        "json_encoders": {
-            LongBytes: lambda v: base64.b64encode(v.get_value()).decode("utf-8"),
-        },
     }
     name: str
     version: str
@@ -27,6 +24,10 @@ class Component(EmbeddedModel):
         default=b"",
         json_schema_extra={"exclude": True, "select": False, "write_only": True},
     )
+
+    @field_serializer("sample")
+    def serialize_longbytes(self, value: Optional[LongBytes]) -> Optional[str]:
+        return base64.b64encode(value.get_value()).decode("utf-8") if value else None
 
 
 class Client(EmbeddedModel):
@@ -81,3 +82,9 @@ class Invocation(Model):
     created_at: datetime.datetime = Field(
         default_factory=lambda: datetime.datetime.now(datetime.UTC)
     )
+
+
+class Quarantine(Model):
+    payload: str = ""
+    error_message: str
+    recovery_message: Optional[str] = None

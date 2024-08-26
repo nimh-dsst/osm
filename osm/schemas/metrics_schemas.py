@@ -1,7 +1,7 @@
 from typing import Optional
 
 from odmantic import EmbeddedModel
-from pydantic import field_validator
+from pydantic import field_serializer, field_validator
 
 from osm._utils import coerce_to_string
 
@@ -12,11 +12,6 @@ from .custom_fields import LongStr
 #  all_indicators.csv from the rtransparent publication has both but has the following extra fields:
 # code_text,com_code,com_data_availibility,com_file_formats,com_general_db,com_github_data,com_specific_db,com_suppl_code,com_supplemental_data,data_text,dataset,eigenfactor_score,field,is_art,is_code_pred,is_data_pred,is_relevant_code,is_relevant_data,jif,n_cite,score,year,
 class RtransparentMetrics(EmbeddedModel):
-    model_config = {
-        "json_encoders": {
-            LongStr: lambda v: v.get_value(),
-        },
-    }
     # Mandatory fields
     is_open_code: Optional[bool]
     is_open_data: Optional[bool]
@@ -197,3 +192,17 @@ class RtransparentMetrics(EmbeddedModel):
     @field_validator("article")
     def fix_string(cls, v):
         return coerce_to_string(v)
+
+    @field_serializer(
+        "data_text",
+        "code_text",
+        "coi_text",
+        "fund_text",
+        "register_text",
+        "funding_text",
+        "open_code_statements",
+        "open_data_category",
+        "open_data_statements",
+    )
+    def serialize_longstr(self, value: Optional[LongStr]) -> Optional[str]:
+        return value.get_value() if value else None

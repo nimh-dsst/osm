@@ -18,27 +18,32 @@ class Component(ABC):
     def run(self, data: Any, **kwargs) -> Any:
         pass
 
-    def _get_model_fields(self) -> dict[str, Any]:
-        return {
-            "name": self.name,
-            "version": self.version,
-        }
+    def _get_orm_fields(self) -> dict[str, Any]:
+        fields = {}
+        for fieldname in self.orm_model_class.model_fields.keys():
+            if hasattr(self, fieldname):
+                fields[fieldname] = getattr(self, fieldname)
+
+        return fields
 
     @property
     def name(self) -> str:
         return self.__class__.__name__
 
     @property
+    def orm_model_class(self) -> type:
+        return schemas.Component
+
+    @property
     def orm_model(self) -> schemas.Component:
-        if self._orm_model is None:
-            self._orm_model = schemas.Component(
-                **self._get_model_fields(),
-            )
+        self._orm_model = self.orm_model_class(
+            **self._get_orm_fields(),
+        )
         return self._orm_model
 
-    def model_dump(self) -> dict[str, Any]:
+    def model_dump(self, *args, **kwargs) -> dict[str, Any]:
         """Return a dict of the components model."""
-        return self.orm_model.model_dump()
+        return self.orm_model.model_dump(*args, **kwargs)
 
 
 class Savers:
