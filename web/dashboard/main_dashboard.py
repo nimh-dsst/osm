@@ -25,6 +25,7 @@ extraction_tools_params = {
             "journal",
             "affiliation_country",
             "funder",
+            "data_tags",
         ],
     }
 }
@@ -62,7 +63,7 @@ class MainDashboard(param.Parameterized):
     """
 
     # High-level parameters.
-    extraction_tool = param.Selector(default="", objects=[], label="Extraction tool")
+    extraction_tool = param.Selector(default="", objects=[], label="Metrics group")
 
     metrics = param.Selector(default=[], objects=[], label="Metrics")
 
@@ -81,6 +82,11 @@ class MainDashboard(param.Parameterized):
     )
 
     filter_funder = param.ListSelector(default=[], objects=[], label="Funder")
+
+    filter_tags = param.ListSelector(default=[], objects=[], label="Tags")
+
+    # Internal mechanisms
+    trigger_rendering = param.Integer(default=0)
 
     # UI elements
     echarts_pane = pn.pane.ECharts(
@@ -118,6 +124,13 @@ class MainDashboard(param.Parameterized):
             update_title_callback=lambda select_picker,
             values,
             options: self.new_picker_title("funders", select_picker, values, options),
+        )
+
+        self.tags_select_picker = SelectPicker.from_param(
+            self.param.filter_tags,
+            update_title_callback=lambda select_picker,
+            values,
+            options: self.new_picker_title("tags", select_picker, values, options),
         )
 
         self.build_pubdate_filter()
@@ -166,7 +179,9 @@ class MainDashboard(param.Parameterized):
         self.param.filter_journal.objects = self.raw_data.journal.unique()
 
         ## affiliation country
-        countries_with_count = self.get_countries_with_count()
+        countries_with_count = self.get_col_values_with_count(
+            "affiliation_country", lambda x: x is None
+        )
 
         def country_sorter(c):
             return countries_with_count[c]
@@ -176,7 +191,9 @@ class MainDashboard(param.Parameterized):
         )
 
         ## funder
-        funders_with_count = self.get_funders_with_count()
+        funders_with_count = self.get_col_values_with_count(
+            "funder", lambda x: len(x) == 0 or len(x) == 1 and x[0] == ""
+        )
 
         def funder_sorter(c):
             return funders_with_count[c]
@@ -185,33 +202,33 @@ class MainDashboard(param.Parameterized):
             funders_with_count.keys(), key=funder_sorter, reverse=True
         )
 
+        ## Tags
+        tags_with_count = self.get_col_values_with_count(
+            "data_tags", lambda x: x is None
+        )
+
+        def tags_sorter(c):
+            return tags_with_count[c]
+
+        self.param.filter_tags.objects = sorted(
+            tags_with_count.keys(), key=tags_sorter, reverse=True
+        )
+
         # This triggers function "did_change_splitting_var"
         # which updates filter_journal, filter_affiliation_country and filter_funder
         self.splitting_var = self.param.splitting_var.objects[0]
 
     @lru_cache
-    def get_funders_with_count(self):
-        funders = {}
-        for row in self.raw_data.funder.values:
-            if len(row) == 0 or len(row) == 1 and row[0] == "":
+    def get_col_values_with_count(self, col, none_test):
+        values = {}
+        for row in self.raw_data[col].values:
+            if none_test(row):
                 ## Keeping "None" as a string on purpose, to represent it in the SelectPicker
-                funders["None"] = funders.get("None", 0) + 1
+                values["None"] = values.get("None", 0) + 1
             else:
                 for c in row:
-                    funders[c] = funders.get(c, 0) + 1
-        return funders
-
-    @lru_cache
-    def get_countries_with_count(self):
-        countries = {}
-        for row in self.raw_data.affiliation_country.values:
-            if row is None:
-                ## Keeping "None" as a string on purpose, to represent it in the SelectPicker
-                countries["None"] = countries.get("None", 0) + 1
-            else:
-                for c in row:
-                    countries[c] = countries.get(c, 0) + 1
-        return countries
+                    values[c] = values.get(c, 0) + 1
+        return values
 
     @pn.depends("splitting_var", watch=True)
     def did_change_splitting_var(self):
@@ -235,7 +252,9 @@ class MainDashboard(param.Parameterized):
 
         if self.splitting_var == "affiliation_country":
             # We want to show all countries, but pre-select only the top 10
-            countries_with_count = self.get_countries_with_count()
+            countries_with_count = self.get_col_values_with_count(
+                "affiliation_country", lambda x: x is None
+            )
 
             # pre-filter the countries because there are a lot
             countries_with_count = {
@@ -264,7 +283,9 @@ class MainDashboard(param.Parameterized):
 
         if self.splitting_var == "funder":
             # We want to show all funders, but pre-select only the top 10
-            funders_with_count = self.get_funders_with_count()
+            funders_with_count = self.get_col_values_with_count(
+                "funder", lambda x: len(x) == 0 or len(x) == 1 and x[0] == ""
+            )
 
             top_5_min = sorted(
                 [
@@ -284,15 +305,24 @@ class MainDashboard(param.Parameterized):
         else:
             selected_funders = self.param.filter_funder.objects
 
+        # There is currently only two tags, so no need to pre-select a top subset
+        selected_tags = self.param.filter_tags.objects
+
         # Trigger a batch update of the filters value,
         # preventing from re-rendering the dashboard several times
         # and preventing intermediate states where the dashboard renders onces
         # with all funders for instance, and then restricting on the selected funders.
+        # Also, we increment the trigger_rendering to force the update of the echarts plot.
+        # This is usefull when switching from splitting var "None" to "data_tags" for instance.
+        # In this case, the selected tags don't change, and the plot won't update, hence the need
+        # for trigger_rendering.
         print("TRIGGER UPDATE")
         self.param.update(
             filter_journal=selected_journals,
             filter_affiliation_country=selected_countries,
             filter_funder=selected_funders,
+            filter_tags=selected_tags,
+            trigger_rendering=self.trigger_rendering + 1,
         )
 
         if self.splitting_var == "None":
@@ -342,6 +372,17 @@ class MainDashboard(param.Parameterized):
 
             filtered_df = filtered_df[filtered_df.funder.apply(funder_filter)]
 
+        if len(filtered_df) > 0 and len(self.filter_tags) != len(
+            self.param.filter_tags.objects
+        ):
+            # the filter on tags is similar to the filter on countries
+            def tags_filter(cell):
+                if cell is None:
+                    return "None" in self.filter_tags
+                return any(c in self.filter_tags for c in cell)
+
+            filtered_df = filtered_df[filtered_df.data_tags.apply(tags_filter)]
+
         aggretations = {}
         for field, aggs in dims_aggregations.items():
             for agg in aggs:
@@ -353,6 +394,8 @@ class MainDashboard(param.Parameterized):
 
         result = filtered_df.groupby(groupers).agg(**aggretations).reset_index()
 
+        print("FILTERED_GROUPED_DATA_DONE", len(result))
+
         return result
 
     @pn.depends(
@@ -361,6 +404,8 @@ class MainDashboard(param.Parameterized):
         "filter_affiliation_country",
         "filter_journal",
         "filter_funder",
+        "filter_tags",
+        "trigger_rendering",
         watch=True,
     )
     def updated_echart_plot(self):
@@ -407,6 +452,12 @@ class MainDashboard(param.Parameterized):
                 splitting_var_filter = self.filter_funder
                 splitting_var_column = "funder"
                 splitting_var_query = lambda cell, selected_item: selected_item in cell
+
+            elif self.splitting_var == "data_tags":
+                splitting_var_filter = self.filter_tags
+                splitting_var_column = "data_tags"
+                splitting_var_query = lambda cell, selected_item: selected_item in cell
+
             else:
                 print("Defaulting to splitting var 'journal' ")
                 splitting_var_filter = self.filter_journal
@@ -594,6 +645,7 @@ class MainDashboard(param.Parameterized):
             self.journal_select_picker,
             self.affiliation_country_select_picker,
             self.funder_select_picker,
+            self.tags_select_picker,
         ]
 
         sidebar = pn.Column(*items)

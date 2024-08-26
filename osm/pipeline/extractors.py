@@ -26,7 +26,6 @@ class RTransparentExtractor(Component):
                     metrics[k] = None
             return metrics
         else:
-            breakpoint()
             logger.error(f"Error: {response.text}")
             response.raise_for_status()
 

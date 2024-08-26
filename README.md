@@ -28,6 +28,8 @@ osm -f path/to/pdf-or-xml2 -u uuid2 --user-managed-compose
 
 # Contributing
 
+N.B. On Apple silicon you must use emulation i.e. `export DOCKER_DEFAULT_PLATFORM=linux/amd64`
+
 If you wish to contribute to this project you can set up a development environment with the following:
 
 ```

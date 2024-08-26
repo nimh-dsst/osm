@@ -5,6 +5,7 @@ import panel as pn
 import param
 import pyarrow as pa
 import pyarrow.dataset as ds
+import pyarrow.parquet as pq
 import ui
 from main_dashboard import MainDashboard
 from pyarrow import compute as pc
@@ -18,6 +19,7 @@ def load_data():
         dset = ds.dataset(local_path, format="parquet")
     else:
         dset = ds.dataset(osh.matches_to_table(osh.get_data_from_mongo()))
+        pq.write_table(dset.to_table(), local_path, compression="snappy")
 
     tb = dset.to_table()
     split_col = pc.split_pattern(
@@ -39,10 +41,8 @@ def load_data():
 
     # necessary conversion to tuples, which is hashable type
     # needed for grouping
-    raw_data.affiliation_country = raw_data.affiliation_country.apply(
-        lambda cntry: tuple(cntry)
-    )
-    raw_data.funder = raw_data.funder.apply(lambda fndrs: tuple(fndrs))
+    for col in ["affiliation_country", "funder", "data_tags"]:
+        raw_data[col] = raw_data[col].apply(lambda x: tuple(x))
 
     return raw_data
 
