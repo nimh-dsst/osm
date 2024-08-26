@@ -5,6 +5,7 @@ import panel as pn
 import param
 import pyarrow as pa
 import pyarrow.dataset as ds
+import pyarrow.parquet as pq
 import ui
 from main_dashboard import MainDashboard
 from pyarrow import compute as pc
@@ -18,6 +19,7 @@ def load_data():
         dset = ds.dataset(local_path, format="parquet")
     else:
         dset = ds.dataset(osh.matches_to_table(osh.get_data_from_mongo()))
+        pq.write_table(dset.to_table(), local_path, compression="snappy")
 
     tb = dset.to_table()
     split_col = pc.split_pattern(
