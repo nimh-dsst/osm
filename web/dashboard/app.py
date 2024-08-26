@@ -39,10 +39,8 @@ def load_data():
 
     # necessary conversion to tuples, which is hashable type
     # needed for grouping
-    raw_data.affiliation_country = raw_data.affiliation_country.apply(
-        lambda cntry: tuple(cntry)
-    )
-    raw_data.funder = raw_data.funder.apply(lambda fndrs: tuple(fndrs))
+    for col in ["affiliation_country", "funder", "data_tags"]:
+        raw_data[col] = raw_data[col].apply(lambda x: tuple(x))
 
     return raw_data
 
