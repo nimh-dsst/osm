@@ -1,22 +1,5 @@
 """
 Sets up a web API for uploading osm metrics to a centralized database
-
-Usage along the lines of:
-
-curl -X POST "http://localhost:80/upload/" \
-    -H "Content-Type: application/json" \
-    -d '{
-        "osm_version": "1.0",
-        "timestamp": "2024-07-24T12:00:00Z",
-        "user_comment": "example comment",
-        "work": {
-            "user_defined_id": "123",
-            "pmid": "pmid_example",
-            "file": "example_file_content_base64_encoded",
-            "content_hash": "example_hash",
-            "timestamp": "2024-07-24T12:00:00Z"
-        }
-    }'
 """
 
 import os

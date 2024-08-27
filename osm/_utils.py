@@ -127,6 +127,7 @@ def _setup(args):
 
 
 def coerce_to_string(v):
+    "Can be useful for schemas with permissive string fields"
     if isinstance(v, (int, float, bool)):
         return str(v)
     elif isinstance(v, types.NoneType):
