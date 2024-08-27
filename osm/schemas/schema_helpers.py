@@ -272,6 +272,8 @@ def matches_to_table(matches: Iterator[dict], batch_size: int = 1000) -> pa.Tabl
                 inferred_type = pa.bool
             elif col == "manual_is_open_data":
                 inferred_type = pa.bool_()
+            elif col == "created_at":
+                inferred_type = pa.timestamp("ns")
             else:
                 inferred_type = infer_type_for_column(df[col])
             adjusted_schema = adjusted_schema.append(pa.field(col, inferred_type))
