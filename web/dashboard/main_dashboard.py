@@ -224,7 +224,7 @@ class MainDashboard(param.Parameterized):
 
         ## affiliation country
         countries_with_count = self.get_col_values_with_count(
-            "affiliation_country", lambda x: len(x) == 0 or len(x) == 1 and x[0] == ""
+            "affiliation_country", lambda x: "None" in x
         )
 
         def country_sorter(c):
@@ -236,7 +236,7 @@ class MainDashboard(param.Parameterized):
 
         ## funder
         funders_with_count = self.get_col_values_with_count(
-            "funder", lambda x: len(x) == 0 or len(x) == 1 and x[0] == ""
+            "funder", lambda x: "None" in x
         )
 
         def funder_sorter(c):
@@ -248,7 +248,7 @@ class MainDashboard(param.Parameterized):
 
         ## Tags
         tags_with_count = self.get_col_values_with_count(
-            "data_tags", lambda x: len(x) == 0 or len(x) == 1 and x[0] == ""
+            "data_tags", lambda x: "None" in x
         )
 
         def tags_sorter(c):
@@ -300,7 +300,7 @@ class MainDashboard(param.Parameterized):
             # We want to show all countries, but pre-select only the top 10
             countries_with_count = self.get_col_values_with_count(
                 "affiliation_country",
-                lambda x: len(x) == 0 or len(x) == 1 and x[0] == "",
+                lambda x: "None" in x,
             )
 
             # pre-filter the countries because there are a lot
@@ -331,7 +331,7 @@ class MainDashboard(param.Parameterized):
         if splitting_var == "funder":
             # We want to show all funders, but pre-select only the top 10
             funders_with_count = self.get_col_values_with_count(
-                "funder", lambda x: len(x) == 0 or len(x) == 1 and x[0] == ""
+                "funder", lambda x: "None" in x
             )
 
             top_5_min = sorted(
@@ -400,7 +400,7 @@ class MainDashboard(param.Parameterized):
             # the filter on countries is a bit different as the rows
             # are list of countries
             def country_filter(cell):
-                if cell is None:
+                if len(cell) == 0 or len(cell) == 1 and cell[0] == "":
                     return "None" in self.filter_affiliation_country
                 return any(c in self.filter_affiliation_country for c in cell)
 
@@ -424,22 +424,22 @@ class MainDashboard(param.Parameterized):
         ):
             # the filter on tags is similar to the filter on countries
             def tags_filter(cell):
-                if cell is None:
+                if len(cell) == 0 or len(cell) == 1 and cell[0] == "":
                     return "None" in self.filter_tags
                 return any(c in self.filter_tags for c in cell)
 
             filtered_df = filtered_df[filtered_df.data_tags.apply(tags_filter)]
 
-        aggretations = {}
+        aggregations = {}
         for field, aggs in dims_aggregations.items():
             for agg in aggs:
-                aggretations[f"{agg}_{field}"] = (field, aggregation_formulas[agg])
+                aggregations[f"{agg}_{field}"] = (field, aggregation_formulas[agg])
 
         groupers = ["year"]
         if self.splitting_var != "None":
             groupers.append(self.splitting_var_from_label(self.splitting_var))
 
-        result = filtered_df.groupby(groupers).agg(**aggretations).reset_index()
+        result = filtered_df.groupby(groupers).agg(**aggregations).reset_index()
 
         print("FILTERED_GROUPED_DATA_DONE", len(result))
 
@@ -705,7 +705,6 @@ class MainDashboard(param.Parameterized):
         )
 
         def did_click_shortcut_button(event):
-            print(event)
             if event.obj.name == "Last year":
                 self.start_pubdate_input.value, self.end_pubdate_input.value = (
                     str(datetime.now().year),
