@@ -14,12 +14,12 @@ MONGODB_URI = os.environ["MONGODB_URI"]
 
 
 rtrans_publication_kwargs = {
-    "data_tags": ["bulk_upload", "rtransparent-publication"],
-    "user_comment": "Bulk upload of rtransparent publication data",
+    "data_tags": ["PMC-OA 2020"],
+    "user_comment": "Bulk upload of rtransparent publication data that processed all open access XMLs from pubmed central in 2020",
     "components": [Component(name="rtransparent-publication", version="x.x.x")],
 }
 irp_kwargs = {
-    "data_tags": ["bulk_upload", "NIH-IRP"],
+    "data_tags": ["NIH-IRP"],
     "user_comment": "Bulk upload of NIH-IRP data",
     "components": [Component(name="Sciencebeam parser/RTransparent", version="x.x.x")],
 }
