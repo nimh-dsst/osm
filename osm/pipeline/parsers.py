@@ -3,6 +3,7 @@ import requests
 from osm.schemas.custom_fields import LongBytes
 
 from .core import Component
+import io
 
 SCIENCEBEAM_URL = "http://localhost:8070/api/convert"
 
@@ -30,8 +31,10 @@ class ScienceBeamParser(Component):
     def _run(self, data: bytes) -> str:
         self.sample = LongBytes(data)
         headers = {"Accept": "application/tei+xml", "Content-Type": "application/pdf"}
-        response = requests.post(SCIENCEBEAM_URL, data=data, headers=headers)
+        files = {'file': ('input.pdf', io.BytesIO(data), 'application/pdf')}
+
+        response = requests.post(SCIENCEBEAM_URL, files=files, headers=headers)
         if response.status_code == 200:
-            return response.text
+            return response.content
         else:
             response.raise_for_status()

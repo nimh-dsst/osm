@@ -27,14 +27,14 @@ def format_error_message() -> str:
 class FileSaver(Component):
     """Basic saver that writes data to a file."""
 
-    def _run(self, data: str, path: Path):
+    def _run(self, data: bytes, path: Path):
         """Write data to a file.
 
         Args:
             data (str): Some data.
             path (Path): A file path.
         """
-        path.write_text(data)
+        path.write_bytes(data)
         logger.info(f"Data saved to {path}")
 
 
