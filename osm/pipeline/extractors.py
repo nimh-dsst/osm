@@ -19,7 +19,7 @@ class RTransparentExtractor(Component):
 
         # Send the request with the file
         response = requests.post(
-            "http://localhost:8071/extract-metrics",
+            "http://localhost:8071/extract-metrics/",
             files=files,
             params={"parser": parser},
         )

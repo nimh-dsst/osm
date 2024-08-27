@@ -22,15 +22,16 @@ curl -X POST "http://localhost:80/upload/" \
 import os
 
 import motor.motor_asyncio
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi.responses import JSONResponse
 from odmantic import AIOEngine, ObjectId
 
-from osm.schemas import Invocation, Quarantine
+from osm.schemas import Invocation, PayloadError, Quarantine
 
 app = FastAPI()
 dburi = os.environ.get("MONGODB_URI", "mongodb://localhost:27017")
 client = motor.motor_asyncio.AsyncIOMotorClient(dburi)
-engine = AIOEngine(client=client, database="test")
+engine = AIOEngine(client=client, database="osm")
 
 
 @app.put("/upload/", response_model=Invocation)
@@ -39,10 +40,24 @@ async def upload_invocation(invocation: Invocation):
     return invocation
 
 
+@app.put("/payload_error/", response_model=PayloadError)
+async def upload_failed_payload_construction(payload_error: PayloadError):
+    await engine.save(payload_error)
+    return payload_error
+
+
 @app.put("/quarantine/", response_model=Quarantine)
 async def upload_failed_invocation(quarantine: Quarantine):
     await engine.save(quarantine)
     return quarantine
+
+
+@app.put("/quarantine2/")
+async def upload_failed_quarantine(
+    file: UploadFile = File(...), error_message: str = Form(...)
+):
+    await engine.save(Quarantine(payload=file.file.read(), error_message=error_message))
+    return JSONResponse(content={"message": "Success"}, status_code=200)
 
 
 @app.get("/invocations/{id}", response_model=Invocation)

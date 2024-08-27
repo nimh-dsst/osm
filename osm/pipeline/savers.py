@@ -1,8 +1,10 @@
 import base64
+import getpass
 import hashlib
 import json
 import logging
 import os
+import traceback
 from pathlib import Path
 
 import dill
@@ -16,6 +18,10 @@ from osm._version import __version__
 from .core import Component
 
 logger = logging.getLogger(__name__)
+
+
+def format_error_message() -> str:
+    return traceback.format_exc().replace(getpass.getuser(), "USER")
 
 
 class FileSaver(Component):
@@ -77,21 +83,30 @@ class OSMSaver(Component):
         osm_api = os.environ.get("OSM_API", "https://osm.pythonaisolutions.com/api")
         print(f"Using OSM API: {osm_api}")
         # Build the payload
-        payload = {
-            "osm_version": __version__,
-            "user_comment": self.comment,
-            "work": {
-                "user_defined_id": self.user_defined_id,
-                "filename": self.filename,
-                "content_hash": hashlib.sha256(data).hexdigest(),
-            },
-            "client": {
-                "compute_context_id": self.compute_context_id,
-                "email": self.email,
-            },
-            "metrics": schemas.RtransparentMetrics(**metrics),
-            "components": [comp.orm_model for comp in components],
-        }
+        try:
+            payload = {
+                "osm_version": __version__,
+                "user_comment": self.comment,
+                "work": {
+                    "user_defined_id": self.user_defined_id,
+                    "filename": self.filename,
+                    "content_hash": hashlib.sha256(data).hexdigest(),
+                },
+                "client": {
+                    "compute_context_id": self.compute_context_id,
+                    "email": self.email,
+                },
+                "metrics": metrics,
+                "components": [comp.orm_model for comp in components],
+            }
+        except Exception as e:
+            requests.put(
+                f"{osm_api}/payload_error/",
+                json=schemas.PayloadError(
+                    error_message=format_error_message(),
+                ).model_dump(mode="json", exclude=["id"]),
+            )
+            raise e
         try:
             # Validate the payload
             validated_data = schemas.Invocation(**payload)
@@ -116,17 +131,15 @@ class OSMSaver(Component):
                 # Quarantine the failed payload
                 failure = schemas.Quarantine(
                     payload=base64.b64encode(dill.dumps(payload)).decode("utf-8"),
-                    error_message=str(e),
+                    error_message=format_error_message(),
                 ).model_dump(mode="json", exclude=["id"])
                 response = requests.put(f"{osm_api}/quarantine/", json=failure)
                 response.raise_for_status()
-                raise e
-            except requests.exceptions.RequestException as qe:
+            except Exception:
                 requests.put(
-                    f"{osm_api}/quarantine/",
-                    json=schemas.Quarantine(
-                        error_message=str(e),
-                        recovery_message=str(qe),
-                    ).model_dump(mode="json", exclude=["id"]),
+                    f"{osm_api}/quarantine2/",
+                    files={"file": dill.dumps(payload)},
+                    data={"error_message": format_error_message()},
                 )
+            finally:
                 raise e

@@ -85,6 +85,15 @@ class Invocation(Model):
 
 
 class Quarantine(Model):
-    payload: str = ""
+    payload: bytes = b""
     error_message: str
-    recovery_message: Optional[str] = None
+    created_at: datetime.datetime = Field(
+        default_factory=lambda: datetime.datetime.now(datetime.UTC)
+    )
+
+
+class PayloadError(Model):
+    error_message: str
+    created_at: datetime.datetime = Field(
+        default_factory=lambda: datetime.datetime.now(datetime.UTC)
+    )
