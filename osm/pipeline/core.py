@@ -15,7 +15,7 @@ class Component(ABC):
         self._orm_model = None
 
     @abstractmethod
-    def _run(self, data: bytes, **kwargs) -> Any:
+    def _run(self, data: bytes|dict, **kwargs) -> Any:
         """Abstract method that subclasses must implement."""
         pass
 
@@ -64,7 +64,7 @@ class Savers:
         yield self.json_saver
         yield self.osm_saver
 
-    def save_file(self, data: str, path: Path):
+    def save_file(self, data: bytes, path: Path):
         self.file_saver.run(data, path=path)
 
     def save_json(self, data: dict, path: Path):
@@ -102,7 +102,7 @@ class Pipeline:
     def run(self):
         for parser in self.parsers:
             parsed_data = parser.run(self.file_data)
-            if isinstance(parsed_data, str):
+            if isinstance(parsed_data, bytes):
                 self.savers.save_file(parsed_data, self.xml_path)
             for extractor in self.extractors:
                 extracted_metrics = extractor.run(parsed_data, parser=parser.name)
