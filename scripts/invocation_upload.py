@@ -23,7 +23,11 @@ irp_kwargs = {
     "user_comment": "Bulk upload of NIH-IRP data",
     "components": [Component(name="Sciencebeam parser/RTransparent", version="x.x.x")],
 }
-
+theneuro_kwargs = {
+    "data_tags": ["Th Neuro"],
+    "user_comment": "Bulk upload of The Neuro data containing OddPub metrics underlying RTransparent metrics for open code/data.",
+    "components": [Component(name="TheNeuroOddPub", version="x.x.x")],
+}
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
@@ -58,6 +62,8 @@ def get_data(args):
     file_in = Path(args.input_file)
     if file_in.is_dir() or file_in.suffix == ".parquet":
         tb = ds.dataset(file_in, format="parquet").to_table()
+    else:
+        raise ValueError("Only parquet files are supported")
     return tb
 
 
@@ -70,6 +76,8 @@ def get_upload_kwargs(args):
             kwargs = rtrans_publication_kwargs
         elif args.custom_processing == "irp_data_processing":
             kwargs = irp_kwargs
+        elif args.custom_processing == "theneuro_data_processing":
+            kwargs = theneuro_kwargs
         else:
             raise ValueError(
                 f"Kwargs associated with {args.custom_processing} not found"
