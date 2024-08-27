@@ -87,7 +87,6 @@ def compose_up():
     print("Waiting for containers to be ready...")
     docker.compose.up(detach=True, wait=True, pull="always")
     print("Containers ready!")
-    sleep(5)
 
 
 def compose_down():

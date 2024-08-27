@@ -99,9 +99,9 @@ class Pipeline:
         self.xml_path = xml_path
         self.metrics_path = metrics_path
 
-    def run(self):
+    def run(self,user_managed_compose:bool=False):
         for parser in self.parsers:
-            parsed_data = parser.run(self.file_data)
+            parsed_data = parser.run(self.file_data,user_managed_compose=user_managed_compose)
             if isinstance(parsed_data, bytes):
                 self.savers.save_file(parsed_data, self.xml_path)
             for extractor in self.extractors:

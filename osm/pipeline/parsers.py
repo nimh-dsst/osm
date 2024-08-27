@@ -1,5 +1,5 @@
 import requests
-
+import time
 from osm.schemas.custom_fields import LongBytes
 
 from .core import Component
@@ -28,13 +28,19 @@ class PMCParser(NoopParser):
 
 
 class ScienceBeamParser(Component):
-    def _run(self, data: bytes) -> str:
+    def _run(self, data: bytes,user_managed_compose=False) -> str:
         self.sample = LongBytes(data)
         headers = {"Accept": "application/tei+xml", "Content-Type": "application/pdf"}
         files = {'file': ('input.pdf', io.BytesIO(data), 'application/pdf')}
-
-        response = requests.post(SCIENCEBEAM_URL, files=files, headers=headers)
-        if response.status_code == 200:
-            return response.content
-        else:
-            response.raise_for_status()
+        for attempt in range(5):
+            try:
+                if not user_managed_compose:
+                    time.sleep(10)
+                response = requests.post(SCIENCEBEAM_URL, files=files, headers=headers)
+            except requests.exceptions.RequestException as e:
+                print(f"Attempt {attempt + 1} for parsing the file failed. This can happen while the container is starting up. Retrying in 5 seconds.")
+                continue
+            if response.status_code == 200:
+                return response.content
+            else:
+                response.raise_for_status()

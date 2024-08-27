@@ -93,7 +93,7 @@ def main():
                 ),
             ),
         )
-        pipeline.run()
+        pipeline.run(user_managed_compose=args.user_managed_compose)
     finally:
         if not args.user_managed_compose:
             compose_down()
