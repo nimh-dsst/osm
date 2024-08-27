@@ -26,6 +26,10 @@ def rtransparent_pub_data_processing(row):
     return row
 
 
+def theneuro_data_processing(row):
+    return row
+
+
 def types_mapper(pa_type):
     if pa.types.is_int64(pa_type):
         # Map pyarrow int64 to pandas Int64 (nullable integer)
