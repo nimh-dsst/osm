@@ -206,3 +206,15 @@ class RtransparentMetrics(EmbeddedModel):
     )
     def serialize_longstr(self, value: Optional[LongStr]) -> Optional[str]:
         return value.get_value() if value else None
+
+
+class ManualAnnotationNIMHDSST(EmbeddedModel):
+    pmid: Optional[int]
+    DOI: Optional[str]
+    Alternative_link: Optional[str]
+    rtransparent_is_open_data: Optional[bool]
+    rtransparent_open_data_statements: Optional[str]
+    manual_is_open_data: Optional[bool]
+    manual_data_statements: Optional[str]
+    Notes: Optional[LongStr]
+    PMID_raw: Optional[int]
