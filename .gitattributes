@@ -6,4 +6,3 @@
 
 # Enable binary delta compression for PNG files
 *.png -delta
-

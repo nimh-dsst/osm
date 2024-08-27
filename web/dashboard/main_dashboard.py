@@ -32,12 +32,22 @@ extraction_tools_params = {
             "funder",
             "data_tags",
         ],
+        "labels": {
+            "None": "None",
+            "journal": "Journal",
+            "affiliation_country": "Country",
+            "funder": "Funder",
+            "data_tags": "Tags",
+        },
     }
 }
 
 dims_aggregations = {
-    "is_open_data": ["percent", "count_true"],
-    "is_open_code": ["percent", "count_true"],
+    "is_open_data": ["percent", "count_true", "count"],
+    "is_open_code": [
+        "percent",
+        "count_true",
+    ],
     # "score": ["mean"],
     # "eigenfactor_score": ["mean"],
 }
@@ -47,6 +57,7 @@ metrics_titles = {
     "percent_is_open_code": "Code Sharing (%)",
     "count_true_is_open_data": "Data Sharing",
     "count_true_is_open_code": "Code Sharing",
+    "count_is_open_data": "Total number of publications",
     "mean_score": "Mean Score",
     "mean_eigenfactor_score": "Mean Eigenfactor Score",
 }
@@ -156,6 +167,16 @@ class MainDashboard(param.Parameterized):
         # DEBUG
         self.echarts_update_button.on_click(self.did_click_update_echart_plot)
 
+    def splitting_var_label(self, splitting_var):
+        return extraction_tools_params[self.extraction_tool]["labels"][splitting_var]
+
+    def splitting_var_from_label(self, label):
+        return [
+            k
+            for k, v in extraction_tools_params[self.extraction_tool]["labels"].items()
+            if v == label
+        ][0]
+
     @pn.depends("extraction_tool", watch=True)
     def did_change_extraction_tool(self):
         print("DID_CHANGE_EXTRACTION_TOOL")
@@ -180,7 +201,9 @@ class MainDashboard(param.Parameterized):
         new_extraction_tools_splitting_vars = extraction_tools_params[
             self.extraction_tool
         ]["splitting_vars"]
-        self.param.splitting_var.objects = new_extraction_tools_splitting_vars
+        self.param.splitting_var.objects = [
+            self.splitting_var_label(v) for v in new_extraction_tools_splitting_vars
+        ]
 
         # Update the filters
         ## filter_pubdate
@@ -201,7 +224,7 @@ class MainDashboard(param.Parameterized):
 
         ## affiliation country
         countries_with_count = self.get_col_values_with_count(
-            "affiliation_country", lambda x: x is None
+            "affiliation_country", lambda x: len(x) == 0 or len(x) == 1 and x[0] == ""
         )
 
         def country_sorter(c):
@@ -225,7 +248,7 @@ class MainDashboard(param.Parameterized):
 
         ## Tags
         tags_with_count = self.get_col_values_with_count(
-            "data_tags", lambda x: x is None
+            "data_tags", lambda x: len(x) == 0 or len(x) == 1 and x[0] == ""
         )
 
         def tags_sorter(c):
@@ -258,8 +281,10 @@ class MainDashboard(param.Parameterized):
         # already set the echarts pane as loading for a better UX
         self.echarts_pane.loading = True
 
+        splitting_var = self.splitting_var_from_label(self.splitting_var)
+
         notif_msg = None
-        if self.splitting_var == "journal":
+        if splitting_var == "journal":
             # We want to show all journals, but pre-select only the top 10
             selected_journals = list(
                 self.raw_data.query("journal != 'None'")
@@ -271,10 +296,11 @@ class MainDashboard(param.Parameterized):
         else:
             selected_journals = self.param.filter_journal.objects
 
-        if self.splitting_var == "affiliation_country":
+        if splitting_var == "affiliation_country":
             # We want to show all countries, but pre-select only the top 10
             countries_with_count = self.get_col_values_with_count(
-                "affiliation_country", lambda x: x is None
+                "affiliation_country",
+                lambda x: len(x) == 0 or len(x) == 1 and x[0] == "",
             )
 
             # pre-filter the countries because there are a lot
@@ -302,7 +328,7 @@ class MainDashboard(param.Parameterized):
         else:
             selected_countries = self.param.filter_affiliation_country.objects
 
-        if self.splitting_var == "funder":
+        if splitting_var == "funder":
             # We want to show all funders, but pre-select only the top 10
             funders_with_count = self.get_col_values_with_count(
                 "funder", lambda x: len(x) == 0 or len(x) == 1 and x[0] == ""
@@ -346,7 +372,7 @@ class MainDashboard(param.Parameterized):
             trigger_rendering=self.trigger_rendering + 1,
         )
 
-        if self.splitting_var == "None":
+        if splitting_var == "None":
             notif_msg = "No more splitting. Filters reset to default"
 
         if notif_msg is not None:
@@ -411,7 +437,7 @@ class MainDashboard(param.Parameterized):
 
         groupers = ["year"]
         if self.splitting_var != "None":
-            groupers.append(self.splitting_var)
+            groupers.append(self.splitting_var_from_label(self.splitting_var))
 
         result = filtered_df.groupby(groupers).agg(**aggretations).reset_index()
 
@@ -465,26 +491,28 @@ class MainDashboard(param.Parameterized):
             series = []
             legend_data = []
 
-            if self.splitting_var == "affiliation_country":
+            splitting_var = self.splitting_var_from_label(self.splitting_var)
+
+            if splitting_var == "affiliation_country":
                 splitting_var_filter = self.filter_affiliation_country
                 splitting_var_column = "affiliation_country"
-                splitting_var_query = lambda cell, selected_item: selected_item in cell
+                splitting_var_query = lambda cell, selected_item: selected_item in cell  # noqa: E731
 
-            elif self.splitting_var == "funder":
+            elif splitting_var == "funder":
                 splitting_var_filter = self.filter_funder
                 splitting_var_column = "funder"
-                splitting_var_query = lambda cell, selected_item: selected_item in cell
+                splitting_var_query = lambda cell, selected_item: selected_item in cell  # noqa: E731
 
-            elif self.splitting_var == "data_tags":
+            elif splitting_var == "data_tags":
                 splitting_var_filter = self.filter_tags
                 splitting_var_column = "data_tags"
-                splitting_var_query = lambda cell, selected_item: selected_item in cell
+                splitting_var_query = lambda cell, selected_item: selected_item in cell  # noqa: E731
 
             else:
                 print("Defaulting to splitting var 'journal' ")
                 splitting_var_filter = self.filter_journal
                 splitting_var_column = "journal"
-                splitting_var_query = lambda cell, selected_item: cell == selected_item
+                splitting_var_query = lambda cell, selected_item: cell == selected_item  # noqa: E731
 
             last_year_values = {}
             for selected_item in sorted(splitting_var_filter):
@@ -497,9 +525,10 @@ class MainDashboard(param.Parameterized):
                 ]
 
                 if len(sub_df) > 0:
+                    aggregation = "mean" if "percent" in raw_metric else "sum"
                     sub_df = (
                         sub_df.groupby("year")
-                        .agg({raw_metric: "mean"})  # todo fix this
+                        .agg({raw_metric: aggregation})
                         .reset_index()
                     )
 
@@ -514,7 +543,7 @@ class MainDashboard(param.Parameterized):
                             "name": selected_item,
                             "type": "line",
                             "data": sub_df[raw_metric].tolist(),
-                            # Shows a label at the end of the line.
+                            # Shows a label at the end of the plotted line.
                             # Labels end up overlapping in some cases.
                             # To fix this, we would need to change the offset of the label
                             # with values calculated to avoid overlapping.
@@ -559,6 +588,7 @@ class MainDashboard(param.Parameterized):
             "tooltip": {
                 "show": True,
                 "trigger": "axis",
+                "order": "valueDesc",
                 # "formatter": f"""<b>{self.splitting_var}</b> : {{b0}} <br />
                 #                 {{a0}} : {{c0}} <br />
                 #                 {{a1}} : {{c1}} """,
@@ -591,7 +621,9 @@ class MainDashboard(param.Parameterized):
                     "fontFamily": "Roboto",
                     "fontSize": "20",
                 },
-                "axisLabel": {"formatter": "{value}%"},
+                "axisLabel": {
+                    "formatter": "{value}%" if "percent" in raw_metric else "{value}"
+                },
             },
             "series": series,
         }
