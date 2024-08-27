@@ -1,13 +1,18 @@
+import json
 from datetime import datetime
 from functools import lru_cache
 
+import colorcet as cc
 import pandas as pd
 import panel as pn
 import param
 from components.select_picker import SelectPicker
-from ui import divider
+from ui import MAIN_COLOR, divider
 
-pn.extension("echarts")
+pn.extension(
+    "echarts",
+    "codeeditor",
+)
 
 pd.options.display.max_columns = None
 
@@ -90,8 +95,21 @@ class MainDashboard(param.Parameterized):
 
     # UI elements
     echarts_pane = pn.pane.ECharts(
-        {}, height=640, width=960, renderer="svg", options={"replaceMerge": ["series"]}
+        {}, height=640, width=1200, renderer="svg", options={"replaceMerge": ["series"]}
     )
+
+    # DEBUG
+    # This is a code editor to update the ECharts config and render the plot from the browser
+    # without having to restart the server.
+
+    # Switch this to True to enable it.
+    debug = False
+
+    echarts_config_editor = pn.widgets.CodeEditor(
+        value="", sizing_mode="stretch_width", language="javascript", height=800
+    )
+    echarts_update_button = pn.widgets.Button(name="Update ECharts")
+    echarts_config = param.Dict(default={})
 
     def __init__(self, datasets, **params):
         super().__init__(**params)
@@ -134,6 +152,9 @@ class MainDashboard(param.Parameterized):
         )
 
         self.build_pubdate_filter()
+
+        # DEBUG
+        self.echarts_update_button.on_click(self.did_click_update_echart_plot)
 
     @pn.depends("extraction_tool", watch=True)
     def did_change_extraction_tool(self):
@@ -437,6 +458,7 @@ class MainDashboard(param.Parameterized):
             legend_data = [
                 {"name": self.metrics, "icon": "path://M 0 0 H 20 V 20 H 0 Z"},
             ]
+            colormap = [MAIN_COLOR]
         else:
             title = f"{self.metrics} by {self.splitting_var} ({int(self.filter_pubdate[0])}-{int(self.filter_pubdate[1])})"
 
@@ -464,6 +486,7 @@ class MainDashboard(param.Parameterized):
                 splitting_var_column = "journal"
                 splitting_var_query = lambda cell, selected_item: cell == selected_item
 
+            last_year_values = {}
             for selected_item in sorted(splitting_var_filter):
                 # sub_df = df.query(f"{splitting_var_column} == '{selected_item}'")
 
@@ -480,21 +503,58 @@ class MainDashboard(param.Parameterized):
                         .reset_index()
                     )
 
+                    value_last_year = sub_df[sub_df.year == sub_df.year.max()][
+                        raw_metric
+                    ].values[0]
+                    last_year_values[selected_item] = value_last_year
+
                     series.append(
                         {
                             "id": selected_item,
                             "name": selected_item,
                             "type": "line",
                             "data": sub_df[raw_metric].tolist(),
+                            # Shows a label at the end of the line.
+                            # Labels end up overlapping in some cases.
+                            # To fix this, we would need to change the offset of the label
+                            # with values calculated to avoid overlapping.
+                            # https://echarts.apache.org/en/option.html#series-line.endLabel.offset
+                            # "endLabel":{
+                            #     "formatter":selected_item,
+                            #     "show":True,
+                            # }
                         }
                     )
                     legend_data.append(
                         {"name": selected_item, "icon": "path://M 0 0 H 20 V 20 H 0 Z"}
                     )
 
+            # Sort the legend series by decreasing order of the last year value
+            legend_data.sort(
+                key=lambda x: last_year_values.get(x["name"], 0), reverse=True
+            )
+
+            colormap = cc.glasbey_light
+
+        # Hack for the tooltip.
+        # The tooltip shows values with 15 decimals, which is not very useful.
+        # We could use the formatter option of the tooltip, but it requires a bit of
+        # time to get the same good-looking result.
+        # So for the sake of delivering fast, I just round the values to 2 decimals.
+        for serie in series:
+            serie["data"] = [round(v, 2) for v in serie["data"]]
+
+        # Default colormap is :
+        # ["#5470c6", "#91cc75", "#fac858", "#ee6666", "#73c0de", "#3ba272", "#fc8452", "#9a60b4", "#ea7ccc"]
+        # https://echarts.apache.org/en/option.html#color
+
         echarts_config = {
+            "color": colormap,
             "title": {
                 "text": title,
+            },
+            "grid": {
+                "width": "800",
             },
             "tooltip": {
                 "show": True,
@@ -505,27 +565,52 @@ class MainDashboard(param.Parameterized):
             },
             "legend": {
                 "data": legend_data,
+                "type": "scroll",
                 "orient": "vertical",
-                "right": 10,
-                "top": 20,
-                "bottom": 20,
                 "show": True,
+                "right": "0",
+                "textStyle": {"width": "250", "overflow": "break"},
             },
             "xAxis": {
                 "data": xAxis,
                 "name": "year",
                 "nameLocation": "center",
-                "nameGap": 30,
+                "nameGap": 40,
+                "nameTextStyle": {
+                    "fontWeight": "bold",
+                    "fontFamily": "Roboto",
+                    "fontSize": "20",
+                },
             },
             "yAxis": {
-                "name": "percent",
+                "name": self.metrics,
                 "nameLocation": "center",
-                "nameGap": 30,
+                "nameGap": 80,
+                "nameTextStyle": {
+                    "fontWeight": "bold",
+                    "fontFamily": "Roboto",
+                    "fontSize": "20",
+                },
+                "axisLabel": {"formatter": "{value}%"},
             },
             "series": series,
         }
 
-        self.echarts_pane.object = echarts_config
+        self.echarts_config = echarts_config
+        self.echarts_config_editor.value = json.dumps(
+            self.echarts_config, indent=4, sort_keys=True
+        )
+
+    @pn.depends("echarts_config", watch=True)
+    def echarts_config_updated(self):
+        self.echarts_pane.object = self.echarts_config
+        self.echarts_pane.loading = False
+
+    def did_click_update_echart_plot(self, event):
+        print("DID_CLICK_UPDATE_ECHART_PLOT")
+        self.echarts_pane.loading = True
+        self.echarts_config = json.loads(self.echarts_config_editor.value)
+        self.echarts_pane.object = self.echarts_config
         self.echarts_pane.loading = False
 
     # Below are all the functions returning the different parts of the dashboard :
@@ -689,12 +774,19 @@ class MainDashboard(param.Parameterized):
     def get_dashboard(self):
         print("GET_DASHBOARD")
 
-        # Layout the dashboard
-        dashboard = pn.Column(
+        items = [
             self.get_top_bar(),
             divider(),
             self.echarts_pane,
             # self.get_intro_block(),
+        ]
+
+        if self.debug:
+            items += [divider(), self.echarts_update_button, self.echarts_config_editor]
+
+        # Layout the dashboard
+        dashboard = pn.Column(
+            *items,
             css_classes=["dashboard-column"],
         )
 
