@@ -1,11 +1,11 @@
 import argparse
+import datetime
 import logging
 import os
-import shlex
-import subprocess
 import time
 import types
 from pathlib import Path
+from time import sleep
 
 import pandas as pd
 import requests
@@ -47,6 +47,12 @@ def _get_text_dir(output_dir: Path = DEFAULT_OUTPUT_DIR) -> Path:
     return text_dir
 
 
+def _get_logs_dir(output_dir: Path = DEFAULT_OUTPUT_DIR) -> Path:
+    logs_dir = Path(output_dir) / "logs"
+    logs_dir.mkdir(parents=True, exist_ok=True)
+    return logs_dir
+
+
 def _existing_file(path_string):
     path = Path(path_string)
     if not path.exists():
@@ -59,6 +65,10 @@ def get_compute_context_id():
 
 
 def wait_for_containers():
+    """
+    A hack for now, on Apple Silicon, the parser container fails. Ideally we
+    would just use the wait kwargs for docker compose up
+    """
     while True:
         try:
             response = requests.get("http://localhost:8071/health")
@@ -71,19 +81,24 @@ def wait_for_containers():
 
 
 def compose_up():
-    cmd = shlex.split("docker compose up -d --build")
-    subprocess.run(
-        cmd,
-        check=True,
-    )
+    from python_on_whales import docker
+
+    logger.info("Waiting for containers to be ready...")
+    print("Waiting for containers to be ready...")
+    docker.compose.up(detach=True, wait=True)
+    print("Containers ready!")
+    sleep(5)
 
 
 def compose_down():
-    cmd = shlex.split("docker compose down")
-    subprocess.run(
-        cmd,
-        check=True,
+    from python_on_whales import docker
+
+    docker_log = _get_logs_dir() / (
+        datetime.datetime.now().strftime("docker_log_%Y%m%d_%H%M%S.txt")
     )
+    docker_log.write_text(docker.compose.logs())
+    docker.compose.down()
+    print(f"Logs of docker containers are saved at {docker_log}")
 
 
 def _setup(args):
@@ -104,17 +119,15 @@ def _setup(args):
     metrics_path = _get_metrics_dir() / f"{args.uid}.json"
     if metrics_path.exists():
         raise FileExistsError(metrics_path)
+    # create logs directory if necessary
+    _ = _get_logs_dir()
     if not args.user_managed_compose:
         compose_up()
-
-    logger.info("Waiting for containers to be ready...")
-    print("Waiting for containers to be ready...")
-    wait_for_containers()
-    print("Containers ready!")
     return xml_path, metrics_path
 
 
 def coerce_to_string(v):
+    "Can be useful for schemas with permissive string fields"
     if isinstance(v, (int, float, bool)):
         return str(v)
     elif isinstance(v, types.NoneType):

@@ -28,9 +28,14 @@ osm -f path/to/pdf-or-xml2 -u uuid2 --user-managed-compose
 
 # Contributing
 
-N.B. On Apple silicon you must use emulation i.e. `export DOCKER_DEFAULT_PLATFORM=linux/amd64`
+N.B. On Apple silicon you must use emulation and download the mongo container in advance:
 
-If you wish to contribute to this project you can set up a development environment with the following:
+```
+export DOCKER_DEFAULT_PLATFORM=linux/amd64
+docker pull mongo:4.4.6
+```
+
+To contribute to the project please run the following commands to set up a development environment:
 
 ```
 pip install -e .

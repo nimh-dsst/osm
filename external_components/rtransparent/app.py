@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 import psutil
 import rpy2.robjects as ro
-from fastapi import FastAPI, HTTPException, Query, Request, status
+from fastapi import FastAPI, File, HTTPException, Query, UploadFile, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from rpy2.robjects import pandas2ri
@@ -51,15 +51,14 @@ def rtransparent_metric_extraction(
     future = importr("future")
     future.plan(future.multisession, workers=workers)
 
-    # Write the XML content to a temporary file
     with tempfile.NamedTemporaryFile(delete=False, suffix=".xml") as temp_xml_file:
         temp_xml_file.write(xml_content)
         temp_xml_file_path = temp_xml_file.name
-    if parser == "pmc":
+    if parser == "PMCParser":
+        # XML files from pubmedcentral can have extra metadata exracted
         df = extract_from_pmc_xml(temp_xml_file_path, rtransparent)
     else:
         df = extract_from_xml(temp_xml_file_path, rtransparent)
-    # Clean up the temporary file
     temp_xml_file.close()
     Path(temp_xml_file_path).unlink()
     return df
@@ -81,7 +80,11 @@ def extract_from_xml(temp_xml_file_path, rtransparent):
 
 def extract_from_pmc_xml(temp_xml_file_path, rtransparent):
     raise NotImplementedError(
-        "Not all XML files provided at pubmedcentral include the datasharing statements."
+        """
+        Not all XML files provided at pubmedcentral include the datasharing
+        statements so this is a not a priority. The data returned contains R Na
+        types which need to be converted to an appropriate python type.
+        """
     )
     # dfs = {}
     # with (ro.default_converter + pandas2ri.converter).context():
@@ -105,24 +108,17 @@ def extract_from_pmc_xml(temp_xml_file_path, rtransparent):
 
 
 @app.post("/extract-metrics/")
-async def extract_metrics(request: Request, parser: str = Query("other")):
+async def extract_metrics(file: UploadFile = File(...), parser: str = Query("other")):
     try:
-        # Attempt to read the XML content from the request body
-        xml_content = await request.body()
+        xml_content = await file.read()
         if not xml_content:
             raise NotImplementedError(
                 """For now the XML content must be provided. Check the output of
                 the parsing stage."""
             )
-
         metrics_df = rtransparent_metric_extraction(xml_content, parser)
-
-        # Log the extracted metrics
-        logger.info(metrics_df)
-
-        # Return the first row as a JSON response
+        logger.info(metrics_df.info())
         return JSONResponse(content=metrics_df.iloc[0].to_dict(), status_code=200)
 
     except Exception as e:
-        # Handle exceptions and return a 500 Internal Server Error
         raise HTTPException(status_code=500, detail=str(e))

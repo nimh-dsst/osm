@@ -10,7 +10,7 @@ services:
   web_api:
     container_name: web_api
     environment:
-      - MONGODB_URI=mongodb://db:27017/test
+      - MONGODB_URI=mongodb://db:27017/osm
     build:
       context: .
       dockerfile: ./web/api/Dockerfile
@@ -30,7 +30,7 @@ services:
       context: .
       dockerfile: ./web/dashboard/Dockerfile
     environment:
-      - MONGODB_URI=mongodb://db:27017/test
+      - MONGODB_URI=mongodb://db:27017/osm
     working_dir: /app
     ports:
       - "8501:8501"
@@ -45,4 +45,4 @@ services:
     ports:
       - 27017:27017
     environment:
-      - MONGO_INITDB_DATABASE=test
+      - MONGO_INITDB_DATABASE=osm
