@@ -80,7 +80,7 @@ class OSMSaver(Component):
             metrics: Schema conformant metrics.
             components: parsers, extractors, and savers that constitute the pipeline.
         """
-        osm_api = os.environ.get("OSM_API", "https://osm.pythonaisolutions.com/api")
+        osm_api = os.environ.get("OSM_API", "https://opensciencemetrics.org/api")
         print(f"Using OSM API: {osm_api}")
         # Build the payload
         try:

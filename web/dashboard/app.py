@@ -126,7 +126,7 @@ class OSMApp(param.Parameterized):
             profiler="pyinstrument",
             allow_websocket_origin=[
                 "localhost:8501",
-                "osm.pythonaisolutions.com",
+                "opensciencemetrics.org",
             ],
             static_dirs={
                 dir: str(Path(__file__).parent / dir)
