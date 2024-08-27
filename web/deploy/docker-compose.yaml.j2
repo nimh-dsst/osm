@@ -11,7 +11,7 @@ services:
         labels:
             - traefik.enable=true
             - traefik.docker.network=osm_traefik-public
-            - traefik.http.routers.osm_web_api.rule=Host(`osm.pythonaisolutions.com`) && PathPrefix(`/api`)
+            - traefik.http.routers.osm_web_api.rule=Host(`opensciencemetrics.org`) && PathPrefix(`/api`)
             - "traefik.http.routers.osm_web_api.entrypoints=web,websecure"
             - traefik.http.services.osm_web_api.loadbalancer.server.port=80
             # use the "le" (Let's Encrypt) resolver to get Let's Encrypt certificates
@@ -29,7 +29,7 @@ services:
         labels:
             - traefik.enable=true
             - traefik.docker.network=osm_traefik-public
-            - traefik.http.routers.dashboard.rule=Host(`osm.pythonaisolutions.com`)
+            - traefik.http.routers.dashboard.rule=Host(`opensciencemetrics.org`)
             - traefik.http.routers.dashboard.entrypoints=web,websecure
             # use the "le" (Let's Encrypt) resolver to get Let's Encrypt certificates
             - traefik.http.routers.dashboard.tls=true
