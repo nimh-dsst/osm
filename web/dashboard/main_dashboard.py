@@ -109,6 +109,12 @@ class MainDashboard(param.Parameterized):
         {}, height=640, width=1200, renderer="svg", options={"replaceMerge": ["series"]}
     )
 
+    # set up in the init method
+    journal_select_picker = None
+    affiliation_country_select_picker = None
+    funder_select_picker = None
+    tags_select_picker = None
+
     # DEBUG
     # This is a code editor to update the ECharts config and render the plot from the browser
     # without having to restart the server.
@@ -372,6 +378,13 @@ class MainDashboard(param.Parameterized):
             trigger_rendering=self.trigger_rendering + 1,
         )
 
+        # Hack to force re-rendering the select pickers
+        if self.affiliation_country_select_picker is not None:
+            self.journal_select_picker.trigger_rendering += 1
+            self.affiliation_country_select_picker.trigger_rendering += 1
+            self.funder_select_picker.trigger_rendering += 1
+            self.tags_select_picker.trigger_rendering += 1
+
         if splitting_var == "None":
             notif_msg = "No more splitting. Filters reset to default"
 
@@ -407,6 +420,7 @@ class MainDashboard(param.Parameterized):
             filtered_df = filtered_df[
                 filtered_df.affiliation_country.apply(country_filter)
             ]
+            print("FILTERED_GROUPED_DATA_COUNTRY", len(filtered_df))
 
         if len(filtered_df) > 0 and len(self.filter_funder) != len(
             self.param.filter_funder.objects

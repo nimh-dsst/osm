@@ -14,6 +14,8 @@ class SelectPicker(ReactiveHTML, Widget):
 
     filter_str = param.String(default="")
 
+    trigger_rendering = param.Integer(default=0)
+
     update_title_callback = None
 
     _child_config = {"options": "model"}
@@ -28,7 +30,7 @@ class SelectPicker(ReactiveHTML, Widget):
         result.value_did_change()
         return result
 
-    def update_filtereted_options(self):
+    def update_filtered_options(self):
         self.filtered_options = [
             opt
             for opt in self.options
@@ -39,7 +41,7 @@ class SelectPicker(ReactiveHTML, Widget):
     def options_did_change(self):
         # print("options_did_change", self.options)
         self.value = [v for v in self.value if v in self.options]
-        self.update_filtereted_options()
+        self.update_filtered_options()
 
     @param.depends("value", watch=True, on_init=True)
     def value_did_change(self):
@@ -50,7 +52,7 @@ class SelectPicker(ReactiveHTML, Widget):
     @param.depends("filter_str", watch=True, on_init=True)
     def filter_str_did_change(self):
         # print("filter_str_did_change", self.filter_str)
-        self.update_filtereted_options()
+        self.update_filtered_options()
 
     @param.depends("filtered_options", watch=True, on_init=True)
     def filtered_options_did_change(self):
@@ -126,12 +128,12 @@ class SelectPicker(ReactiveHTML, Widget):
             font-size: var(--type-ramp-base-font-size);
             padding-left: 12px;
             width:auto;
-            height:33px
+            height:40px
         }
 
 
         div.sp_header p {
-            margin-top: 6px;
+            margin-top: 9px;
             margin-right:18px;
         }
 
@@ -306,6 +308,7 @@ class SelectPicker(ReactiveHTML, Widget):
         + """
 
     <div id="sp_container" class="sp_container">
+        <div id="trigger_rendering" style="display:none;" class="${trigger_rendering}">${trigger_rendering}</div>
 
         <div id="sp_header"  onclick="${script('toggle_list')}" class="sp_header" tabindex="100">
             <p>${title}</p>
@@ -460,16 +463,28 @@ class SelectPicker(ReactiveHTML, Widget):
 
         """,
         "render": """
-            console.log("render");
+
             /*
-            console.log("data", data);
-            console.log("model", model);
-            console.log("state", state);
-            console.log("view", view);
-            console.log("checkboxes_container", checkboxes_container);
-            console.log("sp_options_list_container", sp_options_list_container);
+                In some cases the render is called before the data is updated.
+                So we need to wait a bit before rendering.
             */
-            self.rebuild_checkboxes();
+
+            setTimeout(function() {
+                console.log("render");
+                /*
+                console.log("data", data);
+                console.log("data", data.value);
+                console.log("data", data.trigger_rendering);
+                console.log("model", model);
+                console.log("state", state);
+                console.log("view", view);
+                console.log("checkboxes_container", checkboxes_container);
+                console.log("sp_options_list_container", sp_options_list_container);
+                */
+                self.rebuild_checkboxes();
+                self.update_select_all_checkbox()
+            }, 250);
+
             self.update_select_all_checkbox()
 
             var isPointerEventInsideElement = function (event, element) {
