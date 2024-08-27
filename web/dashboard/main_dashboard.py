@@ -496,23 +496,23 @@ class MainDashboard(param.Parameterized):
             if splitting_var == "affiliation_country":
                 splitting_var_filter = self.filter_affiliation_country
                 splitting_var_column = "affiliation_country"
-                splitting_var_query = lambda cell, selected_item: selected_item in cell
+                splitting_var_query = lambda cell, selected_item: selected_item in cell  # noqa: E731
 
             elif splitting_var == "funder":
                 splitting_var_filter = self.filter_funder
                 splitting_var_column = "funder"
-                splitting_var_query = lambda cell, selected_item: selected_item in cell
+                splitting_var_query = lambda cell, selected_item: selected_item in cell  # noqa: E731
 
             elif splitting_var == "data_tags":
                 splitting_var_filter = self.filter_tags
                 splitting_var_column = "data_tags"
-                splitting_var_query = lambda cell, selected_item: selected_item in cell
+                splitting_var_query = lambda cell, selected_item: selected_item in cell  # noqa: E731
 
             else:
                 print("Defaulting to splitting var 'journal' ")
                 splitting_var_filter = self.filter_journal
                 splitting_var_column = "journal"
-                splitting_var_query = lambda cell, selected_item: cell == selected_item
+                splitting_var_query = lambda cell, selected_item: cell == selected_item  # noqa: E731
 
             last_year_values = {}
             for selected_item in sorted(splitting_var_filter):
