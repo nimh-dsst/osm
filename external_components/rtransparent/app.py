@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 import psutil
 import rpy2.robjects as ro
-from fastapi import FastAPI, HTTPException, Query, Request, status
+from fastapi import FastAPI, File, HTTPException, Query, UploadFile, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from rpy2.robjects import pandas2ri
@@ -110,16 +110,18 @@ def extract_from_pmc_xml(temp_xml_file_path, rtransparent):
 
 
 @app.post("/extract-metrics/")
-async def extract_metrics(request: Request, parser: str = Query("other")):
+async def extract_metrics(file: UploadFile = File(...), parser: str = Query("other")):
     try:
-        # Attempt to read the XML content from the request body
-        xml_content = await request.body()
+        # Read the uploaded XML file content
+        xml_content = await file.read()
+
         if not xml_content:
             raise NotImplementedError(
                 """For now the XML content must be provided. Check the output of
                 the parsing stage."""
             )
 
+        # Assuming `rtransparent_metric_extraction` processes the XML content
         metrics_df = rtransparent_metric_extraction(xml_content, parser)
 
         # Log the extracted metrics

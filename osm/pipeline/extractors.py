@@ -1,3 +1,4 @@
+import io
 import logging
 
 import requests
@@ -12,18 +13,22 @@ logger = logging.getLogger(__name__)
 class RTransparentExtractor(Component):
     def _run(self, data: bytes, parser: str = None) -> dict:
         self.sample = LongBytes(data)
-        headers = {"Content-Type": "application/octet-stream"}
+
+        # Prepare the file to be sent as a part of form data
+        files = {"file": ("input.xml", io.BytesIO(data), "application/xml")}
+
+        # Send the request with the file
         response = requests.post(
             "http://localhost:8071/extract-metrics",
-            data=data,
-            headers=headers,
+            files=files,
             params={"parser": parser},
         )
+
         if response.status_code == 200:
             metrics = response.json()
             # pmid only exists when input filename is correct
-            metrics.pop("pmid")
-            #  replace bizarre sentinel value
+            metrics.pop("pmid", None)  # Use .pop() with a default to avoid KeyError
+            # Replace NA value
             for k, v in metrics.items():
                 if v == -2147483648:
                     metrics[k] = None
