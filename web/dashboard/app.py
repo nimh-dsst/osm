@@ -41,8 +41,13 @@ def load_data():
 
     # necessary conversion to tuples, which is hashable type
     # needed for grouping
-    for col in ["affiliation_country", "funder", "data_tags"]:
+    for col in ["funder", "data_tags"]:
         raw_data[col] = raw_data[col].apply(lambda x: tuple(x))
+
+    # convert to tuple, remove duplicates and remove leading and trailing spaces in countries names
+    raw_data["affiliation_country"] = raw_data["affiliation_country"].apply(
+        lambda x: tuple(set([v.strip() for v in x]))
+    )
 
     return raw_data
 
