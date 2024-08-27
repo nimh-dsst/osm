@@ -5,7 +5,6 @@ import os
 import time
 import types
 from pathlib import Path
-from time import sleep
 
 import pandas as pd
 import requests

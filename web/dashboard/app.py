@@ -40,14 +40,21 @@ def load_data():
     raw_data = raw_data[raw_data.year >= 2000]
 
     # necessary conversion to tuples, which is hashable type
-    # needed for grouping
-    for col in ["funder", "data_tags"]:
-        raw_data[col] = raw_data[col].apply(lambda x: tuple(x))
+    # needed for grouping.
+    # Also removes duplicates and removes leading and trailing spaces in values.
+    # Also replaces empty lists with ("None", ) to simplify the filtering and grouping in the dashboard
+    for col in ["funder", "affiliation_country", "data_tags"]:
+        raw_data[col] = raw_data[col].apply(
+            lambda x: ("None",)
+            if (len(x) == 0 or len(x) == 1 and x[0] == "")
+            else tuple(set([v.strip() for v in x]))
+        )
 
-    # convert to tuple, remove duplicates and remove leading and trailing spaces in countries names
-    raw_data["affiliation_country"] = raw_data["affiliation_country"].apply(
-        lambda x: tuple(set([v.strip() for v in x]))
-    )
+    # Filter out some distracting weird data
+    raw_data = raw_data[
+        raw_data["journal"]
+        != "Acta Crystallographica Section E: Structure Reports Online"
+    ]
 
     return raw_data
 
