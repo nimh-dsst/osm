@@ -53,7 +53,7 @@ def get_user_args():
         default="tempdata/funders.feather",
     )
     parser.add_argument(
-        "--metrics-schema",
+        "--schema-name",
         help="Name of the schema class to use in order to validate the data",
         default="RTransparentMetrics",
     )
@@ -87,7 +87,7 @@ def main():
     print("Converting to pyarrow...")
     funder_field = pa.field("funder", pa.list_(pa.string()), nullable=True)
     tb = get_table_with_schema(
-        dataset.assign(funder=None), [funder_field], metrics_schema=args.metrics_schema
+        dataset.assign(funder=None), [funder_field], schema_name=args.schema_name
     )
 
     print("Merging with funders...")
