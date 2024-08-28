@@ -1,5 +1,5 @@
 FROM nimhdsst/osm_base
-RUN pip install colorcet panel
+
 # # Copy the project files and install the package
 COPY web/dashboard/ /app
 CMD ["python", "app.py"]

@@ -4,11 +4,19 @@ WORKDIR /app
 RUN mkdir -p /opt/data
 RUN mkdir -p /opt/osm
 
+# Container install hack with poetry and web dependencies
 RUN pip install poetry fastapi[standard] uvicorn
+
+# LLM stuff
+RUN pip install llama-index llama-index-llms-openai llama-index-program-openai
+
+# Dashboard stuff
+RUN pip install colorcet panel
+
 # Install requirements first in a separate layer to avoid re-installing them on
 # every code changes
 COPY pyproject.toml /opt/osm
-RUN bash -c 'FORCE_OSM_VERSION=0.0.0 pip install -r <(poetry export --without-hashes --format=requirements.txt)'
+RUN bash -c 'FORCE_OSM_VERSION=9.9.9 pip install -r <(poetry export --without-hashes --format=requirements.txt)'
 # Install the package
 COPY osm /opt/osm/osm
-RUN --mount=source=.git,target=/opt/osm/.git,type=bind pip install --no-dependencies -e /opt/osm
+RUN  export SETUPTOOLS_SCM_PRETEND_VERSION_FOR_OSM=9.9.9; pip install --no-dependencies -e /opt/osm
