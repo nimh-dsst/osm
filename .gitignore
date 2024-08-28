@@ -1,4 +1,5 @@
 # Ignore the virtual environment directory
+.git
 _version.py
 dashboard_data
 node_modules
