@@ -38,6 +38,28 @@ class RTransparentExtractor(Component):
             response.raise_for_status()
 
 
+class LLMExtractor(Component):
+    def _run(self, data: bytes, llm_model: str = None) -> dict:
+        self.sample = LongBytes(data)
+
+        # Prepare the file to be sent as a part of form data
+        files = {"file": ("input.xml", io.BytesIO(data), "application/xml")}
+
+        # Send the request with the file
+        response = requests.post(
+            "http://localhost:8072/extract-metrics/",
+            files=files,
+            params={"llm_model": llm_model},
+        )
+
+        if response.status_code == 200:
+            metrics = response.json()
+            return metrics
+        else:
+            logger.error(f"Error: {response.text}")
+            response.raise_for_status()
+
+
 # import psutil
 # # Adjust the logging level for rpy2
 # rpy2_logger = logging.getLogger("rpy2")
