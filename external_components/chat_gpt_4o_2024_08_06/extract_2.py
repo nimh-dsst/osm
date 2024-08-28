@@ -19,6 +19,9 @@ class GPT_4o_2024_08_06(BaseModel):
     Many unavailable identifiers (PMID, PMCID etc) can be found using pubmed: https://pubmed.ncbi.nlm.nih.gov/advanced/
     """
 
+    llm_model: str = Field(
+        description="Exact verion of the llm model used to generate the data (not in publication itself but known by the model) e.g. GPT_4o_2024_08_06"
+    )
     year: int = Field(
         description="Best attempt at extracting the year of the publication",
     )
@@ -33,8 +36,12 @@ class GPT_4o_2024_08_06(BaseModel):
         description="The institutes of the affiliations of the authors",
     )
     doi: str = Field(description="The DOI of the paper")
-    pmid: int = Field(description="The PMID of the paper")
-    pmcid: str = Field(description="The PMCID of the paper")
+    pmid: int = Field(
+        description="The PMID of the paper, use '0' if one cannot be found"
+    )
+    pmcid: str = Field(
+        description="The PMCID of the paper, use '0' if one cannot be found"
+    )
     title: str = Field(description="The title of the paper")
     authors: list[str] = Field(description="The authors of the paper")
     publisher: str = Field(description="The publisher of the paper")
