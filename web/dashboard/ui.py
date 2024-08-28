@@ -23,7 +23,13 @@ CSS_VARS = css(
     },
 )
 
-CSS_GLOBAL = css("#header.shadow", {"box-shadow": "unset"})
+CSS_GLOBAL = "\n".join(
+    [
+        css("#header.shadow", {"box-shadow": "unset"}),
+        css("#sidebar", {"overflow-y": "visible !important"}),
+        css("*", {"font-family": "'Roboto' !important"}),
+    ]
+)
 
 """
 the structure of css_modifiers is as follows:

@@ -12,6 +12,8 @@ class SelectPicker(ReactiveHTML, Widget):
     )
     value = param.List(doc="The actual list of selected values", default=[])
 
+    annotations = param.Dict(default={})
+
     filter_str = param.String(default="")
 
     trigger_rendering = param.Integer(default=0)
@@ -197,7 +199,7 @@ class SelectPicker(ReactiveHTML, Widget):
                         rgba(0, 0, 0, 0.12) 0px 3px 14px 2px;
             position: absolute;
             z-index: 1001;
-            width: 270px;
+            width: 300px;
             top: 30%;
             left: 15%;
         }
@@ -269,6 +271,15 @@ class SelectPicker(ReactiveHTML, Widget):
             text-overflow: ellipsis;
             white-space: nowrap;
             overflow: hidden;
+        }
+
+        .sp_options_list_container label span.label {
+            width: 60%;
+        }
+
+        .sp_options_list_container label span.annotation {
+            width: 25%;
+            text-align:right;
         }
 
         .sp_filter_clear_btn {
@@ -364,16 +375,26 @@ class SelectPicker(ReactiveHTML, Widget):
            """,
         "input_change": """
 
-            /*console.log("input_change", data, model, state, view);
-            console.log(model.checkboxes_list);*/
+            /* console.log("input_change") , data, model, state, view);
+            console.log(model.checkboxes_list); */
 
             let new_value = [];
+            let removed_values = [];
             model.checkboxes_list.forEach((cb, idx) => {
                 if (cb.checked) {
                     new_value.push(cb.value);
+                } else if (!cb.checked && data.value.includes(cb.value)) {
+                    removed_values.push(cb.value);
                 }
             });
-            data.value = new_value;
+
+            if ( filter_text_input.value.length > 0) {
+                /* When a filter is applied ... */
+                data.value = data.value.concat(new_value).filter((v) => !removed_values.includes(v));
+            } else {
+                data.value = new_value;
+            }
+
 
 
             setTimeout(function() {
@@ -446,10 +467,16 @@ class SelectPicker(ReactiveHTML, Widget):
                 lbl.htmlFor = `cb${idx}`;
 
                 let lblspan = document.createElement("span");
+                lblspan.classList.add("label");
                 lblspan.innerHTML = opt;
+
+                let lblannotation = document.createElement("span");
+                lblannotation.classList.add("annotation");
+                lblannotation.innerHTML = data.annotations[opt];
 
                 lbl.appendChild(cb);
                 lbl.appendChild(lblspan);
+                lbl.appendChild(lblannotation);
 
                 checkboxes_container.appendChild(lbl);
                 /* checkboxes_container.appendChild(document.createElement("br"));
