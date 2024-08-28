@@ -140,6 +140,7 @@ class MainDashboard(param.Parameterized):
 
         self.journal_select_picker = SelectPicker.from_param(
             self.param.filter_journal,
+            annotations=self.get_col_values_with_count("journal"),
             update_title_callback=lambda select_picker,
             values,
             options: self.new_picker_title("journals", select_picker, values, options),
@@ -147,6 +148,7 @@ class MainDashboard(param.Parameterized):
 
         self.affiliation_country_select_picker = SelectPicker.from_param(
             self.param.filter_affiliation_country,
+            annotations=self.get_col_values_with_count("affiliation_country"),
             update_title_callback=lambda select_picker,
             values,
             options: self.new_picker_title(
@@ -156,6 +158,7 @@ class MainDashboard(param.Parameterized):
 
         self.funder_select_picker = SelectPicker.from_param(
             self.param.filter_funder,
+            annotations=self.get_col_values_with_count("funder"),
             update_title_callback=lambda select_picker,
             values,
             options: self.new_picker_title("funders", select_picker, values, options),
@@ -163,6 +166,7 @@ class MainDashboard(param.Parameterized):
 
         self.tags_select_picker = SelectPicker.from_param(
             self.param.filter_tags,
+            annotations=self.get_col_values_with_count("data_tags"),
             update_title_callback=lambda select_picker,
             values,
             options: self.new_picker_title("tags", select_picker, values, options),
@@ -229,9 +233,7 @@ class MainDashboard(param.Parameterized):
         self.param.filter_journal.objects = self.raw_data.journal.unique()
 
         ## affiliation country
-        countries_with_count = self.get_col_values_with_count(
-            "affiliation_country", lambda x: "None" in x
-        )
+        countries_with_count = self.get_col_values_with_count("affiliation_country")
 
         def country_sorter(c):
             return countries_with_count[c]
@@ -241,9 +243,7 @@ class MainDashboard(param.Parameterized):
         )
 
         ## funder
-        funders_with_count = self.get_col_values_with_count(
-            "funder", lambda x: "None" in x
-        )
+        funders_with_count = self.get_col_values_with_count("funder")
 
         def funder_sorter(c):
             return funders_with_count[c]
@@ -253,9 +253,7 @@ class MainDashboard(param.Parameterized):
         )
 
         ## Tags
-        tags_with_count = self.get_col_values_with_count(
-            "data_tags", lambda x: "None" in x
-        )
+        tags_with_count = self.get_col_values_with_count("data_tags")
 
         def tags_sorter(c):
             return tags_with_count[c]
@@ -269,7 +267,7 @@ class MainDashboard(param.Parameterized):
         self.splitting_var = self.param.splitting_var.objects[0]
 
     @lru_cache
-    def get_col_values_with_count(self, col, none_test):
+    def get_col_values_with_count(self, col, none_test=lambda row: "None" in row):
         values = {}
         for row in self.raw_data[col].values:
             if none_test(row):
@@ -304,10 +302,7 @@ class MainDashboard(param.Parameterized):
 
         if splitting_var == "affiliation_country":
             # We want to show all countries, but pre-select only the top 10
-            countries_with_count = self.get_col_values_with_count(
-                "affiliation_country",
-                lambda x: "None" in x,
-            )
+            countries_with_count = self.get_col_values_with_count("affiliation_country")
 
             # pre-filter the countries because there are a lot
             countries_with_count = {
@@ -336,9 +331,7 @@ class MainDashboard(param.Parameterized):
 
         if splitting_var == "funder":
             # We want to show all funders, but pre-select only the top 10
-            funders_with_count = self.get_col_values_with_count(
-                "funder", lambda x: "None" in x
-            )
+            funders_with_count = self.get_col_values_with_count("funder")
 
             top_5_min = sorted(
                 [
