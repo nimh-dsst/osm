@@ -9,3 +9,8 @@ services:
     image: nimhdsst/rtransparent:staging
     ports:
       - "8071:8071"
+  llm_extraction:
+    container_name: llm_extraction
+    image: nimhdsst/llm_extraction:staging
+    ports:
+      - "8072:8072"

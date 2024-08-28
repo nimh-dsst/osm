@@ -6,6 +6,14 @@ services:
       dockerfile: ./external_components/rtransparent/Dockerfile
     volumes:
       - ./external_components/rtransparent:/app
+  llm_extraction:
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-NOKEY}
+    build:
+      context: .
+      dockerfile: ./external_components/llm_extraction/Dockerfile
+    volumes:
+      - ./external_components/llm_extraction:/app
 
   web_api:
     container_name: web_api
