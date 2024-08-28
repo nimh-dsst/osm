@@ -1,6 +1,6 @@
 import base64
 import datetime
-from typing import Optional
+from typing import Optional, Union
 
 import pandas as pd
 from odmantic import EmbeddedModel, Field, Model
@@ -9,7 +9,7 @@ from pydantic import EmailStr, field_serializer, field_validator
 from osm._utils import coerce_to_string
 
 from .custom_fields import LongBytes
-from .metrics_schemas import RtransparentMetrics
+from .metrics_schemas import LLMExtractorMetrics, RtransparentMetrics
 
 
 class Component(EmbeddedModel):
@@ -71,7 +71,7 @@ class Invocation(Model):
     """
 
     model_config = {"extra": "forbid"}
-    metrics: RtransparentMetrics
+    metrics: Union[RtransparentMetrics, LLMExtractorMetrics]
     components: Optional[list[Component]] = []
     work: Work
     client: Client

@@ -1,5 +1,6 @@
 # Ignore the virtual environment directory
 _version.py
+dashboard_data
 node_modules
 venv/
 *coverage*

@@ -5,9 +5,10 @@ from llama_index.core import ChatPromptTemplate
 from llama_index.core.llms import LLM, ChatMessage
 from llama_index.llms.openai import OpenAI
 from llama_index.program.openai import OpenAIPydanticProgram
+from pydantic import ValidationError
 
 # from pydantic import BaseModel, Field
-from osm.schemas.metrics_schemas import LLMExtractor
+from osm.schemas.metrics_schemas import LLMExtractorMetrics
 
 LLM_MODELS = {"gpt-4o-2024-08-06": OpenAI(model="gpt-4o-2024-08-06")}
 
@@ -38,7 +39,7 @@ def get_program(llm: LLM) -> OpenAIPydanticProgram:
     )
 
     program = OpenAIPydanticProgram.from_defaults(
-        output_cls=LLMExtractor,
+        output_cls=LLMExtractorMetrics,
         llm=llm,
         prompt=prompt,
         verbose=True,
@@ -46,7 +47,7 @@ def get_program(llm: LLM) -> OpenAIPydanticProgram:
     return program
 
 
-def extract_with_llm(xml_content: bytes, llm: LLM) -> LLMExtractor:
+def extract_with_llm(xml_content: bytes, llm: LLM) -> LLMExtractorMetrics:
     program = get_program(llm=llm)
     return program(xml_content=xml_content, llm_model=llm.model)
 
@@ -58,7 +59,7 @@ def llm_metric_extraction(
     return extract_with_llm(xml_content, LLM_MODELS[llm_model])
 
 
-@app.post("/extract-metrics/", response_model=LLMExtractor)
+@app.post("/extract-metrics/", response_model=LLMExtractorMetrics)
 async def extract_metrics(
     file: UploadFile = File(...), llm_model: str = Query("other")
 ):
@@ -69,7 +70,14 @@ async def extract_metrics(
                 """For now the XML content must be provided. Check the output of
                 the parsing stage."""
             )
-        metrics = llm_metric_extraction(xml_content, llm_model)
+        for ii in range(5):
+            try:
+                metrics = llm_metric_extraction(xml_content, llm_model)
+            except ValidationError as e:
+                # retry if it is just a validation error (the LLM can try harder next time)
+                print("Validation error:", e)
+            break
+
         logger.info(metrics)
         return metrics
 

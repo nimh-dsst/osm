@@ -208,7 +208,7 @@ class RtransparentMetrics(EmbeddedModel):
         return value.get_value() if value else None
 
 
-class LLMExtractor(EmbeddedModel):
+class LLMExtractorMetrics(EmbeddedModel):
     """
     Model for extracting information from scientific publications. These metrics
     are a summary of the publications adherence to transparent or open

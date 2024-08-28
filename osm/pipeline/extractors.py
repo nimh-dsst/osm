@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class RTransparentExtractor(Component):
-    def _run(self, data: bytes, parser: str = None) -> dict:
+    def _run(self, data: bytes, parser: str = None, **kwargs) -> dict:
         self.sample = LongBytes(data)
 
         # Prepare the file to be sent as a part of form data
@@ -39,7 +39,8 @@ class RTransparentExtractor(Component):
 
 
 class LLMExtractor(Component):
-    def _run(self, data: bytes, llm_model: str = None) -> dict:
+    def _run(self, data: bytes, llm_model: str = None, **kwargs) -> dict:
+        llm_model = llm_model or kwargs.get("llm_model", "gpt-4o-2024-08-06")
         self.sample = LongBytes(data)
 
         # Prepare the file to be sent as a part of form data

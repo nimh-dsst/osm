@@ -8,7 +8,7 @@ RUN pip install panel pymongo odmantic pandas pydantic[email] pyarrow
 
 RUN mkdir -p /opt/data
 ENV LOCAL_DATA_PATH=/opt/data/matches.parquet
-COPY ./tempdata/matches.parquet /opt/data/matches.parquet
+COPY ./dashboard_data/matches.parquet /opt/data/matches.parquet
 
 RUN mkdir -p /opt/osm
 COPY pyproject.toml /opt/osm

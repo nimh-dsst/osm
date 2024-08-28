@@ -13,7 +13,7 @@ SCIENCEBEAM_URL = "http://localhost:8070/api/convert"
 class NoopParser(Component):
     """Used if the input is xml and so needs no parsing."""
 
-    def _run(self, data: bytes) -> bytes:
+    def _run(self, data: bytes, **kwargs) -> bytes:
         return data
 
 
@@ -30,7 +30,7 @@ class PMCParser(NoopParser):
 
 
 class ScienceBeamParser(Component):
-    def _run(self, data: bytes, user_managed_compose=False) -> str:
+    def _run(self, data: bytes, user_managed_compose=False, **kwargs) -> str:
         self.sample = LongBytes(data)
         headers = {"Accept": "application/tei+xml", "Content-Type": "application/pdf"}
         files = {"file": ("input.pdf", io.BytesIO(data), "application/pdf")}
