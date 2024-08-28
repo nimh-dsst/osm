@@ -3,6 +3,8 @@ import os
 
 def get_version():
     try:
+        if os.environ.get("FORCE_OSM_VERSION"):
+            return os.environ["FORCE_OSM_VERSION"]
         from . import _version
 
         return _version.version
