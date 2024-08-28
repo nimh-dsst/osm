@@ -140,7 +140,10 @@ class MainDashboard(param.Parameterized):
 
         self.journal_select_picker = SelectPicker.from_param(
             self.param.filter_journal,
-            annotations=self.get_col_values_with_count("journal"),
+            annotations={
+                row[0]: row[1]
+                for row in self.raw_data.journal.value_counts().reset_index().values
+            },
             update_title_callback=lambda select_picker,
             values,
             options: self.new_picker_title("journals", select_picker, values, options),
@@ -230,7 +233,13 @@ class MainDashboard(param.Parameterized):
         self.filter_pubdate = (self.raw_data.year.min(), self.raw_data.year.max())
 
         ## filter_journal
-        self.param.filter_journal.objects = self.raw_data.journal.unique()
+
+        self.param.filter_journal.objects = (
+            self.raw_data.journal.value_counts().index.to_list()
+        )
+        # If we don't want to sort the journals by number of paper,
+        # but by alphabetical order, we can use this instead:
+        # self.param.filter_journal.objects = self.raw_data.journal.unique()
 
         ## affiliation country
         countries_with_count = self.get_col_values_with_count("affiliation_country")
