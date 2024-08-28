@@ -135,7 +135,10 @@ class MainDashboard(param.Parameterized):
 
         # By default, take the first dataset.
         # Currently, there's only RTransparent
-        self.param.extraction_tool.objects = list(self.datasets.keys())
+        self.param.extraction_tool.objects = [
+            *list(self.datasets.keys()),
+            *["Manual curation", "GPT_4o_2024_08_06"],
+        ]
         self.extraction_tool = self.param.extraction_tool.objects[0]
 
         self.journal_select_picker = SelectPicker.from_param(
