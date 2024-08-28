@@ -12,7 +12,6 @@ keywords = [
 dynamic = ["version"]
 dependencies = [
   "dill",
-  "colorcet",
   "pandas",
   "pyarrow",
   "pydantic",

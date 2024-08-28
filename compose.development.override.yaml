@@ -1,5 +1,11 @@
 name: local-osm
 services:
+  base_image:
+    image: nimhdsst/osm_base
+    build:
+      context: .
+      dockerfile: Dockerfile.base
+
   rtransparent:
     build:
       context: .
@@ -7,7 +13,22 @@ services:
     volumes:
       - ./external_components/rtransparent:/app
 
+  llm_extraction:
+    image: nimhdsst/osm_base
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-NOKEY}
+    build:
+      context: .
+      dockerfile: ./external_components/llm_extraction/Dockerfile
+    volumes:
+      - ./external_components/llm_extraction:/app
+    depends_on:
+      - base_image
+
+
+
   web_api:
+    image: nimhdsst/osm_base
     container_name: web_api
     environment:
       - MONGODB_URI=mongodb://db:27017/osm
@@ -22,21 +43,27 @@ services:
     working_dir: /app/app
     command: ["fastapi","dev","--host","0.0.0.0","--port","80"]
     depends_on:
-        - db
+      - db
+      - base_image
 
   dashboard:
+    image: nimhdsst/osm_base
     container_name: dashboard
+    environment:
+      - MONGODB_URI=mongodb://db:27017/osm
     build:
       context: .
       dockerfile: ./web/dashboard/Dockerfile
-    environment:
-      - MONGODB_URI=mongodb://db:27017/osm
-    working_dir: /app
     ports:
       - "8501:8501"
     volumes:
       - ./web/dashboard:/app
       - ./osm:/opt/osm/osm
+    working_dir: /app
+    command: ["python", "app.py"]
+    depends_on:
+      - db
+      - base_image
 
   db:
     container_name: db
