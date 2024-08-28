@@ -4,7 +4,7 @@ from typing import Optional, Union
 
 import pandas as pd
 from odmantic import EmbeddedModel, Field, Model
-from pydantic import EmailStr, field_serializer, field_validator
+from pydantic import EmailStr, field_serializer, field_validator, model_validator
 
 from osm._utils import coerce_to_string
 
@@ -82,6 +82,19 @@ class Invocation(Model):
     created_at: datetime.datetime = Field(
         default_factory=lambda: datetime.datetime.now(datetime.UTC)
     )
+
+    @model_validator(pre=True)
+    def validate_metrics(cls, values):
+        metrics = values.get("metrics")
+        if "metrics_group" not in metrics:
+            raise ValueError("metrics field must contain a 'metrics_group' field")
+        if metrics["metrics_group"] == "Rtransparent":
+            values["metrics"] = RtransparentMetrics(**metrics)
+        elif metrics["metrics_group"] == "LLMExtractor":
+            values["metrics"] = LLMExtractorMetrics(**metrics)
+        else:
+            raise ValueError("Invalid 'metrics_group' in metrics")
+        return values
 
 
 class Quarantine(Model):

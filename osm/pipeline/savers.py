@@ -108,7 +108,6 @@ class OSMSaver(Component):
             )
             raise e
         try:
-            breakpoint()
             # Validate the payload
             validated_data = schemas.Invocation(**payload)
             # If validation passes, send POST request to OSM API. ID is not

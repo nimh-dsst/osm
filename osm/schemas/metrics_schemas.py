@@ -12,6 +12,7 @@ from .custom_fields import LongStr
 #  all_indicators.csv from the rtransparent publication has both but has the following extra fields:
 # code_text,com_code,com_data_availibility,com_file_formats,com_general_db,com_github_data,com_specific_db,com_suppl_code,com_supplemental_data,data_text,dataset,eigenfactor_score,field,is_art,is_code_pred,is_data_pred,is_relevant_code,is_relevant_data,jif,n_cite,score,year,
 class RtransparentMetrics(EmbeddedModel):
+    metrics_group: str = "RtransparentMetrics"
     # Mandatory fields
     is_open_code: Optional[bool]
     is_open_data: Optional[bool]
@@ -216,6 +217,8 @@ class LLMExtractorMetrics(EmbeddedModel):
     Many unavailable identifiers (PMID, PMCID etc) can be found using pubmed: https://pubmed.ncbi.nlm.nih.gov/advanced/
     """
 
+    metrics_group: str = "LLMExtractorMetrics"
+
     llm_model: str = Field(
         description="Exact verion of the llm model used to generate the data (not in publication itself but known by the model) e.g. GPT_4o_2024_08_06"
     )
@@ -226,7 +229,7 @@ class LLMExtractorMetrics(EmbeddedModel):
     article_type: list[str] = Field(
         description="The type of article e.g. research article, review, erratum, meta-analysis etc.",
     )
-    affiliation_country: list[str] = Field(
+    country: list[str] = Field(
         description="The countries of the affiliations of the authors",
     )
     institute: list[str] = Field(
