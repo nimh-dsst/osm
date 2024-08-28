@@ -375,7 +375,7 @@ class SelectPicker(ReactiveHTML, Widget):
            """,
         "input_change": """
 
-            /* console.log("input_change") , data, model, state, view);*/
+            /* console.log("input_change") , data, model, state, view);
             console.log(model.checkboxes_list); */
 
             let new_value = [];
