@@ -1,56 +1,57 @@
 name: local-osm
 services:
-  rtransparent:
-    container_name: rtransparent
-    build:
-      context: .
-      dockerfile: ./external_components/rtransparent/Dockerfile
-    volumes:
-      - ./external_components/rtransparent:/app
+  # rtransparent:
+  #   container_name: rtransparent
+  #   build:
+  #     context: .
+  #     dockerfile: ./external_components/rtransparent/Dockerfile
+  #   volumes:
+  #     - ./external_components/rtransparent:/app
 
   llm_extraction:
     container_name: llm_extraction
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY:-NOKEY}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-NOKEY}
     build:
       context: .
       dockerfile: ./external_components/llm_extraction/Dockerfile
     volumes:
       - ./external_components/llm_extraction:/app
 
-  web_api:
-    container_name: web_api
-    environment:
-      - MONGODB_URI=mongodb://db:27017/osm
-    build:
-      context: .
-      dockerfile: ./web/api/Dockerfile
-    ports:
-      - 80:80
-    volumes:
-      - ./web/api:/app/app
-      - ./osm:/opt/osm/osm
-    working_dir: /app/app
-    command: ["fastapi","dev","--host","0.0.0.0","--port","80"]
-    depends_on:
-      - db
+  # web_api:
+  #   container_name: web_api
+  #   environment:
+  #     - MONGODB_URI=mongodb://db:27017/osm
+  #   build:
+  #     context: .
+  #     dockerfile: ./web/api/Dockerfile
+  #   ports:
+  #     - 80:80
+  #   volumes:
+  #     - ./web/api:/app/app
+  #     - ./osm:/opt/osm/osm
+  #   working_dir: /app/app
+  #   command: ["fastapi","dev","--host","0.0.0.0","--port","80"]
+  #   depends_on:
+  #     - db
 
-  dashboard:
-    container_name: dashboard
-    environment:
-      - MONGODB_URI=mongodb://db:27017/osm
-    build:
-      context: .
-      dockerfile: ./web/dashboard/Dockerfile
-    ports:
-      - "8501:8501"
-    volumes:
-      - ./web/dashboard:/app
-      - ./osm:/opt/osm/osm
-    working_dir: /app
-    command: ["python", "app.py"]
-    depends_on:
-      - db
+  # dashboard:
+  #   container_name: dashboard
+  #   environment:
+  #     - MONGODB_URI=mongodb://db:27017/osm
+  #   build:
+  #     context: .
+  #     dockerfile: ./web/dashboard/Dockerfile
+  #   ports:
+  #     - "8501:8501"
+  #   volumes:
+  #     - ./web/dashboard:/app
+  #     - ./osm:/opt/osm/osm
+  #   working_dir: /app
+  #   command: ["python", "app.py"]
+  #   depends_on:
+  #     - db
 
   db:
     container_name: db
