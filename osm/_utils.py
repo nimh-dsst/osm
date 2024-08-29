@@ -2,6 +2,7 @@ import argparse
 import datetime
 import logging
 import os
+import re
 import time
 import types
 from pathlib import Path
@@ -99,6 +100,32 @@ def compose_down():
     print(f"Logs of docker containers are saved at {docker_log}")
 
 
+def make_uid_path_safe(uid: str) -> str:
+    """
+    Sanitizes a given string to make it safe for use as a file path.
+
+    Args:
+    - uid (str): The original string that needs to be sanitized.
+
+    Returns:
+    - str: A sanitized string safe for use as a file path.
+    """
+    # Define a regex pattern to match unsafe characters for file paths
+    unsafe_characters_pattern = r'[\/\\:*?"<>|]'
+
+    # Replace unsafe characters with an underscore
+    safe_uid = re.sub(unsafe_characters_pattern, "_", uid)
+
+    # Remove leading/trailing whitespace
+    safe_uid = safe_uid.strip()
+
+    # Replace multiple consecutive spaces or underscores with a single underscore
+    safe_uid = re.sub(r"[\s_]+", "_", safe_uid)
+
+    # Return the sanitized UID
+    return safe_uid
+
+
 def _setup(args):
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -114,7 +141,7 @@ def _setup(args):
             """
         )
         args.parser = ["no-op"]
-    metrics_path = _get_metrics_dir() / f"{args.uid}.json"
+    metrics_path = _get_metrics_dir() / f"{make_uid_path_safe(args.uid)}.json"
     if metrics_path.exists():
         raise FileExistsError(metrics_path)
     # create logs directory if necessary
@@ -152,3 +179,10 @@ def flatten_dict(d):
         else:
             items.append((k, v))
     return dict(items)
+
+
+def camel_to_snake(name: str) -> str:
+    # Replace capital letters with underscore + lowercase letter
+    s1 = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)
+    # Handle cases where a lowercase is followed by an uppercase letter
+    return re.sub("([a-z0-9])([A-Z])", r"\1_\2", s1).lower()

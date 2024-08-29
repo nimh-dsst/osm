@@ -14,6 +14,7 @@ from pydantic import ValidationError
 from osm import schemas
 from osm._utils import get_compute_context_id
 from osm._version import __version__
+from osm.schemas.schema_helpers import get_metrics_schemas
 
 from .core import Component
 
@@ -83,6 +84,7 @@ class OSMSaver(Component):
         osm_api = os.environ.get("OSM_API", "https://opensciencemetrics.org/api")
         print(f"Using OSM API: {osm_api}")
         # Build the payload
+        schemas = get_metrics_schemas()
         try:
             payload = {
                 "osm_version": __version__,

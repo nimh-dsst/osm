@@ -11,7 +11,8 @@ logger = logging.getLogger(__name__)
 
 
 class RTransparentExtractor(Component):
-    def _run(self, data: bytes, parser: str = None) -> dict:
+    def _run(self, data: bytes, **kwargs) -> dict:
+        parser = kwargs["parser"]
         self.sample = LongBytes(data)
 
         # Prepare the file to be sent as a part of form data
@@ -32,6 +33,29 @@ class RTransparentExtractor(Component):
             for k, v in metrics.items():
                 if v == -2147483648:
                     metrics[k] = None
+            return metrics
+        else:
+            logger.error(f"Error: {response.text}")
+            response.raise_for_status()
+
+
+class LLMExtractor(Component):
+    def _run(self, data: bytes, llm_model: str = None, **kwargs) -> dict:
+        llm_model = llm_model or kwargs.get("llm_model", "gpt-4o-2024-08-06")
+        self.sample = LongBytes(data)
+
+        # Prepare the file to be sent as a part of form data
+        files = {"file": ("input.xml", io.BytesIO(data), "application/xml")}
+
+        # Send the request with the file
+        response = requests.post(
+            "http://localhost:8072/extract-metrics/",
+            files=files,
+            params={"llm_model": llm_model},
+        )
+
+        if response.status_code == 200:
+            metrics = response.json()
             return metrics
         else:
             logger.error(f"Error: {response.text}")
