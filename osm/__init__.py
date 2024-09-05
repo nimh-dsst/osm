@@ -3,8 +3,6 @@ import os
 
 def get_version():
     try:
-        if os.environ.get("FORCE_OSM_VERSION"):
-            return os.environ["FORCE_OSM_VERSION"]
         from . import _version
 
         return _version.version
@@ -18,7 +16,10 @@ def get_version():
 def generate_version_file():
     import pkg_resources
 
-    version = pkg_resources.get_distribution("osm").version
+    if os.get("SETUPTOOLS_SCM_PRETEND_VERSION_FOR_OSM"):
+        version = os.environ["SETUPTOOLS_SCM_PRETEND_VERSION_FOR_OSM"]
+    else:
+        version = pkg_resources.get_distribution("osm").version
     version_file_content = f"version = '{version}'\n"
 
     version_file_path = os.path.join(os.path.dirname(__file__), "_version.py")

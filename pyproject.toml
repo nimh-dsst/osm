@@ -9,6 +9,7 @@ keywords = [
   "scientific transparency",
   "reproducibility"
 ]
+
 dynamic = ["version"]
 dependencies = [
   "dill",
@@ -21,6 +22,28 @@ dependencies = [
   "requests",
 ]
 
+[project.optional-dependencies]
+dev = [
+  "pdbpp",
+  "ipython",
+  "ruff",
+  "pytest",
+]
+server = [
+  "fastapi[standard]",
+  "uvicorn",
+  "gunicorn",
+]
+llm = [
+  "llama-index",
+  "llama-index-llms-openai",
+  "llama-index-program-openai",
+  "llama-index-llms-openrouter"
+]
+plot = [
+  "colorcet",
+  "panel",
+]
 [project.urls]
 homepage = "https://website"
 source = "https://github.com/nimh-dsst/osm"
@@ -38,10 +61,6 @@ where = ["."]
 
 [project.scripts]
 osm = "osm.cli:main"
-
-[tool.black]
-line-length = 88
-target-version = ["py38", "py39", "py310"]
 
 [tool.ruff]
 line-length = 88
