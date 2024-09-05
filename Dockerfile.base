@@ -1,21 +1,20 @@
 FROM tiangolo/uvicorn-gunicorn:python3.11
-
+SHELL ["/bin/bash", "--login", "-c"]
+COPY --from=ghcr.io/astral-sh/uv:0.4.0 /uv /bin/uv
 WORKDIR /app
 RUN mkdir -p /opt/data
-RUN mkdir -p /opt/osm
-
-# Container install hack with poetry and web dependencies
-RUN pip install uv fastapi[standard] uvicorn
-
-# LLM stuff
-RUN pip install llama-index llama-index-llms-openai llama-index-program-openai llama-index-llms-openrouter
-
-# Dashboard stuff
-RUN pip install colorcet panel
-
+RUN mkdir -p /opt/osm/osm
+ENV UV_SYSTEM_PYTHON=1
+# ENV UV_PYTHON=/usr/local/bin/python
 # Install requirements first in a separate layer to avoid re-installing them on
 # every code changes
 COPY pyproject.toml /opt/osm
-SHELL ["/bin/bash", "--login", "-c"]
-RUN  cd /opt/osm ; \
-    pip install  -r <(uv pip compile pyproject.toml )
+RUN --mount=type=cache,target=/root/.cache/uv \
+    SETUPTOOLS_SCM_PRETEND_VERSION_FOR_OSM=9.9.9; \
+    cd /opt/osm; \
+    uv pip install --system  -r <(uv pip compile --all-extras pyproject.toml )
+COPY ./osm /opt/osm/osm
+RUN --mount=source=.git,target=/opt/osm/.git,type=bind \
+    --mount=type=cache,target=/root/.cache/uv \
+    cd /opt/osm; \
+    uv pip install  --system -r <(uv pip compile --all-extras pyproject.toml ) -e  .

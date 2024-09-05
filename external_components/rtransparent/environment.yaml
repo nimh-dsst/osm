@@ -25,10 +25,10 @@ dependencies:
   - r-lubridate
   - r-magrittr
   - r-pbapply
-  - r-pdftools
+  #- r-pdftools
   - r-plyr
   - r-purrr
-  - r-qpdf
+  #- r-qpdf
   - r-readr
   # - r-rentrez
   - r-rlang

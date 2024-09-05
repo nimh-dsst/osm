@@ -1,5 +1,6 @@
 name: local-osm
 services:
+
   rtransparent:
     container_name: rtransparent
     build:
@@ -8,27 +9,30 @@ services:
     volumes:
       - ./external_components/rtransparent:/app
 
-  web_api:
-    container_name: web_api
+
+############ Development images ############
+
+  db:
+  # use old version of mongo to avoid Apple Instruction set error
+    image: mongo:4.4.6
+    container_name: db
+    ports:
+      - 27017:27017
     environment:
-      - MONGODB_URI=mongodb://db:27017/osm
+      - MONGO_INITDB_DATABASE=osm
+
+  base:
+    command: ["echo", "base image"]
+    image: nimhdsst/osm_base:latest
     build:
       context: .
-      dockerfile: ./web/api/Dockerfile
-    ports:
-      - 80:80
-    volumes:
-      - ./web/api:/app/app
-      - ./osm:/opt/osm/osm
-    working_dir: /app/app
-    command: ["fastapi","dev","--host","0.0.0.0","--port","80"]
-    depends_on:
-      - db
+      dockerfile: Dockerfile.base
 
   dashboard:
     container_name: dashboard
     environment:
       - MONGODB_URI=mongodb://db:27017/osm
+    image: nimhdsst/osm_dashboard:latest
     build:
       context: .
       dockerfile: ./web/dashboard/Dockerfile
@@ -36,17 +40,39 @@ services:
       - "8501:8501"
     volumes:
       - ./web/dashboard:/app
-      - ./osm:/opt/osm/osm
-    working_dir: /app
-    command: ["python", "app.py"]
+      - ./dashboard_data:/opt/data
     depends_on:
       - db
+      - base
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./osm
+          target: /opt/osm/osm
+          ignore:
+            - __pycache__
 
-  db:
-    container_name: db
-  # use old version of mongo to avoid Apple Instruction set error
-    image: mongo:4.4.6
-    ports:
-      - 27017:27017
+  web_api:
+    container_name: web_api
+    working_dir: /app/app
+    command: ["fastapi","dev","--host","0.0.0.0","--port","80"]
     environment:
-      - MONGO_INITDB_DATABASE=osm
+      - MONGODB_URI=mongodb://db:27017/osm
+    image: nimhdsst/osm_web_api:latest
+    build:
+      context: .
+      dockerfile: ./web/api/Dockerfile
+    ports:
+      - 80:80
+    volumes:
+      - ./web/api:/app/app
+    depends_on:
+      - db
+      - base
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./osm
+          target: /opt/osm/osm
+          ignore:
+            - __pycache__
