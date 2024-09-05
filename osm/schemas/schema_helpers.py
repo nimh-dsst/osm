@@ -5,28 +5,19 @@ from collections.abc import Iterator
 
 import pandas as pd
 import pyarrow as pa
-from odmantic import SyncEngine
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 from pymongo import MongoClient
 
 from osm import __version__, schemas
-from osm._utils import flatten_dict
-from osm.schemas import Client, Invocation, RtransparentMetrics, Work
+from osm._utils import camel_to_snake, flatten_dict
+from osm.schemas import Client, Invocation, Work, metrics_schemas
 
 logger = logging.getLogger(__name__)
-
-
-def irp_data_processing(row):
-    return row
 
 
 def rtransparent_pub_data_processing(row):
     row["is_open_code"] = row.pop("is_code_pred")
     row["is_open_data"] = row.pop("is_data_pred")
-    return row
-
-
-def theneuro_data_processing(row):
     return row
 
 
@@ -44,7 +35,7 @@ def types_mapper(pa_type):
         return None
 
 
-def odmantic_to_pyarrow(schema_dict):
+def pydantic_to_pyarrow(schema_dict):
     type_mapping = {
         "integer": pa.int64(),
         "number": pa.float64(),
@@ -74,15 +65,15 @@ def odmantic_to_pyarrow(schema_dict):
     return pa.schema(fields)
 
 
-def get_pyarrow_schema(metrics_type="RtransparentMetrics"):
-    odmantic_schema_json = getattr(schemas, metrics_type).model_json_schema()
-    pyarrow_schema = odmantic_to_pyarrow(odmantic_schema_json)
+def get_pyarrow_schema(schema_name):
+    pydantic_schema_json = getattr(schemas, schema_name).model_json_schema()
+    pyarrow_schema = pydantic_to_pyarrow(pydantic_schema_json)
     return pyarrow_schema
 
 
-def get_table_with_schema(df, other_fields=None, raise_error=True):
+def get_table_with_schema(df, *, schema_name, other_fields=None, raise_error=True):
     other_fields = other_fields or []
-    pyarrow_schema = get_pyarrow_schema()
+    pyarrow_schema = get_pyarrow_schema(schema_name)
     adjusted_schema = adjust_schema_to_dataframe(
         pyarrow_schema, df, other_fields=other_fields
     )
@@ -114,7 +105,9 @@ def adjust_schema_to_dataframe(schema, df, other_fields: list = None):
     return pa.schema(fields)
 
 
-def transform_data(table: pa.Table, raise_error=True, **kwargs) -> Iterator[dict]:
+def transform_data(
+    table: pa.Table, *, metrics_schema, raise_error=True, **kwargs
+) -> Iterator[dict]:
     """
     Process each row in a PyArrow Table in a memory-efficient way and yield JSON payloads.
     """
@@ -124,7 +117,7 @@ def transform_data(table: pa.Table, raise_error=True, **kwargs) -> Iterator[dict
         for row in batch.to_pylist():
             try:
                 # Process each row using the existing get_invocation logic
-                invocation = get_invocation(row, **kwargs)
+                invocation = get_invocation(row, metrics_schema, **kwargs)
                 yield invocation.model_dump(mode="json", exclude="id")
             except (KeyError, ValidationError) as e:
                 if raise_error:
@@ -134,11 +127,11 @@ def transform_data(table: pa.Table, raise_error=True, **kwargs) -> Iterator[dict
                 continue
 
 
-def get_invocation(row, **kwargs):
+def get_invocation(row, metrics_schema, **kwargs):
     kwargs["data_tags"] = kwargs.get("data_tags") or []
     if kwargs.get("custom_processing") is not None:
         # hack to run custom processing functions from this module
-        func = globals()[kwargs["custom_processing"]]
+        func = globals().get(kwargs["custom_processing"], lambda x: x)
         row = func(row)
     work = Work(
         user_defined_id=row.get("pmid"),
@@ -153,9 +146,7 @@ def get_invocation(row, **kwargs):
         compute_context_id=kwargs.get("compute_context_id", 999),
         email=kwargs.get("email"),
     )
-    metrics = RtransparentMetrics(**row)
     invocation = Invocation(
-        metrics=metrics,
         osm_version=kwargs.get("osm_version", __version__),
         client=client,
         work=work,
@@ -167,29 +158,55 @@ def get_invocation(row, **kwargs):
             else row.get("funder")
         ),
         components=kwargs.get("components", []),
+        **{camel_to_snake(metrics_schema.__name__): metrics_schema(**row)},  # metrics
     )
     return invocation
 
 
-def get_data_from_mongo(aggregation: list[dict] | None = None) -> Iterator[dict]:
+def get_metrics_schemas():
+    schemas = {}
+    for attrib_name in dir(metrics_schemas):
+        if attrib_name == "EmbeddedModel" or attrib_name.startswith("_"):
+            continue
+        attrib = getattr(metrics_schemas, attrib_name)
+        if isinstance(attrib, type) and issubclass(attrib, BaseModel):
+            schemas[attrib_name] = getattr(metrics_schemas, attrib_name)
+    return schemas
+
+
+def get_all_data_from_mongo(aggregation: list[dict] | None = None) -> dict[pa.Table]:
+    mschemas = get_metrics_schemas()
+    tables = {}
+    for sname in mschemas.keys():
+        matches = get_data_from_mongo_for_schema(sname)
+        table = matches_to_table(matches, schema_name=sname)
+        tables[sname] = table
+    return tables
+
+
+def get_data_from_mongo_for_schema(
+    schema_name, aggregation: list[dict] | None = None
+) -> Iterator[dict]:
     if aggregation is None:
         aggregation = [
             {
-                "$match": {
-                    "metrics_group": {
-                        "$regex": "R"
-                    }
-                },
+                "$match": {"metrics_group": schema_name},
             },
             {
                 "$project": {
                     # "osm_version": True,
                     "funder": True,
                     "data_tags": True,
+                    "doi": True,
+                    "metrics_group": True,
                     "work.pmid": True,
                     "metrics.year": True,
                     "metrics.is_open_data": True,
                     "metrics.is_open_code": True,
+                    "metrics.manual_is_open_code": True,
+                    "metrics.rtransparent_is_open_code": True,
+                    "metrics.manual_is_open_data": True,
+                    "metrics.rtransparent_is_open_data": True,
                     "metrics.affiliation_country": True,
                     "metrics.journal": True,
                     "created_at": True,
@@ -197,10 +214,9 @@ def get_data_from_mongo(aggregation: list[dict] | None = None) -> Iterator[dict]
             },
         ]
     client = MongoClient(os.environ["MONGODB_URI"])
-    engine = SyncEngine(client=client, database="osm")
-    matches = (
-        engine.get_collection(schemas.Invocation).aggregate(aggregation).__iter__()
-    )
+    db = client["osm"]
+    collection = db["invocations"]
+    matches = collection.aggregate(aggregation)
     for match in matches:
         yield flatten_dict(match)
 
@@ -231,7 +247,9 @@ def infer_type_for_column(column):
         return pa.string()
 
 
-def matches_to_table(matches: Iterator[dict], batch_size: int = 1000) -> pa.Table:
+def matches_to_table(
+    matches: Iterator[dict], *, schema_name, batch_size: int = 1000
+) -> pa.Table:
     # Initialize an empty list to store batches of tables
     tables = []
 
@@ -247,21 +265,44 @@ def matches_to_table(matches: Iterator[dict], batch_size: int = 1000) -> pa.Tabl
 
         # Convert batch of dicts to DataFrame
         df = pd.DataFrame(batch)
+        if "created_at" in df.columns and df["created_at"].dtype == "O":
+            df["created_at"] = pd.to_datetime(
+                df["created_at"], utc=True, format="ISO8601"
+            )
 
         # Drop the `_id` column if it exists
         if "_id" in df.columns:
             df = df.drop(columns=["_id"])
 
         # Adjust schema according to pre-existing functionality
-        pyarrow_schema = get_pyarrow_schema()  # Get the base schema
+        pyarrow_schema = get_pyarrow_schema(
+            schema_name=schema_name
+        )  # Get the base schema
         adjusted_schema = adjust_schema_to_dataframe(
             pyarrow_schema, df
         )  # Adjust schema to match DataFrame
 
         # Extend schema to include any additional columns in the DataFrame
+        # though ideally returned queries should conform pretty well to the
+        # schema so this is for entries outside of that. We may wish to consider
+        # searching for fields across every schema to find a type to eliminate
+        # the guesswork here.
         extra_columns = [col for col in df.columns if col not in adjusted_schema.names]
         for col in extra_columns:
-            inferred_type = infer_type_for_column(df[col])
+            if col == "funder":
+                inferred_type = pa.list_(pa.string())
+            elif col == "data_tags":
+                inferred_type = pa.list_(pa.string())
+            elif col == "affiliation_country":
+                inferred_type = pa.list_(pa.string())
+            elif col == "rtransparent_is_open_data":
+                inferred_type = pa.bool_()
+            elif col == "manual_is_open_data":
+                inferred_type = pa.bool_()
+            elif col == "created_at":
+                inferred_type = pa.timestamp("ns")
+            else:
+                inferred_type = infer_type_for_column(df[col])
             adjusted_schema = adjusted_schema.append(pa.field(col, inferred_type))
 
         # Convert DataFrame to PyArrow Table with the extended schema

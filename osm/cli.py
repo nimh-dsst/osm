@@ -2,7 +2,7 @@ import argparse
 
 from osm._utils import DEFAULT_OUTPUT_DIR, _existing_file, _setup, compose_down
 from osm.pipeline.core import Pipeline, Savers
-from osm.pipeline.extractors import RTransparentExtractor
+from osm.pipeline.extractors import LLMExtractor, RTransparentExtractor
 from osm.pipeline.parsers import NoopParser, PMCParser, ScienceBeamParser
 from osm.pipeline.savers import FileSaver, JSONSaver, OSMSaver
 
@@ -13,6 +13,7 @@ PARSERS = {
 }
 EXTRACTORS = {
     "rtransparent": RTransparentExtractor,
+    "llm_extractor": LLMExtractor,
 }
 
 
@@ -50,6 +51,11 @@ def parse_args():
         default=["rtransparent"],
         nargs="+",
         help="Select the tool for extracting the output metrics. Default is 'rtransparent'.",
+    )
+    parser.add_argument(
+        "--llm_model",
+        default="gpt-4o-2024-08-06",
+        help="Specify the model to use for LLM extraction.",
     )
     parser.add_argument(
         "--comment",
@@ -93,7 +99,10 @@ def main():
                 ),
             ),
         )
-        pipeline.run(user_managed_compose=args.user_managed_compose)
+        pipeline.run(
+            user_managed_compose=args.user_managed_compose,
+            llm_model=args.llm_model,
+        )
     finally:
         if not args.user_managed_compose:
             compose_down()

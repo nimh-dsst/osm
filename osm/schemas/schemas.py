@@ -1,42 +1,51 @@
 import base64
 import datetime
-from typing import Optional
+from typing import Annotated, Optional, Union
 
 import pandas as pd
-from odmantic import EmbeddedModel, Field, Model
-from pydantic import EmailStr, field_serializer, field_validator
+from pydantic import BaseModel, BeforeValidator, EmailStr, Field, field_validator
 
 from osm._utils import coerce_to_string
 
 from .custom_fields import LongBytes
-from .metrics_schemas import RtransparentMetrics
+from .metrics_schemas import (
+    LLMExtractorMetrics,
+    ManualAnnotationNIMHDSST,
+    RtransparentMetrics,
+)
+
+PyObjectId = Annotated[str, BeforeValidator(str)]
 
 
-class Component(EmbeddedModel):
-    model_config = {
-        "extra": "forbid",
-    }
+class Component(BaseModel):
+    model_config = {"extra": "forbid"}
     name: str
     version: str
-    docker_image: Optional[str] = None
-    docker_image_id: Optional[str] = None
-    sample: Optional[LongBytes] = Field(
-        default=b"",
-        json_schema_extra={"exclude": True, "select": False, "write_only": True},
+    docker_image: str | None = None
+    docker_image_id: Union[str, None] = None
+    sample: Union[LongBytes, None] = Field(
+        default=b"", exclude=True, description="Serialized to base64 string"
     )
 
-    @field_serializer("sample")
-    def serialize_longbytes(self, value: Optional[LongBytes]) -> Optional[str]:
+    @staticmethod
+    def serialize_longbytes(value: LongBytes) -> Union[str, None]:
         return base64.b64encode(value.get_value()).decode("utf-8") if value else None
 
+    def bson(self):
+        """Custom BSON serialization to handle LongBytes."""
+        data = self.model_dump()
+        if self.sample:
+            data["sample"] = self.serialize_longbytes(self.sample)
+        return data
 
-class Client(EmbeddedModel):
+
+class Client(BaseModel):
     model_config = {"extra": "forbid"}
     compute_context_id: int
     email: Optional[EmailStr] = None
 
 
-class Work(EmbeddedModel):
+class Work(BaseModel):
     """
     Unique reference for each publication/study/work. For each  “work”,
     pmid, doi (normalized), openalex ids are approaches to referencing such a
@@ -64,36 +73,57 @@ class Work(EmbeddedModel):
         return None if pd.isna(v) else v
 
 
-class Invocation(Model):
+class Invocation(BaseModel):
     """
     Approximate document model. This may evolve but provides a starting point
-    for the Odmantic document model used to interact with mongodb.
+    for the document model used to interact with mongodb.
     """
 
     model_config = {"extra": "forbid"}
-    metrics: RtransparentMetrics
+    id: Optional[PyObjectId] = Field(alias="_id", default=None)
+    manual_annotation_nimhdsst: Optional[ManualAnnotationNIMHDSST] = Field(default=None)
+    llm_extractor_metrics: Optional[LLMExtractorMetrics] = Field(default=None)
+    rtransparent_metrics: Optional[RtransparentMetrics] = Field(default=None)
     components: Optional[list[Component]] = []
     work: Work
     client: Client
-    user_comment: str = ""
-    osm_version: str
+    user_comment: Optional[str] = None
+    osm_version: Optional[str] = None
     funder: Optional[list[str]] = []
     data_tags: list[str] = []
     created_at: datetime.datetime = Field(
-        default_factory=lambda: datetime.datetime.now(datetime.UTC)
+        default_factory=lambda: datetime.datetime.now(datetime.UTC).replace(
+            microsecond=0
+        )
     )
 
+    class Settings:
+        keep_nulls = False
+        populate_by_name = True
 
-class Quarantine(Model):
+
+class Quarantine(BaseModel):
     payload: bytes = b""
     error_message: str
     created_at: datetime.datetime = Field(
-        default_factory=lambda: datetime.datetime.now(datetime.UTC)
+        default_factory=lambda: datetime.datetime.now(datetime.UTC).replace(
+            microsecond=0
+        )
     )
 
+    class Settings:
+        keep_nulls = False
+        populate_by_name = True
 
-class PayloadError(Model):
+
+class PayloadError(BaseModel):
     error_message: str
     created_at: datetime.datetime = Field(
-        default_factory=lambda: datetime.datetime.now(datetime.UTC)
+        default_factory=lambda: datetime.datetime.now(datetime.UTC).replace(
+            microsecond=0
+        )
     )
+
+    class Settings:
+        keep_nulls = False
+        populate_by_name = True
