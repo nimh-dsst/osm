@@ -48,9 +48,14 @@ def get_user_args():
     parser.add_argument("dataset_path", help="Path to the dataset file")
     parser.add_argument("merge_col", default="pmcid_pmc", help="Column to merge on")
     parser.add_argument(
-        "--funder_path",
+        "--funder-path",
         help="Path to the funders file",
         default="tempdata/funders.feather",
+    )
+    parser.add_argument(
+        "--schema-name",
+        help="Name of the schema class to use in order to validate the data",
+        default="RTransparentMetrics",
     )
     return parser.parse_args()
 
@@ -81,7 +86,11 @@ def main():
 
     print("Converting to pyarrow...")
     funder_field = pa.field("funder", pa.list_(pa.string()), nullable=True)
-    tb = get_table_with_schema(dataset.assign(funder=None), [funder_field])
+    tb = get_table_with_schema(
+        dataset.assign(funder=None),
+        schema_name=args.schema_name,
+        other_fields=[funder_field],
+    )
 
     print("Merging with funders...")
     merge_funder(funder, tb, args.merge_col)

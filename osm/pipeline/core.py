@@ -99,7 +99,7 @@ class Pipeline:
         self.xml_path = xml_path
         self.metrics_path = metrics_path
 
-    def run(self, user_managed_compose: bool = False):
+    def run(self, user_managed_compose: bool = False, llm_model: str = None):
         for parser in self.parsers:
             parsed_data = parser.run(
                 self.file_data, user_managed_compose=user_managed_compose
@@ -107,12 +107,14 @@ class Pipeline:
             if isinstance(parsed_data, bytes):
                 self.savers.save_file(parsed_data, self.xml_path)
             for extractor in self.extractors:
-                extracted_metrics = extractor.run(parsed_data, parser=parser.name)
-                self.savers.save_osm(
-                    data=self.file_data,
-                    metrics=extracted_metrics,
-                    components=[*self.parsers, *self.extractors, *self.savers],
+                extracted_metrics = extractor.run(
+                    parsed_data, parser=parser.name, llm_model=llm_model
                 )
+                # self.savers.save_osm(
+                #     data=self.file_data,
+                #     metrics=extracted_metrics,
+                #     components=[parser, extractor, *self.savers],
+                # )
                 self.savers.save_json(extracted_metrics, self.metrics_path)
 
     @staticmethod

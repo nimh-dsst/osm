@@ -9,6 +9,25 @@ services:
     volumes:
       - ./external_components/rtransparent:/app
 
+  llm_extraction:
+    container_name: llm_extraction
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-NOKEY}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-NOKEY}
+    build:
+      context: .
+      dockerfile: ./external_components/llm_extraction/Dockerfile
+    volumes:
+      - ./external_components/llm_extraction:/app
+    depends_on:
+      - base
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./osm
+          target: /opt/osm/osm
+          ignore:
+            - __pycache__
 
 ############ Development images ############
 
