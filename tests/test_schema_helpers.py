@@ -7,14 +7,7 @@ from osm.schemas import schema_helpers as osh
 def test_transform_data():
     # Create mock data for testing
     data = {
-        "is_open_code": [False],
-        "is_open_data": [True],
         "pmid": [27458207],
-        "open_code_statements": [None],
-        "open_data_category": ["data availability statement"],
-        "open_data_statements": [
-            "deposited data https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE12345"
-        ],
         "funder": [["National Institutes of Health"]],  # Funder as a list of strings
     }
 
@@ -23,7 +16,9 @@ def test_transform_data():
 
     # Use the existing get_table_with_schema function to create the PyArrow Table
     funder_field = pa.field("funder", pa.list_(pa.string()), nullable=True)
-    table = osh.get_table_with_schema(df, [funder_field])
+    table = osh.get_table_with_schema(
+        df, schema_name="Work", other_fields=[funder_field]
+    )
 
     # Mock parameters for the transform_data function
     kwargs = {
@@ -58,7 +53,3 @@ def test_transform_data():
     assert result["user_comment"] == "Bulk upload of NIH-IRP data"
     assert result["components"][0]["name"] == "Sciencebeam parser/RTransparent"
     assert result["components"][0]["version"] == "x.x.x"
-
-
-# Run the test
-test_transform_data()
