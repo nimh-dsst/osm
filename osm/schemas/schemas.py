@@ -4,7 +4,7 @@ from typing import Optional
 
 import pandas as pd
 from odmantic import EmbeddedModel, Field, Model
-from pydantic import EmailStr, field_serializer, field_validator, model_validator
+from pydantic import EmailStr, field_serializer, field_validator
 
 from osm._utils import coerce_to_string
 
@@ -75,9 +75,9 @@ class Invocation(Model):
     """
 
     model_config = {"extra": "forbid"}
-    manual_annotation_nimhdsst: Optional[ManualAnnotationNIMHDSST] = None
-    llm_extractor_metrics: Optional[LLMExtractorMetrics] = None
-    rtransparent_metrics: Optional[RtransparentMetrics] = None
+    manual_annotation_nimhdsst: Optional[ManualAnnotationNIMHDSST] = Field(default=None)
+    llm_extractor_metrics: Optional[LLMExtractorMetrics] = Field(default=None)
+    rtransparent_metrics: Optional[RtransparentMetrics] = Field(default=None)
     components: Optional[list[Component]] = []
     work: Work
     client: Client
@@ -90,15 +90,6 @@ class Invocation(Model):
             microsecond=0
         )
     )
-
-    @model_validator(mode="before")
-    def set_metrics_group(cls, values):
-        metrics = values.get("metrics")
-        if isinstance(metrics, (RtransparentMetrics, ManualAnnotationNIMHDSST)):
-            values["metrics_group"] = metrics.__class__.__name__
-        else:
-            raise ValueError("Unknown metrics type")
-        return values
 
 
 class Quarantine(Model):

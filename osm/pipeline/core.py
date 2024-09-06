@@ -110,11 +110,11 @@ class Pipeline:
                 extracted_metrics = extractor.run(
                     parsed_data, parser=parser.name, llm_model=llm_model
                 )
-                # self.savers.save_osm(
-                #     data=self.file_data,
-                #     metrics=extracted_metrics,
-                #     components=[parser, extractor, *self.savers],
-                # )
+                self.savers.save_osm(
+                    data=self.file_data,
+                    metrics=extracted_metrics,
+                    components=[parser, extractor, *self.savers],
+                )
                 self.savers.save_json(extracted_metrics, self.metrics_path)
 
     @staticmethod

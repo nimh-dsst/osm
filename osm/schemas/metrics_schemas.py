@@ -7,6 +7,12 @@ from osm._utils import coerce_to_string
 
 from .custom_fields import LongStr
 
+__all__ = [
+    "RtransparentMetrics",
+    "ManualAnnotationNIMHDSST",
+    "LLMExtractorMetrics",
+]
+
 
 #  The rtransparent tool can extract from parsed pdfs or from XML directly from pubmed central. The latter has many more fields.
 #  all_indicators.csv from the rtransparent publication has both but has the following extra fields:

@@ -3,6 +3,7 @@ import logging
 
 import requests
 
+from osm import schemas
 from osm.schemas.custom_fields import LongBytes
 
 from .core import Component
@@ -11,6 +12,11 @@ logger = logging.getLogger(__name__)
 
 
 class RTransparentExtractor(Component):
+    model = schemas.RtransparentMetrics
+
+    def create_metrics_model(self, metrics: dict, **kwargs):
+        return self.model(**metrics)
+
     def _run(self, data: bytes, **kwargs) -> dict:
         parser = kwargs["parser"]
         self.sample = LongBytes(data)
