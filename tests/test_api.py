@@ -1,10 +1,14 @@
+import asyncio
 import datetime
 
+import nest_asyncio
 import pytest
 from motor.motor_asyncio import AsyncIOMotorClient
 from odmantic import AIOEngine
 
 from osm.schemas import Client, Component, Invocation, Work
+
+nest_asyncio.apply()
 
 
 @pytest.fixture(scope="function")
@@ -17,8 +21,8 @@ def test_engine():
     client.close()
 
 
-@pytest.mark.asyncio
-async def test_engine_save(test_engine):
+# @pytest.mark.asyncio
+def test_engine_save(test_engine):
     # Create a sample invocation object
     sample_invocation = Invocation(
         work=Work(filename="test_file"),
@@ -32,17 +36,17 @@ async def test_engine_save(test_engine):
     )
 
     # Save the sample invocation to the database
-    await test_engine.save(sample_invocation)
+    asyncio.run(test_engine.save(sample_invocation))
 
     # Retrieve the saved invocation to verify it was saved correctly
-    saved_invocation = await test_engine.find_one(
+    saved_invocation = test_engine.find_one(
         Invocation, Invocation.id == sample_invocation.id
     )
     assert saved_invocation is not None, "Saved invocation not found"
     assert saved_invocation.id == sample_invocation.id, "IDs do not match"
 
     # Retrieve the saved invocation to verify it was saved correctly
-    saved_invocation = await test_engine.find_one(
+    saved_invocation = test_engine.find_one(
         Invocation, Invocation.id == sample_invocation.id
     )
     assert saved_invocation is not None, "Saved invocation not found"
