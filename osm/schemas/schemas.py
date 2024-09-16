@@ -1,15 +1,15 @@
 import base64
 import datetime
-from typing import Optional
+from typing import Optional, Union
 
 import pandas as pd
 from odmantic import EmbeddedModel, Field, Model
-from pydantic import EmailStr, field_serializer, field_validator
+from pydantic import EmailStr, field_serializer, field_validator, model_validator
 
 from osm._utils import coerce_to_string
 
 from .custom_fields import LongBytes
-from .metrics_schemas import RtransparentMetrics
+from .metrics_schemas import ManualAnnotationNIMHDSST, RtransparentMetrics
 
 
 class Component(EmbeddedModel):
@@ -71,7 +71,8 @@ class Invocation(Model):
     """
 
     model_config = {"extra": "forbid"}
-    metrics: RtransparentMetrics
+    metrics: Union[RtransparentMetrics | ManualAnnotationNIMHDSST]
+    metrics_group: str
     components: Optional[list[Component]] = []
     work: Work
     client: Client
@@ -80,20 +81,35 @@ class Invocation(Model):
     funder: Optional[list[str]] = []
     data_tags: list[str] = []
     created_at: datetime.datetime = Field(
-        default_factory=lambda: datetime.datetime.now(datetime.UTC)
+        default_factory=lambda: datetime.datetime.now(datetime.UTC).replace(
+            microsecond=0
+        )
     )
+
+    @model_validator(mode="before")
+    def set_metrics_group(cls, values):
+        metrics = values.get("metrics")
+        if isinstance(metrics, (RtransparentMetrics, ManualAnnotationNIMHDSST)):
+            values["metrics_group"] = metrics.__class__.__name__
+        else:
+            raise ValueError("Unknown metrics type")
+        return values
 
 
 class Quarantine(Model):
     payload: bytes = b""
     error_message: str
     created_at: datetime.datetime = Field(
-        default_factory=lambda: datetime.datetime.now(datetime.UTC)
+        default_factory=lambda: datetime.datetime.now(datetime.UTC).replace(
+            microsecond=0
+        )
     )
 
 
 class PayloadError(Model):
     error_message: str
     created_at: datetime.datetime = Field(
-        default_factory=lambda: datetime.datetime.now(datetime.UTC)
+        default_factory=lambda: datetime.datetime.now(datetime.UTC).replace(
+            microsecond=0
+        )
     )
