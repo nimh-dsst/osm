@@ -31,3 +31,10 @@ repos:
       - id: isort
         name: isort
         args: ["--profile", "black"]
+
+  - repo: https://github.com/tofuutils/pre-commit-opentofu
+    rev: v1.0.4
+    hooks:
+      - id: tofu_fmt
+      # I would really like to add tf_lint
+      # - id: tofu_tflint
