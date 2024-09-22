@@ -26,7 +26,7 @@ resource "aws_s3_bucket" "tf_state" {
     }
   }
   lifecycle_rule {
-    id      = "tf_state"
+    id      = "tf_state_${var.development_environment}"
     enabled = true
     transition {
       days          = 30
@@ -37,7 +37,7 @@ resource "aws_s3_bucket" "tf_state" {
     }
   }
   tags = {
-    Name = "terraform-state-storage"
+    Name = "${var.bucket_name}-${var.development_environment}"
   }
 }
 
@@ -52,6 +52,6 @@ resource "aws_dynamodb_table" "tf_locks" {
   }
 
   tags = {
-    Name = "terraform-state-locks"
+    Name = "${var.table_name}-${var.development_environment}"
   }
 }
