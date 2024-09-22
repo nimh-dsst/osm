@@ -13,16 +13,16 @@ terraform {
 
 
 module "shared_resources" {
-  source      = "../modules/shared_resources"
+  source = "../modules/shared_resources"
 }
 
 # EC2 Instance
 resource "aws_instance" "staging" {
-  ami                    = module.shared_resources.ami_id
-  instance_type          = var.instance_type
-  subnet_id              = module.shared_resources.subnet_id
-  key_name               = "dsst2023"
-  vpc_security_group_ids = [module.shared_resources.security_group_id]
+  ami                         = module.shared_resources.ami_id
+  instance_type               = var.instance_type
+  subnet_id                   = module.shared_resources.subnet_id
+  key_name                    = "dsst2023"
+  vpc_security_group_ids      = [module.shared_resources.security_group_id]
   associate_public_ip_address = true
   root_block_device {
     volume_size = 30
