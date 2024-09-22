@@ -71,3 +71,16 @@ resource "aws_dynamodb_table" "tf_locks" {
     Name = "${var.bucket_name}-${var.development_environment}"
   }
 }
+
+data "template_file" "dynamodb_policy" {
+  template = file("dynamodb-policy.json.tpl")
+
+  vars = {
+    resource = "${aws_dynamodb_table.tf_locks.arn}"
+  }
+}
+
+resource "aws_dynamodb_resource_policy" "tf_locks" {
+  resource_arn = aws_dynamodb_table.tf_locks.arn
+  policy       = data.template_file.dynamodb_policy.rendered
+}
