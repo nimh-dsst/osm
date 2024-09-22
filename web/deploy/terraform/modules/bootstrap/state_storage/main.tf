@@ -15,31 +15,47 @@ provider "aws" {
 
 resource "aws_s3_bucket" "tf_state" {
   bucket = "${var.bucket_name}-${var.development_environment}"
-  versioning {
-    enabled = true
-  }
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        sse_algorithm = "AES256"
-      }
-    }
-  }
-  lifecycle_rule {
-    id      = "tf_state_${var.development_environment}"
-    enabled = true
-    transition {
-      days          = 30
-      storage_class = "STANDARD_IA"
-    }
-    expiration {
-      days = 365
-    }
-  }
+
   tags = {
     Name = "${var.bucket_name}-${var.development_environment}"
   }
 }
+
+resource "aws_s3_bucket_lifecycle_configuration" "tf_state" {
+  bucket = aws_s3_bucket.tf_state.id
+  rule {
+    id     = "tf_state_${var.development_environment}"
+    status = "Enabled"
+
+    transition {
+      days          = 30
+      storage_class = "STANDARD_IA"
+    }
+
+    expiration {
+      days = 365
+    }
+  }
+}
+
+resource "aws_s3_bucket_versioning" "enabled" {
+  bucket = aws_s3_bucket.tf_state.id
+
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "default" {
+  bucket = aws_s3_bucket.tf_state.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
 
 resource "aws_dynamodb_table" "tf_locks" {
   name         = "${var.table_name}-${var.development_environment}"
@@ -52,6 +68,6 @@ resource "aws_dynamodb_table" "tf_locks" {
   }
 
   tags = {
-    Name = "${var.table_name}-${var.development_environment}"
+    Name = "${var.bucket_name}-${var.development_environment}"
   }
 }
