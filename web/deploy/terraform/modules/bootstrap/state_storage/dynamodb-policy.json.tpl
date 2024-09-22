@@ -15,7 +15,7 @@
                 "dynamodb:Query",
                 "dynamodb:Scan"
             ],
-            "Resource": "arn:aws:dynamodb:us-east-1:507624629289:table/terraform-locks"
+            "Resource": "${resource}"
         },
         {
             "Effect": "Allow",
