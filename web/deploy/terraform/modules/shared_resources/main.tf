@@ -1,29 +1,47 @@
+terraform {
+  required_version = ">= 1.0.0, < 2.0.0"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
+# tflint-ignore: terraform_unused_declarations
 variable "aws_region" {
   description = "AWS region"
   default     = "us-east-1"
+  type        = string
 }
 
-
+# tflint-ignore: terraform_unused_declarations
 variable "s3_bucket" {
   description = "S3 bucket for Terraform state"
   default     = "osm-storage"
+  type        = string
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "dynamodb_table" {
   description = "DynamoDB table for Terraform state locking"
   default     = "terraform-locks"
-}
-variable ssh_port {
-  description = "Non-standard port for SSH"
-  default     = 22
+  type        = string
 }
 
+# tflint-ignore: terraform_unused_declarations
+variable "ssh_port" {
+  description = "Non-standard port for SSH"
+  default     = 22
+  type        = number
+}
 
 # VPC
 resource "aws_vpc" "main" {
-  cidr_block = "10.0.0.0/16"
+  cidr_block           = "10.0.0.0/16"
   enable_dns_hostnames = true
-  enable_dns_support = true
+  enable_dns_support   = true
   tags = {
     Name = "osm-vpc"
   }
@@ -67,7 +85,7 @@ resource "aws_network_acl" "allow_all" {
 resource "aws_network_acl_rule" "allow_all_inbound" {
   network_acl_id = aws_network_acl.allow_all.id
   rule_number    = 100
-  protocol       = "-1"  # -1 means all protocols
+  protocol       = "-1" # -1 means all protocols
   rule_action    = "allow"
   egress         = false
   cidr_block     = "0.0.0.0/0"
@@ -78,7 +96,7 @@ resource "aws_network_acl_rule" "allow_all_inbound" {
 resource "aws_network_acl_rule" "allow_all_outbound" {
   network_acl_id = aws_network_acl.allow_all.id
   rule_number    = 200
-  protocol       = "-1"  # -1 means all protocols
+  protocol       = "-1" # -1 means all protocols
   rule_action    = "allow"
   egress         = true
   cidr_block     = "0.0.0.0/0"
@@ -123,8 +141,8 @@ resource "aws_security_group" "allow_all" {
 }
 
 resource "aws_vpc_dhcp_options" "main" {
-  domain_name          = "compute-1.amazonaws.com"
-  domain_name_servers  = ["AmazonProvidedDNS"]
+  domain_name         = "compute-1.amazonaws.com"
+  domain_name_servers = ["AmazonProvidedDNS"]
 
   tags = {
     Name = "osm-dhcp-options"
@@ -139,9 +157,9 @@ resource "aws_vpc_dhcp_options_association" "main" {
 
 # main Subnet
 resource "aws_subnet" "main" {
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.0.1.0/24"
-  availability_zone = "us-east-1a"
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.1.0/24"
+  availability_zone       = "us-east-1a"
   map_public_ip_on_launch = true
 
   tags = {

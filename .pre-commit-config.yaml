@@ -17,6 +17,8 @@ repos:
         exclude: "examples|docs/examples|tests/data"
       - id: check-added-large-files
       - id: check-toml
+      - id: check-yaml
+      - id: check-json
       - id: end-of-file-fixer
         exclude: "examples|docs/examples|tests/data"
 
@@ -31,3 +33,10 @@ repos:
       - id: isort
         name: isort
         args: ["--profile", "black"]
+
+  - repo: https://github.com/tofuutils/pre-commit-opentofu
+    rev: v1.0.4
+    hooks:
+      - id: tofu_fmt
+      - id: tofu_tflint
+      - id: tofu_validate
