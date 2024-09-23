@@ -19,4 +19,4 @@ jobs:
 
     - uses: terraform-linters/setup-tflint@v4
       
-    - uses: pre-commit/action@v3
+    - uses: pre-commit/action@v3.0.1
