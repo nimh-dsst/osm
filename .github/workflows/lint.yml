@@ -17,7 +17,6 @@ jobs:
 
     - uses: opentofu/setup-opentofu@v1
 
-    # If we use tflint, then we will need to use this action
-    # - uses: terraform-linters/setup-tflint@v4
+    - uses: terraform-linters/setup-tflint@v4
       
     - uses: pre-commit/action@v3
