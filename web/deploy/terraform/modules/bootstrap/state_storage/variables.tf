@@ -16,7 +16,7 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
-variable "development_environment" {
+variable "environment" {
   description = "The name of the development environment. Usually `stage` or `prod`."
   type        = string
 }
