@@ -70,25 +70,3 @@ resource "aws_dynamodb_table" "tf_locks" {
     Name = "${var.bucket_name}-${var.development_environment}"
   }
 }
-
-# data "template_file" "dynamodb_policy" {
-#   template = file("${path.module}/dynamodb-policy.json.tpl")
-
-#   vars = {
-#     resource = "${aws_dynamodb_table.tf_locks.arn}"
-#   }
-# }
-
-# resource "aws_iam_policy" "tf_locks" {
-#   name   = "DynamoDBFullAccess-${var.development_environment}"
-#   policy = data.template_file.dynamodb_policy.rendered
-# }
-
-# resource "aws_iam_policy_attachment" "tf_locks" {
-#   name       = "tf_locks-${var.development_environment}"
-#   policy_arn = aws_iam_policy.tf_locks.arn
-#   users = [
-#     # This will need to be changed before merge
-#     "osm",
-#   ]
-# }
