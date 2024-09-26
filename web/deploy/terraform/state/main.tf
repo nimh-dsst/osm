@@ -3,11 +3,11 @@ terraform {
 }
 
 module "stage_state" {
-  source      = "./bootstrap/"
+  source      = "./modules/"
   environment = "stage"
 }
 
 module "prod_state" {
-  source      = "./bootstrap/"
+  source      = "./modules/"
   environment = "prod"
 }
