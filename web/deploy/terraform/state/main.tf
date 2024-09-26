@@ -11,3 +11,8 @@ module "prod_state" {
   source      = "./modules/"
   environment = "prod"
 }
+
+module "shared_state" {
+  source      = "./modules/"
+  environment = "shared"
+}
