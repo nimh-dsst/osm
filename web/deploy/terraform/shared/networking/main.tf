@@ -9,34 +9,6 @@ terraform {
   }
 }
 
-# tflint-ignore: terraform_unused_declarations
-variable "aws_region" {
-  description = "AWS region"
-  default     = "us-east-1"
-  type        = string
-}
-
-# tflint-ignore: terraform_unused_declarations
-variable "s3_bucket" {
-  description = "S3 bucket for Terraform state"
-  default     = "osm-storage"
-  type        = string
-}
-
-# tflint-ignore: terraform_unused_declarations
-variable "dynamodb_table" {
-  description = "DynamoDB table for Terraform state locking"
-  default     = "terraform-locks"
-  type        = string
-}
-
-# tflint-ignore: terraform_unused_declarations
-variable "ssh_port" {
-  description = "Non-standard port for SSH"
-  default     = 22
-  type        = number
-}
-
 # VPC
 resource "aws_vpc" "main" {
   cidr_block           = "10.0.0.0/16"
@@ -191,30 +163,4 @@ data "aws_ami" "ubuntu" {
     name   = "name"
     values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
   }
-}
-
-
-
-
-# Outputs
-output "vpc_id" {
-  value = aws_vpc.main.id
-}
-output "subnet_id" {
-  value = aws_subnet.main.id
-}
-output "security_group_id" {
-  value = aws_security_group.allow_all.id
-}
-output "internet_gateway_id" {
-  value = aws_internet_gateway.main.id
-}
-output "route_table_id" {
-  value = aws_route_table.main.id
-}
-output "aws_network_acl_id" {
-  value = aws_network_acl.allow_all.id
-}
-output "ami_id" {
-  value = data.aws_ami.ubuntu.id
 }
