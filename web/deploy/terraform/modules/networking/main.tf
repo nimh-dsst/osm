@@ -9,13 +9,17 @@ terraform {
   }
 }
 
+provider "aws" {
+  region = var.region
+}
+
 # VPC
 resource "aws_vpc" "main" {
-  cidr_block           = "10.0.0.0/16"
+  cidr_block           = var.vpc_ipv4_cidr_block
   enable_dns_hostnames = true
   enable_dns_support   = true
   tags = {
-    Name = "osm-vpc"
+    Name = "${var.vpc_name}-${var.environment}"
   }
 }
 
@@ -24,7 +28,7 @@ resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
 
   tags = {
-    Name = "osm-internet-gateway"
+    Name = "${var.internet_gateway_name}-${var.environment}"
   }
 }
 
@@ -33,15 +37,15 @@ resource "aws_route_table" "main" {
   vpc_id = aws_vpc.main.id
 
   route {
-    cidr_block = "0.0.0.0/0"
+    cidr_block = var.route_table_ipv4_cidr_block
     gateway_id = aws_internet_gateway.main.id
   }
   route {
-    ipv6_cidr_block = "::/0"
+    ipv6_cidr_block = var.route_table_ipv6_cidr_block
     gateway_id      = aws_internet_gateway.main.id
   }
   tags = {
-    Name = "osm-route-table"
+    Name = "${var.route_table_name}-${var.environment}"
   }
 }
 
@@ -75,6 +79,7 @@ resource "aws_network_acl_rule" "allow_all_outbound" {
   from_port      = 0
   to_port        = 65535
 }
+
 resource "aws_security_group" "allow_all" {
   name        = "allow_all_security_group"
   description = "Security group that allows all inbound and outbound traffic"
@@ -113,11 +118,11 @@ resource "aws_security_group" "allow_all" {
 }
 
 resource "aws_vpc_dhcp_options" "main" {
-  domain_name         = "compute-1.amazonaws.com"
-  domain_name_servers = ["AmazonProvidedDNS"]
+  domain_name         = var.vpc_domain_name
+  domain_name_servers = var.vpc_domain_name_servers
 
   tags = {
-    Name = "osm-dhcp-options"
+    Name = "${var.vpc_dhcp_options_name}-${var.environment}"
   }
 }
 
@@ -126,16 +131,15 @@ resource "aws_vpc_dhcp_options_association" "main" {
   dhcp_options_id = aws_vpc_dhcp_options.main.id
 }
 
-
 # main Subnet
 resource "aws_subnet" "main" {
   vpc_id                  = aws_vpc.main.id
-  cidr_block              = "10.0.1.0/24"
-  availability_zone       = "us-east-1a"
+  cidr_block              = var.subnet_ipv4_cidr_block
+  availability_zone       = "${var.region}${var.availability_zone_letter_identifier}"
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "main-subnet"
+    Name = "${var.subnet_name}-${var.environment}"
   }
 }
 
@@ -149,18 +153,4 @@ resource "aws_route_table_association" "main" {
 resource "aws_network_acl_association" "main" {
   subnet_id      = aws_subnet.main.id
   network_acl_id = aws_network_acl.allow_all.id
-}
-
-
-# Security Group
-
-
-# Data source to find the latest Ubuntu AMI
-data "aws_ami" "ubuntu" {
-  most_recent = true
-  owners      = ["099720109477"]
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
-  }
 }

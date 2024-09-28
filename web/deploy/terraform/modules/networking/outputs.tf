@@ -22,6 +22,6 @@ output "aws_network_acl_id" {
   value = aws_network_acl.allow_all.id
 }
 
-output "ami_id" {
-  value = data.aws_ami.ubuntu.id
-}
+# output "ami_id" {
+#   value = data.aws_ami.ubuntu.id
+# }
