@@ -3,16 +3,16 @@ terraform {
 }
 
 module "stage_state" {
-  source      = "./modules/state/"
+  source      = "../modules/state/"
   environment = "stage"
 }
 
 module "prod_state" {
-  source      = "./modules/state/"
+  source      = "../modules/state/"
   environment = "prod"
 }
 
 module "shared_state" {
-  source      = "./modules/state/"
+  source      = "../modules/state/"
   environment = "shared"
 }
