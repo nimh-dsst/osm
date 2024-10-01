@@ -25,3 +25,23 @@ resource "aws_ecr_repository" "main" {
     encryption_type = "AES256"
   }
 }
+
+resource "aws_iam_policy" "cd" {
+  name = "${var.cd_iam_policy_name}-${var.environment}"
+  policy = templatefile(
+    "${path.module}/policies/gha-policy.json.tftpl",
+    {
+      resource = aws_ecr_repository.main.arn
+    },
+  )
+}
+
+resource "aws_iam_role" "cd" {
+  name               = "${var.cd_iam_role_policy_name}-${var.environment}"
+  assume_role_policy = file("${path.module}/policies/assume-role.json")
+}
+
+resource "aws_iam_role_policy_attachment" "cd" {
+  role       = aws_iam_role.cd.name
+  policy_arn = aws_iam_policy.cd.arn
+}
