@@ -13,7 +13,7 @@ provider "aws" {
   region = var.region
 }
 
-resource "aws_ecr_repository" "ecr_repository" {
+resource "aws_ecr_repository" "main" {
   name                 = "${var.ecr_name}-${var.environment}"
   image_tag_mutability = "IMMUTABLE"
 
