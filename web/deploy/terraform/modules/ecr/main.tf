@@ -25,9 +25,3 @@ resource "aws_ecr_repository" "main" {
     encryption_type = "AES256"
   }
 }
-
-module "iam_role_and_policy" {
-  source                 = "../iam/"
-  environment            = var.environment
-  cd_iam_policy_resource = aws_ecr_repository.main.arn
-}

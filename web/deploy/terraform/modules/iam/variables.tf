@@ -15,9 +15,9 @@ variable "cd_iam_policy_name" {
   type        = string
 }
 
-variable "cd_iam_policy_resource" {
+variable "cd_iam_policy_resources" {
   description = "The arn of the resource to which the IAM policy is applied"
-  type        = string
+  type        = list(string)
 }
 
 variable "cd_iam_role_policy_name" {

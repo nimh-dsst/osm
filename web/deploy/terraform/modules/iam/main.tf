@@ -18,7 +18,7 @@ resource "aws_iam_policy" "cd" {
   policy = templatefile(
     "${path.module}/policies/gha-policy.json.tftpl",
     {
-      resource = var.cd_iam_policy_resource
+      resources = jsonencode(var.cd_iam_policy_resources)
     },
   )
 }

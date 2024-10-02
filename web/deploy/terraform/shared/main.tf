@@ -33,3 +33,9 @@ module "ecr_dashboard" {
   environment = var.environment
   ecr_name    = "dashboard"
 }
+
+module "iam_role_and_policy" {
+  source                  = "../modules/iam/"
+  environment             = var.environment
+  cd_iam_policy_resources = [module.ecr_api.arn, module.ecr_dashboard.arn]
+}
