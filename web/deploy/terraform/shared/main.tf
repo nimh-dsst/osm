@@ -22,7 +22,14 @@ module "networking" {
   environment = var.environment
 }
 
-module "ecr" {
+module "ecr_api" {
   source      = "../modules/ecr/"
   environment = var.environment
+  ecr_name    = "api"
+}
+
+module "ecr_dashboard" {
+  source      = "../modules/ecr/"
+  environment = var.environment
+  ecr_name    = "dashboard"
 }
