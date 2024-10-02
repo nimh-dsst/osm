@@ -14,15 +14,3 @@ variable "ecr_name" {
   default     = "osm-ecr"
   type        = string
 }
-
-variable "cd_iam_policy_name" {
-  description = "The name of the IAM policy for continuous deployment to ECR"
-  default     = "GitHubActions-ECR"
-  type        = string
-}
-
-variable "cd_iam_role_policy_name" {
-  description = "The name of the IAM role policy for continuous deployment to ECR"
-  default     = "github-actions-role"
-  type        = string
-}
