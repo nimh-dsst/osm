@@ -3,11 +3,20 @@
     "Statement": [
         {
             "Effect": "Allow",
-            "Action": [
-                "sts:AssumeRole"
-            ],
-	    "Principal" : {
-		"Service" : "ec2.amazonaws.com"
+	    "Principal": {
+                "Federated": "arn:aws:iam::123456123456:oidc-provider/token.actions.githubusercontent.com"
+            },
+            "Action": "sts:AssumeRoleWithWebIdentity",
+	    "Condition": {
+                "StringLike": {
+                    "token.actions.githubusercontent.com:sub": [
+			"repo:nimh-dsst/osm:*",
+			"repo:smokestacklightnin/osm:*"
+		    ]
+                },
+                "StringEquals": {
+                    "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
+                }
             }
         }
     ]
