@@ -10,8 +10,7 @@
 	    "Condition": {
                 "StringLike": {
                     "token.actions.githubusercontent.com:sub": [
-			"repo:nimh-dsst/osm:*",
-			"repo:smokestacklightnin/osm:*"
+			"repo:nimh-dsst/osm:*"
 		    ]
                 },
                 "StringEquals": {
