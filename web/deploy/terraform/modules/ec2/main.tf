@@ -33,15 +33,15 @@ resource "aws_instance" "deployment" {
   user_data = file("${path.module}/scripts/install-docker.sh")
 }
 
-resource "aws_eip" "deployment" {
-  domain = var.eip_domain
+# resource "aws_eip" "deployment" {
+#   domain = var.eip_domain
 
-  tags = {
-    Name = var.environment
-  }
-}
+#   tags = {
+#     Name = var.environment
+#   }
+# }
 
-resource "aws_eip_association" "deployment" {
-  instance_id   = aws_instance.deployment.id
-  allocation_id = aws_eip.deployment.id
-}
+# resource "aws_eip_association" "deployment" {
+#   instance_id   = aws_instance.deployment.id
+#   allocation_id = aws_eip.deployment.id
+# }
