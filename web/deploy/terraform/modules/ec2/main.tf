@@ -15,10 +15,10 @@ provider "aws" {
 
 # EC2 Instance
 resource "aws_instance" "deployment" {
-  ami           = data.aws_ami.ubuntu.id
-  instance_type = var.instance_type
-  subnet_id     = data.terraform_remote_state.shared.outputs.subnet_id
-  # key_name                    = var.ec2_key_name
+  ami                         = data.aws_ami.ubuntu.id
+  instance_type               = var.instance_type
+  subnet_id                   = data.terraform_remote_state.shared.outputs.subnet_id
+  key_name                    = var.ec2_key_name
   vpc_security_group_ids      = [data.terraform_remote_state.shared.outputs.security_group_id]
   associate_public_ip_address = true
   root_block_device {

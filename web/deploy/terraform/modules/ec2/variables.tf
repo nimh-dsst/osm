@@ -15,11 +15,11 @@ variable "instance_type" {
   type        = string
 }
 
-# variable "ec2_key_name" {
-#   description = "Key name of the Key Pair to use for the instance; which can be managed using the `aws_key_pair` resource."
-#   default     = "dsst2023"
-#   type        = string
-# }
+variable "ec2_key_name" {
+  description = "Key name of the Key Pair to use for the instance; which can be managed using the `aws_key_pair` resource."
+  default     = "dsst2023"
+  type        = string
+}
 
 variable "ec2_root_block_device_size" {
   description = "Size of the volume in gibibytes (GiB)."
