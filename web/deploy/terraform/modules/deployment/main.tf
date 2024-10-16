@@ -10,15 +10,16 @@ terraform {
 }
 
 provider "aws" {
-  region = "us-east-1"
+  region = var.region
 }
 
 terraform {
   backend "s3" {
-    bucket         = "osm-terraform-storage"
-    key            = "terraform/staging-state/terraform.tfstate"
-    region         = "us-east-1"
-    dynamodb_table = "terraform-locks"
+    bucket         = "${var.state_bucket_name}-${var.environment}"
+    key            = var.state_backend_key
+    region         = var.state_storage_region
+    dynamodb_table = "${var.state_table_name}-${var.environment}"
+    encrypt        = true
   }
 }
 
@@ -32,16 +33,16 @@ resource "aws_instance" "staging" {
   ami                         = module.shared_resources.ami_id
   instance_type               = var.instance_type
   subnet_id                   = module.shared_resources.subnet_id
-  key_name                    = "dsst2023"
+  key_name                    = var.ec2_key_name
   vpc_security_group_ids      = [module.shared_resources.security_group_id]
   associate_public_ip_address = true
   root_block_device {
-    volume_size = 30
-    volume_type = "gp2" # General Purpose SSD (can be "gp2", "gp3", "io1", "io2", etc.)
+    volume_size = var.ec2_root_block_device_size
+    volume_type = var.ec2_root_block_device_type
   }
 
   tags = {
-    Name = "staging-instance"
+    Name = var.environment
   }
 
   user_data = <<-EOF
@@ -58,10 +59,10 @@ resource "aws_instance" "staging" {
 }
 
 resource "aws_eip" "staging" {
-  domain = "vpc"
+  domain = var.eip_domain
 
   tags = {
-    Name = "staging-elastic-ip"
+    Name = var.environment
   }
 }
 
