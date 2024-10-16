@@ -3,15 +3,15 @@
     "Statement": [
         {
             "Effect": "Allow",
-	    "Principal": {
+            "Principal": {
                 "Federated": "arn:aws:iam::123456123456:oidc-provider/token.actions.githubusercontent.com"
             },
             "Action": "sts:AssumeRoleWithWebIdentity",
-	    "Condition": {
+            "Condition": {
                 "StringLike": {
                     "token.actions.githubusercontent.com:sub": [
-			"repo:nimh-dsst/osm:*"
-		    ]
+                        "repo:nimh-dsst/osm:*"
+                    ]
                 },
                 "StringEquals": {
                     "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
