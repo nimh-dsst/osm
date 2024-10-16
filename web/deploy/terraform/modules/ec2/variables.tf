@@ -33,11 +33,11 @@ variable "ec2_root_block_device_type" {
   type        = string
 }
 
-# variable "eip_domain" {
-#   description = "Indicates if this EIP is for use in VPC"
-#   default     = "vpc"
-#   type        = string
-# }
+variable "eip_domain" {
+  description = "Indicates if this EIP is for use in VPC"
+  default     = "vpc"
+  type        = string
+}
 
 variable "ubuntu_ami_release" {
   description = "The release of Ubuntu to use for the EC2 AMI. E.g. 20.04, 22.04, 24.04"
