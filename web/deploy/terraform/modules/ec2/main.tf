@@ -23,18 +23,13 @@ terraform {
   }
 }
 
-
-module "shared_resources" {
-  source = "../modules/shared_resources"
-}
-
 # EC2 Instance
-resource "aws_instance" "staging" {
-  ami                         = module.shared_resources.ami_id
+resource "aws_instance" "deployment" {
+  ami                         = data.aws_ami.ubuntu.id
   instance_type               = var.instance_type
-  subnet_id                   = module.shared_resources.subnet_id
+  subnet_id                   = data.terraform_remote_state.shared.outputs.subnet_id
   key_name                    = var.ec2_key_name
-  vpc_security_group_ids      = [module.shared_resources.security_group_id]
+  vpc_security_group_ids      = [data.terraform_remote_state.shared.outputs.security_group_id]
   associate_public_ip_address = true
   root_block_device {
     volume_size = var.ec2_root_block_device_size
@@ -48,7 +43,7 @@ resource "aws_instance" "staging" {
   user_data = file("${path.module}/scripts/install-docker.sh")
 }
 
-resource "aws_eip" "staging" {
+resource "aws_eip" "deployment" {
   domain = var.eip_domain
 
   tags = {
@@ -56,7 +51,7 @@ resource "aws_eip" "staging" {
   }
 }
 
-resource "aws_eip_association" "staging" {
-  instance_id   = aws_instance.staging.id
-  allocation_id = aws_eip.staging.id
+resource "aws_eip_association" "deployment" {
+  instance_id   = aws_instance.deployment.id
+  allocation_id = aws_eip.deployment.id
 }

@@ -38,3 +38,9 @@ variable "eip_domain" {
   default     = "vpc"
   type        = string
 }
+
+variable "ubuntu_ami_release" {
+  description = "The release of Ubuntu to use for the EC2 AMI. E.g. 20.04, 22.04, 24.04"
+  default     = "20.04"
+  type        = string
+}
