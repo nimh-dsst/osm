@@ -13,16 +13,6 @@ provider "aws" {
   region = var.region
 }
 
-terraform {
-  backend "s3" {
-    bucket         = "${var.state_bucket_name}-${var.environment}"
-    key            = var.state_backend_key
-    region         = var.state_storage_region
-    dynamodb_table = "${var.state_table_name}-${var.environment}"
-    encrypt        = true
-  }
-}
-
 # EC2 Instance
 resource "aws_instance" "deployment" {
   ami                         = data.aws_ami.ubuntu.id
