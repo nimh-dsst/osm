@@ -66,3 +66,18 @@ $ tofu init
 $ tofu plan # This is not required, but gives a nice preview
 $ tofu apply
 ```
+
+### 3. Deploy Production Resources
+
+> **_Note:_** This step will usually be run by a CD workflow. This step is included here for development/debugging purposes.
+
+First, for each resource defined by a module in `production/main.tf`, make sure that resource's input variables are set to your desired values. You can find the input variables for a module `foo` in `modules/foo/variables.tf`.
+
+Then you can deploy the production resources with 
+
+```bash
+$ cd ~/path-to-repo/web/deploy/terraform/production/
+$ tofu init
+$ tofu plan # This is not required, but gives a nice preview
+$ tofu apply
+```
