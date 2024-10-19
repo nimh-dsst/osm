@@ -52,6 +52,14 @@ $ tofu plan # This is not required, but gives a nice preview
 $ tofu apply
 ```
 
+If you modify the shared deployment, you can redeploy it with 
+
+```bash
+$ cd ~/path-to-repo/web/deploy/terraform/shared/
+$ tofu plan # This is not required, but gives a nice preview
+$ tofu apply
+```
+
 ### 2. Deploy Staging Resources
 
 > **_Note:_** This step will usually be run by a CD workflow. This step is included here for development/debugging purposes.
@@ -67,6 +75,14 @@ $ tofu plan # This is not required, but gives a nice preview
 $ tofu apply
 ```
 
+If you modify the staging deployment, you can redeploy it with 
+
+```bash
+$ cd ~/path-to-repo/web/deploy/terraform/staging/
+$ tofu plan # This is not required, but gives a nice preview
+$ tofu apply
+```
+
 ### 3. Deploy Production Resources
 
 > **_Note:_** This step will usually be run by a CD workflow. This step is included here for development/debugging purposes.
@@ -78,6 +94,14 @@ Then you can deploy the production resources with
 ```bash
 $ cd ~/path-to-repo/web/deploy/terraform/production/
 $ tofu init
+$ tofu plan # This is not required, but gives a nice preview
+$ tofu apply
+```
+
+If you modify the production deployment, you can redeploy it with 
+
+```bash
+$ cd ~/path-to-repo/web/deploy/terraform/production/
 $ tofu plan # This is not required, but gives a nice preview
 $ tofu apply
 ```
