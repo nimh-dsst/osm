@@ -64,3 +64,12 @@ resource "aws_iam_role_policy_attachment" "cd" {
   role       = aws_iam_role.cd.name
   policy_arn = aws_iam_policy.cd.arn
 }
+
+resource "aws_iam_openid_connect_provider" "github" {
+  url = "https://token.actions.githubusercontent.com"
+
+  client_id_list = [
+    "sts.amazonaws.com",
+  ]
+  thumbprint_list = ["1b511abead59c6ce207077c0bf0e0043b1382612"]
+}
