@@ -37,3 +37,9 @@ variable "cd_iam_role_policy_name" {
   default     = "github-actions-role"
   type        = string
 }
+
+variable "AWS_ACCOUNT_ID" {
+  # All caps variable name because this is read in as an environment variable
+  description = "The ID of your AWS account. This should be set as an environment variable `TF_VAR_AWS_ACCOUNT_ID`."
+  type        = string
+}

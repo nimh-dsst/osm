@@ -52,8 +52,12 @@ resource "aws_iam_policy" "cd" {
 }
 
 resource "aws_iam_role" "cd" {
-  name               = "${var.cd_iam_role_policy_name}-${var.environment}"
-  assume_role_policy = file("${path.module}/policies/assume-role.json")
+  name = "${var.cd_iam_role_policy_name}-${var.environment}"
+  assume_role_policy = templatefile("${path.module}/policies/assume-role.json.tftpl",
+    {
+      AWS_ACCOUNT_ID = var.AWS_ACCOUNT_ID
+    },
+  )
 }
 
 resource "aws_iam_role_policy_attachment" "cd" {
