@@ -1,0 +1,19 @@
+name: Deploy to Docker image to AWS ECR
+
+on:
+  workflow_dispatch:
+  push:
+    # tags:
+    #   - 'v*.*.*' # Matches version tags like v1.0.0
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-api-dashboard:
+    uses: ./.github/workflows/build-docker.yml
+    with:
+      ecr_repo: shared-dashboard
+      
+   
