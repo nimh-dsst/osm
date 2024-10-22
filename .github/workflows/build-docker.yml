@@ -32,8 +32,8 @@ jobs:
           aws-region: ${{ inputs.aws_region }}
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-role-shared
 
-      # - name: Set up Docker Buildx
-      #   uses: docker/setup-buildx-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       # - name: Login to Amazon ECR
       #   id: login-ecr
