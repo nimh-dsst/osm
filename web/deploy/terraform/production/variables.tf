@@ -1,6 +1,6 @@
 variable "environment" {
-  description = "The name of the environment. Usually `stage`."
-  default     = "stage"
+  description = "The name of the environment. Usually `prod`"
+  default     = "prod"
   type        = string
 }
 
