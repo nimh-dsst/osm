@@ -9,6 +9,18 @@ variable "region" {
   type        = string
 }
 
+variable "instance_profile_name" {
+  description = "The name of the instance profile"
+  default     = "osm-instance-profile"
+  type        = string
+}
+
+variable "instance_profile_role_name" {
+  description = "The name of the instance profile"
+  default     = "osm-instance-profile-role"
+  type        = string
+}
+
 variable "cd_iam_policy_name" {
   description = "The name of the IAM policy for continuous deployment to ECR"
   default     = "GitHubActions-ECR"

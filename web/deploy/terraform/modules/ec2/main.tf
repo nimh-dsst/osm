@@ -21,6 +21,7 @@ resource "aws_instance" "deployment" {
   key_name                    = var.ec2_key_name
   vpc_security_group_ids      = [data.terraform_remote_state.shared.outputs.security_group_id]
   associate_public_ip_address = true
+  iam_instance_profile        = data.terraform_remote_state.shared.outputs.instance_profile_name
   root_block_device {
     volume_size = var.ec2_root_block_device_size
     volume_type = var.ec2_root_block_device_type
