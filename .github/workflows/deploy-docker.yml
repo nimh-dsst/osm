@@ -11,9 +11,10 @@ permissions:
   contents: read
 
 jobs:
-  build-api-dashboard:
+  build:
+    strategy:
+      matrix:
+        deployment: ["api", "dashboard"]
     uses: ./.github/workflows/build-docker.yml
     with:
-      ecr_repo: shared-dashboard
-      
-   
+      deployment: ${{ matrix.deployment }}

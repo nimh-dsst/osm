@@ -3,9 +3,14 @@ name: Docker Build Workflow
 on:
   workflow_call:
     inputs:
-      ecr_repo:
-        type: string
+      deployment:
         required: true
+        type: string
+        # I would like to get `choice` working
+        # type: choice
+        # options:
+        # - api
+        # - dashboard
       # docker_target:
       #   description: 'Docker target'
       #   type: string
@@ -51,7 +56,7 @@ jobs:
         run: |
           short_sha=$(git rev-parse --short ${{ github.sha }})
           # echo "tag=${{ steps.login-ecr.outputs.registry }}/${{ inputs.ecr_repo }}:$short_sha" >> $GITHUB_OUTPUT
-          echo "tag=${{ steps.login-ecr.outputs.registry }}/api-shared:$short_sha" >> $GITHUB_OUTPUT
+          echo "tag=${{ steps.login-ecr.outputs.registry }}/${{ inputs.deployment }}-shared:$short_sha" >> $GITHUB_OUTPUT
           echo "short_sha=$short_sha" >> $GITHUB_OUTPUT
       - name: Build base docker image
         uses: docker/build-push-action@v5
@@ -71,7 +76,7 @@ jobs:
           provenance: false
           push: true
           tags: ${{ steps.compute-image-tag.outputs.tag }}
-          file: web/api/Dockerfile
+          file: web/${{ inputs.deployment }}/Dockerfile
           build-args: |
             BASE_IMAGE=localhost:5000/osm/osm_base
           # target: ${{ inputs.docker_target }}
