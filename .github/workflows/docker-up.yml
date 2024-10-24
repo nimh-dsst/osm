@@ -1,0 +1,14 @@
+name: Execute `docker compose up`
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        default: stage
+        type: string
+        required: true
+        description: The environment where to deploy. Usually `stage` or `prod`
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
