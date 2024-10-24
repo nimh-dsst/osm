@@ -12,7 +12,7 @@ import requests
 from pydantic import ValidationError
 
 from osm import schemas
-from osm._utils import get_compute_context_id
+from osm._utils import camel_to_snake, get_compute_context_id
 from osm._version import __version__
 
 from .core import Component
@@ -83,6 +83,8 @@ class OSMSaver(Component):
         osm_api = os.environ.get("OSM_API", "https://opensciencemetrics.org/api")
         print(f"Using OSM API: {osm_api}")
         # Build the payload
+        extractor = components[1]
+        metrics_schema = extractor.model
         try:
             payload = {
                 "osm_version": __version__,
@@ -96,7 +98,7 @@ class OSMSaver(Component):
                     "compute_context_id": self.compute_context_id,
                     "email": self.email,
                 },
-                "metrics": metrics,
+                camel_to_snake(metrics_schema.__name__): metrics,
                 "components": [comp.orm_model for comp in components],
             }
         except Exception as e:
@@ -116,7 +118,9 @@ class OSMSaver(Component):
             # as a string or something like that: base64.b64encode(bytes).decode("utf-8")
             response = requests.put(
                 f"{osm_api}/upload/",
-                json=validated_data.model_dump(mode="json", exclude=["id"]),
+                json=validated_data.model_dump(
+                    mode="json", exclude=["id"], exclude_none=True
+                ),
             )
             if response.status_code == 200:
                 print("Invocation data uploaded successfully")

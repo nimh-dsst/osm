@@ -9,7 +9,11 @@ from pydantic import EmailStr, field_serializer, field_validator
 from osm._utils import coerce_to_string
 
 from .custom_fields import LongBytes
-from .metrics_schemas import RtransparentMetrics
+from .metrics_schemas import (
+    LLMExtractorMetrics,
+    ManualAnnotationNIMHDSST,
+    RtransparentMetrics,
+)
 
 
 class Component(EmbeddedModel):
@@ -71,7 +75,9 @@ class Invocation(Model):
     """
 
     model_config = {"extra": "forbid"}
-    metrics: RtransparentMetrics
+    manual_annotation_nimhdsst: Optional[ManualAnnotationNIMHDSST] = Field(default=None)
+    llm_extractor_metrics: Optional[LLMExtractorMetrics] = Field(default=None)
+    rtransparent_metrics: Optional[RtransparentMetrics] = Field(default=None)
     components: Optional[list[Component]] = []
     work: Work
     client: Client
@@ -80,7 +86,9 @@ class Invocation(Model):
     funder: Optional[list[str]] = []
     data_tags: list[str] = []
     created_at: datetime.datetime = Field(
-        default_factory=lambda: datetime.datetime.now(datetime.UTC)
+        default_factory=lambda: datetime.datetime.now(datetime.UTC).replace(
+            microsecond=0
+        )
     )
 
 
@@ -88,12 +96,16 @@ class Quarantine(Model):
     payload: bytes = b""
     error_message: str
     created_at: datetime.datetime = Field(
-        default_factory=lambda: datetime.datetime.now(datetime.UTC)
+        default_factory=lambda: datetime.datetime.now(datetime.UTC).replace(
+            microsecond=0
+        )
     )
 
 
 class PayloadError(Model):
     error_message: str
     created_at: datetime.datetime = Field(
-        default_factory=lambda: datetime.datetime.now(datetime.UTC)
+        default_factory=lambda: datetime.datetime.now(datetime.UTC).replace(
+            microsecond=0
+        )
     )
