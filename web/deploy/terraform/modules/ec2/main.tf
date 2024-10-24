@@ -31,7 +31,8 @@ resource "aws_instance" "deployment" {
     Name = var.environment
   }
 
-  user_data = file("${path.module}/scripts/install-docker.sh")
+  user_data                   = file("${path.module}/scripts/install-docker.sh")
+  user_data_replace_on_change = true
 }
 
 resource "aws_eip" "deployment" {
