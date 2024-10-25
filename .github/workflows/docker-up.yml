@@ -69,10 +69,10 @@ jobs:
           RELEASE_TAG: ${{ env.RELEASE_TAG }}
         run: |
           ssh staging \
-          AWS_ACCOUNT_ID="${AWS_ACCOUNT_ID}" \
-          AWS_REGION="${AWS_REGION}" \
           MONGODB_URI="${MONGODB_URI}" \
           HOST_URI="${HOST_URI}" \
           RELEASE_TAG="${RELEASE_TAG}" \
+          AWS_ACCOUNT_ID="${AWS_ACCOUNT_ID}" \
+          AWS_REGION="${AWS_REGION}" \
           docker compose -f - up -d < ./web/deploy/docker-compose.yaml
           
