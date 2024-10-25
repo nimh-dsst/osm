@@ -30,6 +30,30 @@ jobs:
         run: |
           echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
 
-      - name: Debug print environment
+      - name: Configure SSH
+        env:
+          PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_PROD_HOST: ${{ secrets.SSH_PROD_HOST }}
+          SSH_STAGE_HOST: ${{ secrets.SSH_STAGE_HOST }}
+          DEPLOY_USERNAME: ${{ secrets.DEPLOYMENT_USERNAME }}
         run: |
-          echo ${{ env.dev_environment }}
+          mkdir -p ~/.ssh/
+          echo "$PRIVATE_KEY" > ~/.ssh/aws
+          chmod 600 ~/.ssh/aws
+          cat >>~/.ssh/config <<END
+          Host staging
+            HostName ${SSH_STAGE_HOST}
+            User ${DEPLOY_USERNAME}
+            IdentityFile ~/.ssh/aws
+            StrictHostKeyChecking no
+          Host production
+            HostName ${SSH_PROD_HOST}
+            User ${DEPLOY_USERNAME}
+            IdentityFile ~/.ssh/aws
+            StrictHostKeyChecking no
+          END
+
+      - name: Run `docker compose up` on remote staging host
+        run: |
+          ssh staging 'echo hello prod host'
+          

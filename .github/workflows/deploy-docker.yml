@@ -24,6 +24,7 @@ jobs:
     if: ${{ always() && !cancelled() && needs.build.result == 'success' }}
     name: Deploy and run docker images on EC2
     uses: ./.github/workflows/docker-up.yml
+    secrets: inherit
     with:
       parent_trigger: ${{ github.event_name }}
       
