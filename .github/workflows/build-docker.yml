@@ -11,10 +11,6 @@ on:
         # options:
         # - api
         # - dashboard
-      # docker_target:
-      #   description: 'Docker target'
-      #   type: string
-      #   required: true
       aws_region:
         description: 'AWS region'
         type: string
@@ -49,7 +45,7 @@ jobs:
 
       - name: Login to Amazon ECR
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+        uses: aws-actions/amazon-ecr-login@v2
         
       - name: Compute image tag
         id: compute-image-tag
@@ -59,7 +55,7 @@ jobs:
           echo "tag=${{ steps.login-ecr.outputs.registry }}/${{ inputs.deployment }}-shared:$short_sha" >> $GITHUB_OUTPUT
           echo "short_sha=$short_sha" >> $GITHUB_OUTPUT
       - name: Build base docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           # provenance: false
@@ -70,7 +66,7 @@ jobs:
       - name: Build and push Docker image
         # only build if the image tag doesn't exist
         # if: steps.check-image-tag.outputs.found_tag == 1
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           provenance: false
