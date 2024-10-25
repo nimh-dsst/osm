@@ -18,12 +18,12 @@ jobs:
         
       - name: Set stage environment
         run: |
-          export ENVIRONMENT=stage
+          echo "dev_environment=stage" >> $GITHUB_ENV
         if: ${{ inputs.parent_trigger == 'push' }}
         
       - name: Set prod environment
         run: |
-          export ENVIRONMENT=prod
+          echo "dev_environment=prod" >> $GITHUB_ENV
         if: ${{ inputs.parent_trigger == 'workflow_dispatch' }}
         
       - name: Get version tag
@@ -32,4 +32,4 @@ jobs:
 
       - name: Debug print environment
         run: |
-          echo ${{ inputs.environment }}
+          echo ${{ env.dev_environment }}
