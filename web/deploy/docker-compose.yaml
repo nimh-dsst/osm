@@ -1,7 +1,7 @@
 name: osm
 services:
     web_api:
-        image: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/api-shared:${RELEASE_VERSION}"
+        image: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/api-shared:${RELEASE_TAG}"
         pull_policy: always
         environment:
             - MONGODB_URI="${MONGODB_URI}"
@@ -18,7 +18,7 @@ services:
             - traefik-public
 
     dashboard:
-        image: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/dashboard-shared:${RELEASE_VERSION}"
+        image: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/dashboard-shared:${RELEASE_TAG}"
         pull_policy: always
         environment:
             - MONGODB_URI="${MONGODB_URI}"
