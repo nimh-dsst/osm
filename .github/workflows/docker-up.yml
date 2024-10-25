@@ -54,6 +54,18 @@ jobs:
           END
 
       - name: Run `docker compose up` on remote staging host
+        env:
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          HOST_URI: ${{ secrets.SSH_STAGE_HOST }}
+          RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
         run: |
-          ssh staging 'echo hello prod host'
+          ssh staging \
+          AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID} \
+          AWS_REGION=${AWS_REGION} \
+          MONGODB_URI=${MONGODB_URI} \
+          HOST_URI=${HOST_URI} \
+          RELEASE_VERSION=${RELEASE_VERSION} \
+          docker compose -f - up -d < ./web/deploy/docker-compose.yaml
           
