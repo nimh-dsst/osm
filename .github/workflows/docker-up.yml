@@ -3,17 +3,29 @@ name: Execute `docker compose up`
 on:
   workflow_call:
     inputs:
-      environment:
-        default: stage
+      parent_trigger:
         type: string
         required: true
-        description: The environment where to deploy. Usually `stage` or `prod`
+        description: The environment where to deploy. Usually `push` or `workflow_dispatch`
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.2.2
+        
+      - name: Set stage environment
+        run: |
+          export ENVIRONMENT=stage
+        if: ${{ inputs.parent_trigger == 'push' }}
+        
+      - name: Set prod environment
+        run: |
+          export ENVIRONMENT=prod
+        if: ${{ inputs.parent_trigger == 'workflow_dispatch' }}
+        
       - name: Get version tag
         run: |
           echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
