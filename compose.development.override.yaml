@@ -27,7 +27,7 @@ services:
           path: ./osm
           target: /opt/osm/osm
           ignore:
-            - __pycache__
+            - "**/__pycache__"
 
 ############ Development images ############
 
@@ -41,6 +41,7 @@ services:
       - MONGO_INITDB_DATABASE=osm
 
   base:
+    container_name: base
     command: ["echo", "base image"]
     image: nimhdsst/osm_base:latest
     build:
@@ -69,7 +70,7 @@ services:
           path: ./osm
           target: /opt/osm/osm
           ignore:
-            - __pycache__
+            - __pycache__/*
 
   web_api:
     container_name: web_api
@@ -94,4 +95,4 @@ services:
           path: ./osm
           target: /opt/osm/osm
           ignore:
-            - __pycache__
+            - __pycache__/*

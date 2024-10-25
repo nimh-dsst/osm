@@ -25,3 +25,4 @@ osm_output
 .public_dns
 tempdata
 .aider*
+build-cache
