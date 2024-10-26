@@ -1,5 +1,10 @@
 name: Deploy OpenTofu
 
+on:
+  push:
+    paths:
+      - 'web/deploy/terraform/**'
+
 jobs:
   build:
     runs-on: ubuntu-latest
