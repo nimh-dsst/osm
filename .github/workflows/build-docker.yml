@@ -58,7 +58,6 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          # provenance: false
           push: true
           file: Dockerfile.base
           tags: localhost:5000/osm/osm_base
@@ -69,10 +68,8 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          provenance: false
           push: true
           tags: ${{ steps.compute-image-tag.outputs.tag }}
           file: web/${{ inputs.deployment }}/Dockerfile
           build-args: |
             BASE_IMAGE=localhost:5000/osm/osm_base
-          # target: ${{ inputs.docker_target }}
