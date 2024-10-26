@@ -16,21 +16,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4.2.2
         
-      - name: Set stage environment
+      - name: Set development environment
+        env:
+          SSH_PROD_HOST: ${{ secrets.SSH_PROD_HOST }}
+          SSH_STAGE_HOST: ${{ secrets.SSH_STAGE_HOST }}
         run: |
-          echo "DEV_ENVIRONMENT=staging" >> $GITHUB_ENV
-        if: ${{ inputs.parent_trigger == 'push' }}
-        
-      - name: Set prod environment
-        run: |
-          echo "DEV_ENVIRONMENT=production" >> $GITHUB_ENV
-        if: ${{ inputs.parent_trigger == 'workflow_dispatch' }}
-        
+          if [[ ${{ inputs.parent_trigger }} == 'workflow_dispatch' ]]; then
+            echo "DEV_ENVIRONMENT=production" >> $GITHUB_ENV
+          else
+            echo "DEV_ENVIRONMENT=staging" >> $GITHUB_ENV
+          fi
+          echo The development environment is ${{ env.DEV_ENVIRONMENT }}
+
       - name: Get image tag
         run: |
           echo "RELEASE_TAG=$(git rev-parse --short ${{ github.sha }})" >> $GITHUB_ENV
           
-      - name: Set Host URI
+      - name: Set host URI
         env:
           SSH_PROD_HOST: ${{ secrets.SSH_PROD_HOST }}
           SSH_STAGE_HOST: ${{ secrets.SSH_STAGE_HOST }}
@@ -69,6 +71,5 @@ jobs:
           AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
-          RELEASE_TAG: ${{ env.RELEASE_TAG }}
         run: |
           ssh ${DEV_ENVIRONMENT} MONGODB_URI="${MONGODB_URI}" HOST_URI="${HOST_URI}" RELEASE_TAG="${RELEASE_TAG}" AWS_ACCOUNT_ID="${AWS_ACCOUNT_ID}" AWS_REGION="${AWS_REGION}" docker compose -f - up -d < ./web/deploy/docker-compose.yaml
