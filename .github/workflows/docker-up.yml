@@ -18,36 +18,40 @@ jobs:
         
       - name: Set stage environment
         run: |
-          echo "dev_environment=staging" >> $GITHUB_ENV
+          echo "DEV_ENVIRONMENT=staging" >> $GITHUB_ENV
         if: ${{ inputs.parent_trigger == 'push' }}
         
       - name: Set prod environment
         run: |
-          echo "dev_environment=production" >> $GITHUB_ENV
+          echo "DEV_ENVIRONMENT=production" >> $GITHUB_ENV
         if: ${{ inputs.parent_trigger == 'workflow_dispatch' }}
         
       - name: Get image tag
         run: |
           echo "RELEASE_TAG=$(git rev-parse --short ${{ github.sha }})" >> $GITHUB_ENV
-
+          
+      - name: Set Host URI
+        env:
+          SSH_PROD_HOST: ${{ secrets.SSH_PROD_HOST }}
+          SSH_STAGE_HOST: ${{ secrets.SSH_STAGE_HOST }}
+        run: |
+          if [[ ${DEV_ENVIRONMENT} == 'production' ]]; then
+            echo "HOST_URI=${SSH_PROD_HOST}" >> $GITHUB_ENV
+          else
+            echo "HOST_URI=${SSH_STAGE_HOST}" >> $GITHUB_ENV
+          fi          
+          
       - name: Configure SSH
         env:
           PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SSH_PROD_HOST: ${{ secrets.SSH_PROD_HOST }}
-          SSH_STAGE_HOST: ${{ secrets.SSH_STAGE_HOST }}
           DEPLOY_USERNAME: ${{ secrets.DEPLOYMENT_USERNAME }}
         run: |
           mkdir -p ~/.ssh/
           echo "$PRIVATE_KEY" > ~/.ssh/aws
           chmod 600 ~/.ssh/aws
           cat >>~/.ssh/config <<END
-          Host staging
-            HostName ${SSH_STAGE_HOST}
-            User ${DEPLOY_USERNAME}
-            IdentityFile ~/.ssh/aws
-            StrictHostKeyChecking no
-          Host production
-            HostName ${SSH_PROD_HOST}
+          Host ${DEV_ENVIRONMENT}
+            HostName ${HOST_URI}
             User ${DEPLOY_USERNAME}
             IdentityFile ~/.ssh/aws
             StrictHostKeyChecking no
@@ -57,28 +61,14 @@ jobs:
         env:
           AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
-          DEV_ENVIRONMENT: ${{ env.dev_environment }}
         run: |
           ssh ${DEV_ENVIRONMENT} "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-          
+
       - name: Run `docker compose up` on remote staging host
-        if: ${{ inputs.parent_trigger == 'push' }}
         env:
           AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
-          HOST_URI: ${{ secrets.SSH_STAGE_HOST }}
           RELEASE_TAG: ${{ env.RELEASE_TAG }}
         run: |
-          ssh staging MONGODB_URI="${MONGODB_URI}" HOST_URI="${HOST_URI}" RELEASE_TAG="${RELEASE_TAG}" AWS_ACCOUNT_ID="${AWS_ACCOUNT_ID}" AWS_REGION="${AWS_REGION}" docker compose -f - up -d < ./web/deploy/docker-compose.yaml
-          
-      - name: Run `docker compose up` on remote production host
-        if: ${{ inputs.parent_trigger == 'workflow_dispatch' }}
-        env:
-          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          MONGODB_URI: ${{ secrets.MONGODB_URI }}
-          HOST_URI: ${{ secrets.SSH_STAGE_HOST }}
-          RELEASE_TAG: ${{ env.RELEASE_TAG }}
-        run: |
-          ssh production MONGODB_URI="${MONGODB_URI}" HOST_URI="${HOST_URI}" RELEASE_TAG="${RELEASE_TAG}" AWS_ACCOUNT_ID="${AWS_ACCOUNT_ID}" AWS_REGION="${AWS_REGION}" docker compose -f - up -d < ./web/deploy/docker-compose.yaml
+          ssh ${DEV_ENVIRONMENT} MONGODB_URI="${MONGODB_URI}" HOST_URI="${HOST_URI}" RELEASE_TAG="${RELEASE_TAG}" AWS_ACCOUNT_ID="${AWS_ACCOUNT_ID}" AWS_REGION="${AWS_REGION}" docker compose -f - up -d < ./web/deploy/docker-compose.yaml
