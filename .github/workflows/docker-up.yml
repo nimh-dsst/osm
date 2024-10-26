@@ -73,3 +73,7 @@ jobs:
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
         run: |
           ssh ${DEV_ENVIRONMENT} MONGODB_URI="${MONGODB_URI}" HOST_URI="${HOST_URI}" RELEASE_TAG="${RELEASE_TAG}" AWS_ACCOUNT_ID="${AWS_ACCOUNT_ID}" AWS_REGION="${AWS_REGION}" docker compose -f - up -d < ./web/deploy/docker-compose.yaml
+
+      - name: Prune Docker artifacts
+        run: |
+          ssh ${DEV_ENVIRONMENT} docker system prune -af --filter "until=24h"
