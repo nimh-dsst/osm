@@ -50,3 +50,31 @@ jobs:
         with:
           files: |
             web/deploy/terraform/production/**
+
+      - name: Initialize shared resources
+        run: |
+          tofu -chdir web/deploy/terraform/shared init
+
+      - name: Deploy shared resources
+        if: steps.changed-tofu-modules.outputs.any_modified == true || steps.changed-tofu-shared.outputs.any_modified == true
+        run: |
+          tofu -chdir web/deploy/terraform/shared apply -nocolor -auto-approve
+
+      - name: Initialize staging resources
+        run: |
+          tofu -chdir web/deploy/terraform/staging init
+
+      - name: Deploy staging resources
+        if: steps.changed-tofu-modules.outputs.any_modified == true || steps.changed-tofu-shared.outputs.any_modified == true || steps.changed-tofu-staging.outputs.any_modified == true
+        run: |
+          tofu -chdir web/deploy/terraform/staging apply -nocolor -auto-approve
+
+      - name: Initialize production resources
+        run: |
+          tofu -chdir web/deploy/terraform/staging init
+
+      - name: Deploy production resources
+        if: steps.changed-tofu-modules.outputs.any_modified == true || steps.changed-tofu-shared.outputs.any_modified == true || steps.changed-tofu-production.outputs.any_modified == true
+        run: |
+          tofu -chdir web/deploy/terraform/production apply -nocolor -auto-approve
+      
