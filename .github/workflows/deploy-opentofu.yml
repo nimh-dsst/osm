@@ -14,3 +14,6 @@ jobs:
         with:
           aws-region: ${{ inputs.aws_region }}
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-role-shared
+
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@v1
