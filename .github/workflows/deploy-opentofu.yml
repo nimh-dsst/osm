@@ -22,3 +22,31 @@ jobs:
 
       - name: Setup OpenTofu
         uses: opentofu/setup-opentofu@v1
+
+      - name: Check for changes in reusable modules
+        id: changed-tofu-modules
+        uses: tj-actions/changed-files@v45
+        with:
+          files: |
+            web/deploy/terraform/modules/**
+
+      - name: Check for changes in shared deployment
+        id: changed-tofu-shared
+        uses: tj-actions/changed-files@v45
+        with:
+          files: |
+            web/deploy/terraform/shared/**
+
+      - name: Check for changes in staging deployment
+        id: changed-tofu-staging
+        uses: tj-actions/changed-files@v45
+        with:
+          files: |
+            web/deploy/terraform/staging/**
+
+      - name: Check for changes in production deployment
+        id: changed-tofu-production
+        uses: tj-actions/changed-files@v45
+        with:
+          files: |
+            web/deploy/terraform/production/**
