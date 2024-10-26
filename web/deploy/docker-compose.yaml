@@ -16,6 +16,7 @@ services:
             - traefik.http.services.osm_web_api.loadbalancer.server.port=80
         networks:
             - traefik-public
+        restart: always
 
     dashboard:
         image: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/dashboard-shared:${RELEASE_TAG}"
@@ -34,6 +35,8 @@ services:
 
         networks:
             - traefik-public
+        restart: always
+        
     reverse_proxy:
         image: traefik
         restart: always
