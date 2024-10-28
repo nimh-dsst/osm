@@ -16,7 +16,7 @@ def get_version():
 def generate_version_file():
     import pkg_resources
 
-    if os.get("SETUPTOOLS_SCM_PRETEND_VERSION_FOR_OSM"):
+    if os.getenv("SETUPTOOLS_SCM_PRETEND_VERSION_FOR_OSM"):
         version = os.environ["SETUPTOOLS_SCM_PRETEND_VERSION_FOR_OSM"]
     else:
         version = pkg_resources.get_distribution("osm").version
