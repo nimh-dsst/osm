@@ -16,10 +16,6 @@ provider "aws" {
 resource "aws_s3_bucket" "tf_state" {
   bucket = "${var.bucket_name}-${var.environment}"
 
-  lifecycle {
-    prevent_destroy = true
-  }
-
   tags = {
     Name = "${var.bucket_name}-${var.environment}"
   }
@@ -40,10 +36,6 @@ resource "aws_s3_bucket_lifecycle_configuration" "tf_state" {
       days = 365
     }
   }
-
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 
 resource "aws_s3_bucket_versioning" "enabled" {
@@ -51,10 +43,6 @@ resource "aws_s3_bucket_versioning" "enabled" {
 
   versioning_configuration {
     status = "Enabled"
-  }
-
-  lifecycle {
-    prevent_destroy = true
   }
 }
 
@@ -66,10 +54,6 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "default" {
       sse_algorithm = "AES256"
     }
   }
-
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 
 resource "aws_dynamodb_table" "tf_locks" {
@@ -80,10 +64,6 @@ resource "aws_dynamodb_table" "tf_locks" {
   attribute {
     name = "LockID"
     type = "S"
-  }
-
-  lifecycle {
-    prevent_destroy = true
   }
 
   tags = {
