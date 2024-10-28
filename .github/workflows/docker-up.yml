@@ -64,7 +64,8 @@ jobs:
           AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
         run: |
-          ssh ${DEV_ENVIRONMENT} "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+          ssh ${DEV_ENVIRONMENT} "aws ecr get-login-password --region ${AWS_REGION} | \
+          docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
 
       - name: Run `docker compose up` on remote staging host
         env:
@@ -72,7 +73,13 @@ jobs:
           AWS_REGION: ${{ secrets.AWS_REGION }}
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
         run: |
-          ssh ${DEV_ENVIRONMENT} MONGODB_URI="${MONGODB_URI}" HOST_URI="${HOST_URI}" RELEASE_TAG="${RELEASE_TAG}" AWS_ACCOUNT_ID="${AWS_ACCOUNT_ID}" AWS_REGION="${AWS_REGION}" docker compose -f - up -d < ./web/deploy/docker-compose.yaml
+          ssh ${DEV_ENVIRONMENT} \
+          MONGODB_URI="${MONGODB_URI}" \
+          HOST_URI="${HOST_URI}" \
+          RELEASE_TAG="${RELEASE_TAG}" \
+          AWS_ACCOUNT_ID="${AWS_ACCOUNT_ID}" \
+          AWS_REGION="${AWS_REGION}" \
+          docker compose -f - up -d < ./web/deploy/docker-compose.yaml
 
       - name: Prune Docker artifacts
         run: |
