@@ -6,11 +6,6 @@ on:
       deployment:
         required: true
         type: string
-        # I would like to get `choice` working
-        # type: choice
-        # options:
-        # - api
-        # - dashboard
       aws_region:
         description: 'AWS region'
         type: string
