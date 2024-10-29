@@ -9,6 +9,10 @@ env:
   working_directory_parent: ./web/deploy/terraform
   TF_VAR_AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
 
+permissions:
+  id-token: write
+  contents: read
+  
 jobs:
   deploy-shared-resources:
     runs-on: ubuntu-latest
