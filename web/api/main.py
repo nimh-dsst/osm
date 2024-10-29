@@ -6,7 +6,8 @@ import asyncio
 from contextlib import asynccontextmanager
 
 import uvicorn
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from bson import ObjectId
+from fastapi import Body, FastAPI, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import JSONResponse
 
 from osm import db as osm_db
@@ -22,17 +23,26 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 
-@app.put("/upload/", response_model=Invocation)
+@app.post(
+    "/upload/",
+    response_description="Upload the OSM client output",
+    response_model=Invocation,
+    status_code=status.HTTP_201_CREATED,
+    response_model_by_alias=False,
+)
 async def upload_invocation(
-    invocation: Invocation,
+    invocation: Invocation = Body(...),
 ):
     db = osm_db.get_mongo_db()
-    result = await db.invocations.insert_one(invocation.model_dump(mode="json"))
+    result = await db.invocations.insert_one(
+        invocation.model_dump(by_alias=True, exclude=["id"])
+    )
     inserted_invocation = await db.invocations.find_one({"_id": result.inserted_id})
-    return Invocation(**{k: v for k, v in inserted_invocation.items() if k != "id"})
+    return inserted_invocation
+    # return Invocation(**{k: v for k, v in inserted_invocation.items() if k != "id"})
 
 
-@app.put("/payload_error/", response_model=PayloadError)
+@app.post("/payload_error/", response_model=PayloadError)
 async def upload_failed_payload_construction(payload_error: PayloadError):
     db = osm_db.get_mongo_db()
     result = await db.payload_errors.insert_one(payload_error.model_dump(mode="json"))
@@ -44,7 +54,7 @@ async def upload_failed_payload_construction(payload_error: PayloadError):
     )
 
 
-@app.put("/quarantine/", response_model=Quarantine)
+@app.post("/quarantine/", response_model=Quarantine)
 async def upload_failed_invocation(quarantine: Quarantine):
     db = osm_db.get_mongo_db()
     result = await db.quarantines.insert_one(quarantine.model_dump(mode="json"))
@@ -52,7 +62,7 @@ async def upload_failed_invocation(quarantine: Quarantine):
     return Quarantine(**{k: v for k, v in inserted_quarantine.items() if k != "id"})
 
 
-@app.put("/quarantine2/")
+@app.post("/quarantine2/")
 async def upload_failed_quarantine(
     file: UploadFile = File(...), error_message: str = Form(...)
 ):
@@ -65,9 +75,14 @@ async def upload_failed_quarantine(
     )
 
 
-@app.get("/invocations/{id}", response_model=Invocation)
+@app.get(
+    "/invocations/{id}",
+    response_description="Get a single record by its ID",
+    response_model=Invocation,
+    response_model_by_alias=False,
+)
 async def get_invocation_by_id(id: str):
-    invocation = await Invocation.find_one(id)
+    invocation = await Invocation.find_one({"_id": ObjectId(id)})
     if invocation is None:
         raise HTTPException(404)
     return invocation

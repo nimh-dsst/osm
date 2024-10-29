@@ -3,7 +3,6 @@ import datetime
 from typing import Annotated, Optional, Union
 
 import pandas as pd
-from bson import ObjectId
 from pydantic import (
     BaseModel,
     BeforeValidator,
@@ -107,7 +106,7 @@ class Invocation(BaseModel):
     model_config = ConfigDict(
         populate_by_name=True,
         arbitrary_types_allowed=True,
-        json_encoders={datetime.datetime: lambda dt: dt.isoformat(), ObjectId: str},
+        json_encoders={datetime.datetime: lambda dt: dt.isoformat()},
     )
     # class Settings:
     #     keep_nulls = False
