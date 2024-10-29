@@ -59,8 +59,9 @@ async def test_upload_path(client, db):
     assert response.status_code == 200, response.text
 
     # Retrieve the saved invocation to verify it was saved correctly
-    saved_invocation = asyncio.run(db.invocations.find_one())
-    assert saved_invocation is not None, "Saved invocation not found"
+    record = asyncio.run(db.invocations.find_one())
+    assert record is not None, "Saved invocation not found"
+    saved_invocation = Invocation(**record)
     assert saved_invocation["id"] == SAMPLE_INV.id, "IDs do not match"
     assert (
         saved_invocation["work"]["filename"] == SAMPLE_INV.work.filename
@@ -86,4 +87,7 @@ async def test_upload_path(client, db):
         saved_invocation["data_tags"] == SAMPLE_INV.data_tags
     ), "Data tags do not match"
     # TODO: fix tzinfo issue
-    # assert saved_invocation["created_at"] == SAMPLE_INV.created_at, "Created at does not match"
+    breakpoint()
+    assert (
+        saved_invocation["created_at"] == SAMPLE_INV.created_at
+    ), "Created at does not match"

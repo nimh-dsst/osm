@@ -3,7 +3,15 @@ import datetime
 from typing import Annotated, Optional, Union
 
 import pandas as pd
-from pydantic import BaseModel, BeforeValidator, EmailStr, Field, field_validator
+from bson import ObjectId
+from pydantic import (
+    BaseModel,
+    BeforeValidator,
+    ConfigDict,
+    EmailStr,
+    Field,
+    field_validator,
+)
 
 from osm._utils import coerce_to_string
 
@@ -96,10 +104,14 @@ class Invocation(BaseModel):
             microsecond=0
         )
     )
-
-    class Settings:
-        keep_nulls = False
-        populate_by_name = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        arbitrary_types_allowed=True,
+        json_encoders={datetime.datetime: lambda dt: dt.isoformat(), ObjectId: str},
+    )
+    # class Settings:
+    #     keep_nulls = False
+    #     populate_by_name = True
 
 
 class Quarantine(BaseModel):
