@@ -24,9 +24,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4.2.2
         
-      - name: Get version tag
-        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -46,7 +43,6 @@ jobs:
         id: compute-image-tag
         run: |
           short_sha=$(git rev-parse --short ${{ github.sha }})
-          # echo "tag=${{ steps.login-ecr.outputs.registry }}/${{ inputs.ecr_repo }}:$short_sha" >> $GITHUB_OUTPUT
           echo "tag=${{ steps.login-ecr.outputs.registry }}/${{ inputs.deployment }}-shared:$short_sha" >> $GITHUB_OUTPUT
           echo "short_sha=$short_sha" >> $GITHUB_OUTPUT
       - name: Build base docker image
