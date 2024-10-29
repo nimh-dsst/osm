@@ -29,6 +29,12 @@ jobs:
         run: |
           tofu init
 
+      - name: Plan resources
+        working-directory: ${{ env.working_directory_parent }}/${{ matrix.environment }}
+        run: |
+          tofu plan -no-color -detailed-exitcode
+        continue-on-error: true
+
       - name: Deploy shared resources
         working-directory: ${{ env.working_directory_parent }}/shared
         run: |
@@ -57,6 +63,12 @@ jobs:
         working-directory: ${{ env.working_directory_parent }}/${{ matrix.environment }}
         run: |
           tofu init
+
+      - name: Plan resources
+        working-directory: ${{ env.working_directory_parent }}/${{ matrix.environment }}
+        run: |
+          tofu plan -no-color -detailed-exitcode
+        continue-on-error: true
 
       - name: Deploy resources
         working-directory: ${{ env.working_directory_parent }}/${{ matrix.environment }}
