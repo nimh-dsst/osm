@@ -13,7 +13,10 @@
         },
         {
             "Effect": "Allow",
-            "Action": "ecr:GetAuthorizationToken",
+            "Action": [
+                "ecr:GetAuthorizationToken",
+                "s3:*"
+            ],
             "Resource": "*"
         }
     ]
