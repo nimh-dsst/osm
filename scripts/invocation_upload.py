@@ -6,8 +6,11 @@ from pathlib import Path
 import pyarrow.dataset as ds
 import pymongo
 
+from osm import schemas
 from osm.schemas import Component, schema_helpers
 from osm.schemas.schema_helpers import transform_data
+
+logger = logging.getLogger(__name__)
 
 DB_NAME = os.environ["DB_NAME"]
 MONGODB_URI = os.environ["MONGODB_URI"]
@@ -24,9 +27,15 @@ irp_kwargs = {
     "components": [Component(name="Sciencebeam parser/RTransparent", version="x.x.x")],
 }
 theneuro_kwargs = {
-    "data_tags": ["Th Neuro"],
+    "data_tags": ["The Neuro"],
     "user_comment": "Bulk upload of The Neuro data containing OddPub metrics underlying RTransparent metrics for open code/data.",
     "components": [Component(name="TheNeuroOddPub", version="x.x.x")],
+}
+manual_scoring_kwargs = {
+    "data_tags": ["Manual Annotation NIMH/DSST"],
+    "user_comment": "Bulk upload of some manually scored  open code/data along with RTransparent extracted equivalents.",
+    "components": [Component(name="ManualAnnotation-NIMHDSST", version="x.x.x")],
+    "metrics_schema": schemas.ManualAnnotationNIMHDSST,
 }
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -69,15 +78,18 @@ def get_data(args):
 
 def get_upload_kwargs(args):
     if args.custom_processing:
-        assert hasattr(
-            schema_helpers, args.custom_processing
-        ), f"Custom processing function {args.custom_processing} not found"
+        if not hasattr(schema_helpers, args.custom_processing):
+            logger.warning(
+                f"Custom processing function {args.custom_processing} not found"
+            )
         if args.custom_processing == "rtransparent_pub_data_processing":
             kwargs = rtrans_publication_kwargs
         elif args.custom_processing == "irp_data_processing":
             kwargs = irp_kwargs
         elif args.custom_processing == "theneuro_data_processing":
             kwargs = theneuro_kwargs
+        elif args.custom_processing == "manual_scoring_data_processing":
+            kwargs = manual_scoring_kwargs
         else:
             raise ValueError(
                 f"Kwargs associated with {args.custom_processing} not found"
@@ -95,10 +107,14 @@ def main():
     args = parse_args()
     tb = get_data(args)
     upload_kwargs = get_upload_kwargs(args)
+    schema = upload_kwargs.pop("metrics_schema", schemas.RtransparentMetrics)
 
     try:
+        # use synchronous client for ease and speed
         db = pymongo.MongoClient(MONGODB_URI).osm
-        db.invocation.insert_many(transform_data(tb, **upload_kwargs), ordered=False)
+        db.invocation.insert_many(
+            transform_data(tb, metrics_schema=schema, **upload_kwargs), ordered=False
+        )
     except Exception as e:
         logger.error(f"Failed to process data: {e}")
         raise e

@@ -1,7 +1,6 @@
 from typing import Any, ClassVar, Generic, TypeVar, Union
 
-import odmantic
-from pydantic.annotated_handlers import GetCoreSchemaHandler
+from pydantic import GetCoreSchemaHandler
 from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import CoreSchema, core_schema
 
@@ -37,7 +36,7 @@ class LongField(Generic[T]):
             return json_schema
 
         json_schema = core_schema.no_info_after_validator_function(
-            source,  # construct the type
+            source,
             cls._inner_schema,
         )
 
@@ -90,9 +89,3 @@ class LongBytes(LongField[bytes]):
 
     _inner_schema: ClassVar[CoreSchema] = core_schema.bytes_schema()
     _error_kind: ClassVar[str] = "bytes_type"
-
-
-class FilePlaceholder(odmantic.EmbeddedModel):
-    content: LongBytes = odmantic.Field(
-        default=b"", json_schema_extra={"exclude": True}
-    )

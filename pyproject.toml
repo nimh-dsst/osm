@@ -18,8 +18,15 @@ dependencies = [
   "pydantic",
   "pydantic[email]",
   "python_on_whales",
-  "odmantic",
   "requests",
+  "pytest-asyncio>=0.24.0",
+  "asgi-lifespan>=2.1.0",
+  "mongoengine>=0.29.0",
+  "mongomock>=4.1.2",
+  "setuptools>=74.1.2",
+  "mongomock-motor>=0.0.31",
+  "motor>=3.6.0",
+  "mypy>=1.13.0",
 ]
 
 [project.optional-dependencies]
@@ -65,3 +72,9 @@ osm = "osm.cli:main"
 [tool.ruff]
 line-length = 88
 indent-width = 4
+
+  [tool.pytest.ini_options]
+  asyncio_mode = "auto"
+  markers = [
+      "asyncio: mark test as async",
+  ]
