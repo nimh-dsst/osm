@@ -176,10 +176,9 @@ def get_data_from_mongo(aggregation: list[dict] | None = None) -> Iterator[dict]
         aggregation = [
             {
                 "$match": {
-                    "data_tags": "bulk_upload",
-                    # "work.pmid": {"$regex":r"^2"},
-                    # "metrics.year": {"$gt": 2000},
-                    # "metrics.is_data_pred": {"$eq": True},
+                    "metrics_group": {
+                        "$regex": "R"
+                    }
                 },
             },
             {

@@ -134,6 +134,7 @@ class OSMApp(param.Parameterized):
             allow_websocket_origin=[
                 "localhost:8501",
                 "opensciencemetrics.org",
+                "dev.opensciencemetrics.org",
             ],
             static_dirs={
                 dir: str(Path(__file__).parent / dir)
