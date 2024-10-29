@@ -5,6 +5,9 @@ on:
     paths:
       - 'web/deploy/terraform/**'
 
+env:
+  working_directory_parent: ./web/deploy/terraform
+
 jobs:
   deploy-shared-resources:
     runs-on: ubuntu-latest
@@ -22,12 +25,14 @@ jobs:
         uses: opentofu/setup-opentofu@v1
 
       - name: Initialize shared resources
+        working-directory: ${{ env.working_directory_parent }}/shared
         run: |
-          tofu -chdir web/deploy/terraform/shared init
+          tofu init
 
       - name: Deploy shared resources
+        working-directory: ${{ env.working_directory_parent }}/shared
         run: |
-          tofu -chdir web/deploy/terraform/shared apply -nocolor -auto-approve
+          tofu -nocolor -auto-approve
 
   deploy-environments:
     runs-on: ubuntu-latest
@@ -49,9 +54,11 @@ jobs:
         uses: opentofu/setup-opentofu@v1
 
       - name: Initialize resources
+        working-directory: ${{ env.working_directory_parent }}/${{ matrix.environment }}
         run: |
-          tofu -chdir web/deploy/terraform/${{ matrix.environment }} init
+          tofu init
 
       - name: Deploy resources
+        working-directory: ${{ env.working_directory_parent }}/${{ matrix.environment }}
         run: |
-          tofu -chdir web/deploy/terraform/${{ matrix.environment }} apply -nocolor -auto-approve
+          tofu apply -nocolor -auto-approve
