@@ -16,12 +16,36 @@ permissions:
   contents: read
 
 jobs:
+  infrastructure-modified:
+    runs-on: ubuntu-lastest
+    name: Check for modified infrastructure
+    outputs:
+      modified-files: ${{ steps.set-output.outputs.modified-files }}
+    steps:
+      - uses: actions/checkout@v4
+        name: Checkout repository
+
+      - name: Get modified infrastructure configuration
+        id: infrastructure-modified
+        uses: tj-actions/changed-files@v45
+        with:
+          files: |
+            web/deploy/terraform/**
+
+      - name: Set modified output
+        id: set-output
+        env:
+          MODIFIED_FILES: ${{ steps.infrastructure-modified.outputs.any_modified }}
+        run: |
+          echo "modified-files=${MODIFIED_FILES}" >> $GITHUB_OUTPUT
+  
   build-and-push:
+    needs: infrastructure-modified
     strategy:
       matrix:
         deployment: ["api", "dashboard"]
     uses: ./.github/workflows/build-docker.yml
-    if: (github.event_name == 'pull_request' && github.event.pull_request.merged == true) || (github.event_name == 'workflow_dispatch') || (github.event_name == 'workflow_call')
+    if: ( (github.event_name == 'pull_request' && github.event.pull_request.merged == true && needs.infrastructure-modified.outputs.modified-files != 'true') || (github.event_name == 'workflow_dispatch') || (github.event_name == 'workflow_call') )
     secrets: inherit
     with:
       deployment: ${{ matrix.deployment }}
