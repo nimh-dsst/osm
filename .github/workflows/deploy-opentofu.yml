@@ -46,6 +46,7 @@ jobs:
           tofu apply -no-color -auto-approve
 
   deploy-environments:
+    needs: [deploy-shared-resources]
     runs-on: ubuntu-latest
     if: ${{ always() && !cancelled() && needs.deploy-shared-resources.result == 'success' }}
     strategy:
