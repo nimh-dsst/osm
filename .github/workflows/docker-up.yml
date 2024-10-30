@@ -6,7 +6,7 @@ on:
       parent_trigger:
         type: string
         required: true
-        description: The environment where to deploy. Usually `push` or `workflow_dispatch`
+        description: The environment where to deploy. Usually `push`, `workflow_call`, or `workflow_dispatch`
 
 jobs:
   deploy:
@@ -21,7 +21,7 @@ jobs:
           SSH_PROD_HOST: ${{ secrets.SSH_PROD_HOST }}
           SSH_STAGE_HOST: ${{ secrets.SSH_STAGE_HOST }}
         run: |
-          if [[ ${{ inputs.parent_trigger }} == 'workflow_dispatch' ]]; then
+          if [[ ${{ inputs.parent_trigger }} == 'workflow_dispatch' || ${{ inputs.parent_trigger }} == 'workflow_call' ]]; then
             echo "DEV_ENVIRONMENT=production" >> $GITHUB_ENV
           else
             echo "DEV_ENVIRONMENT=staging" >> $GITHUB_ENV

@@ -7,6 +7,9 @@ on:
       - main
     types:
       - closed
+    paths-ignore:
+      - 'web/deploy/terraform/**'
+  workflow_call:
 
 permissions:
   id-token: write
@@ -18,15 +21,15 @@ jobs:
       matrix:
         deployment: ["api", "dashboard"]
     uses: ./.github/workflows/build-docker.yml
-    if: (github.event_name == 'pull_request' && github.event.pull_request.merged == true) || (github.event_name == 'workflow_dispatch')
+    if: (github.event_name == 'pull_request' && github.event.pull_request.merged == true) || (github.event_name == 'workflow_dispatch') || (github.event_name == 'workflow_call')
     secrets: inherit
     with:
       deployment: ${{ matrix.deployment }}
 
   docker-up:
     needs: [build-and-push]
-    if: ${{ always() && !cancelled() && needs.build-and-push.result == 'success' && ( (github.event_name == 'pull_request' && github.event.pull_request.merged == true) || (github.event_name == 'workflow_dispatch') )}}
-    name: Deploy and run docker images on EC2
+    if: ${{ always() && !cancelled() && needs.build-and-push.result == 'success' && ( (github.event_name == 'pull_request' && github.event.pull_request.merged == true) || (github.event_name == 'workflow_dispatch') || (github.event_name == 'push') || (github.event_name == 'workflow_call') )}}
+    name: Deploy and run Docker images on EC2
     uses: ./.github/workflows/docker-up.yml
     secrets: inherit
     with:
