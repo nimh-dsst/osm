@@ -3,10 +3,11 @@ name: Execute `docker compose up`
 on:
   workflow_call:
     inputs:
-      parent_trigger:
-        type: string
+      development-environment:
+        description: Development environment to deploy to. Usually `staging` or `production`
         required: true
-        description: The environment where to deploy. Usually `push`, `workflow_call`, or `workflow_dispatch`
+        default: staging
+        type: string
 
 jobs:
   deploy:
@@ -16,18 +17,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4.2.2
         
-      - name: Set development environment
-        env:
-          SSH_PROD_HOST: ${{ secrets.SSH_PROD_HOST }}
-          SSH_STAGE_HOST: ${{ secrets.SSH_STAGE_HOST }}
-        run: |
-          if [[ ${{ inputs.parent_trigger }} == 'workflow_dispatch' || ${{ inputs.parent_trigger }} == 'workflow_call' ]]; then
-            echo "DEV_ENVIRONMENT=production" >> $GITHUB_ENV
-          else
-            echo "DEV_ENVIRONMENT=staging" >> $GITHUB_ENV
-          fi
-          echo The development environment is ${{ env.DEV_ENVIRONMENT }}
-
       - name: Get image tag
         run: |
           echo "RELEASE_TAG=$(git rev-parse --short ${{ github.sha }})" >> $GITHUB_ENV
@@ -37,7 +26,7 @@ jobs:
           SSH_PROD_HOST: ${{ secrets.SSH_PROD_HOST }}
           SSH_STAGE_HOST: ${{ secrets.SSH_STAGE_HOST }}
         run: |
-          if [[ ${DEV_ENVIRONMENT} == 'production' ]]; then
+          if [[ ${{ inputs.development-environment }} == 'production' ]]; then
             echo "HOST_URI=${SSH_PROD_HOST}" >> $GITHUB_ENV
           else
             echo "HOST_URI=${SSH_STAGE_HOST}" >> $GITHUB_ENV
@@ -52,7 +41,7 @@ jobs:
           echo "$PRIVATE_KEY" > ~/.ssh/aws
           chmod 600 ~/.ssh/aws
           cat >>~/.ssh/config <<END
-          Host ${DEV_ENVIRONMENT}
+          Host ${{ inputs.development-environment }}
             HostName ${HOST_URI}
             User ${DEPLOY_USERNAME}
             IdentityFile ~/.ssh/aws
@@ -64,7 +53,7 @@ jobs:
           AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
         run: |
-          ssh ${DEV_ENVIRONMENT} "aws ecr get-login-password --region ${AWS_REGION} | \
+          ssh ${{ inputs.development-environment }} "aws ecr get-login-password --region ${AWS_REGION} | \
           docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
 
       - name: Run `docker compose up` on remote staging host
@@ -73,7 +62,7 @@ jobs:
           AWS_REGION: ${{ secrets.AWS_REGION }}
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
         run: |
-          ssh ${DEV_ENVIRONMENT} \
+          ssh ${{ inputs.development-environment }} \
           MONGODB_URI="${MONGODB_URI}" \
           HOST_URI="${HOST_URI}" \
           RELEASE_TAG="${RELEASE_TAG}" \
@@ -83,4 +72,4 @@ jobs:
 
       - name: Prune Docker artifacts
         run: |
-          ssh ${DEV_ENVIRONMENT} docker system prune -af --filter "until=24h"
+          ssh ${{ inputs.development-environment }} docker system prune -af --filter "until=24h"
