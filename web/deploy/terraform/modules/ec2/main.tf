@@ -47,3 +47,8 @@ resource "aws_eip_association" "deployment" {
   instance_id   = aws_instance.deployment.id
   allocation_id = aws_eip.deployment.id
 }
+
+resource "aws_key_pair" "deployer" {
+  key_name   = "deployer-key-${var.environment}"
+  public_key = var.public_key
+}

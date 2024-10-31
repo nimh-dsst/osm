@@ -44,3 +44,8 @@ variable "ubuntu_ami_release" {
   default     = "20.04"
   type        = string
 }
+
+variable "public_key" {
+  description = "The public key used to deploy to the EC2 instance via ssh"
+  type        = string
+}

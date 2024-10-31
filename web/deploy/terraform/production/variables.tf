@@ -9,3 +9,8 @@ variable "instance_type" {
   default     = "t3.large"
   type        = string
 }
+
+variable "PUBLIC_KEY" {
+  description = "The public key used to deploy to the EC2 instance via ssh. All caps because this should be set via an environment variable."
+  type        = string
+}
