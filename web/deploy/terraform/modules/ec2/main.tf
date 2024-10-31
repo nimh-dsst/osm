@@ -31,7 +31,8 @@ resource "aws_instance" "deployment" {
     Name = var.environment
   }
 
-  user_data = file("${path.module}/scripts/install-docker.sh")
+  user_data                   = file("${path.module}/scripts/install-docker.sh")
+  user_data_replace_on_change = true
 }
 
 resource "aws_eip" "deployment" {
@@ -45,4 +46,9 @@ resource "aws_eip" "deployment" {
 resource "aws_eip_association" "deployment" {
   instance_id   = aws_instance.deployment.id
   allocation_id = aws_eip.deployment.id
+}
+
+resource "aws_key_pair" "deployer" {
+  key_name   = "deployer-key-${var.environment}"
+  public_key = var.public_key
 }

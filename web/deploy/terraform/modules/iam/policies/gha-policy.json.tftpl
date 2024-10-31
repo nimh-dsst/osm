@@ -13,7 +13,13 @@
         },
         {
             "Effect": "Allow",
-            "Action": "ecr:GetAuthorizationToken",
+            "Action": [
+                "ecr:GetAuthorizationToken",
+                "s3:*",
+                "dynamodb:*",
+                "iam:*",
+                "ec2:*"
+            ],
             "Resource": "*"
         }
     ]

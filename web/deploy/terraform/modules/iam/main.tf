@@ -52,11 +52,24 @@ resource "aws_iam_policy" "cd" {
 }
 
 resource "aws_iam_role" "cd" {
-  name               = "${var.cd_iam_role_policy_name}-${var.environment}"
-  assume_role_policy = file("${path.module}/policies/assume-role.json")
+  name = "${var.cd_iam_role_policy_name}-${var.environment}"
+  assume_role_policy = templatefile("${path.module}/policies/assume-role.json.tftpl",
+    {
+      AWS_ACCOUNT_ID = var.AWS_ACCOUNT_ID
+    },
+  )
 }
 
 resource "aws_iam_role_policy_attachment" "cd" {
   role       = aws_iam_role.cd.name
   policy_arn = aws_iam_policy.cd.arn
+}
+
+resource "aws_iam_openid_connect_provider" "github" {
+  url = "https://token.actions.githubusercontent.com"
+
+  client_id_list = [
+    "sts.amazonaws.com",
+  ]
+  thumbprint_list = ["1b511abead59c6ce207077c0bf0e0043b1382612"]
 }

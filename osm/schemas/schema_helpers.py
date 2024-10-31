@@ -175,11 +175,7 @@ def get_data_from_mongo(aggregation: list[dict] | None = None) -> Iterator[dict]
     if aggregation is None:
         aggregation = [
             {
-                "$match": {
-                    "metrics_group": {
-                        "$regex": "R"
-                    }
-                },
+                "$match": {"metrics_group": {"$regex": "R"}},
             },
             {
                 "$project": {
