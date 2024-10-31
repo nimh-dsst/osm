@@ -41,14 +41,14 @@ jobs:
       - name: Plan resources
         working-directory: ${{ env.working_directory_parent }}/shared
         run: |
-          tofu plan -no-color -detailed-exitcode
+          tofu plan -no-color -detailed-exitcode -out=tfplan
         continue-on-error: true
 
       - name: Deploy shared resources
         if: ${{ github.event_name != 'push' }}
         working-directory: ${{ env.working_directory_parent }}/shared
         run: |
-          tofu apply -no-color -auto-approve
+          tofu apply -no-color -auto-approve tfplan
 
   deploy-environments:
     needs: [deploy-shared-resources]
@@ -78,14 +78,14 @@ jobs:
       - name: Plan resources
         working-directory: ${{ env.working_directory_parent }}/${{ matrix.environment }}
         run: |
-          tofu plan -no-color -detailed-exitcode
+          tofu plan -no-color -detailed-exitcode -out=tfplan
         continue-on-error: true
 
       - name: Deploy resources
         if: ${{ github.event_name != 'push' }}
         working-directory: ${{ env.working_directory_parent }}/${{ matrix.environment }}
         run: |
-          tofu apply -no-color -auto-approve
+          tofu apply -no-color -auto-approve tfplan
 
   deploy-docker:
     needs: [deploy-environments]
