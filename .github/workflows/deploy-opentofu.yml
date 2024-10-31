@@ -3,7 +3,10 @@ name: Deploy OpenTofu
 on:
   push:
     branches:
+      - '**'
       - '!main'
+    paths:
+      - 'web/deploy/terraform/**'
   workflow_dispatch:
     inputs:
       development-environment:
