@@ -106,4 +106,12 @@ $ tofu apply
 
 In general, once everything is configured and resources are up, the only human interaction necessary is during [deployment to production](#deployment-to-production).
 
+### Deployment to Staging
+
+When pull requests are merged to main, up to two main workflows are run: [`deploy-docker.yml`](../../../.github/workflows/deploy-docker.yml) and [`deploy-opentofu.yml`](../../../.github/workflows/deploy-opentofu.yml).
+
+If none of the files in a pull request are included in `web/deploy/terraform` or `.github/workflows/deploy-opentofu.yml`, then only `deploy-docker.yml` will be run and the Docker image on the staging EC2 instance will be pushed and rerun. 
+
+If any of the files in a pull request is included in `web/deploy/terraform` or `.github/workflows/deploy-opentofu.yml`, then both `deploy-docker.yml` and `deploy-opentofu.yml` will be run. In this case, however, `deploy-docker.yml` will see that paths dealing with OpenTofu were modified and terminate early and successfully without doing anything. At the same time, `deploy-opentofu.yml` will run and redeploy both shared and staging resources to the staging EC2 instance. After running all OpenTofu actions successfully, `deploy-opentofu.yml` will run `deploy-docker.yml` as a child workflow via the [`workflow_call`](https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows#workflow_call) trigger. This way, the potent parts of `deploy-docker.yml`, i.e. the parts that actually build and deploy images, is only run once per merged pull request. 
+
 ### Deployment to Production
