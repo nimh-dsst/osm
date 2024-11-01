@@ -127,3 +127,7 @@ Note that running the OpenTofu deployment to production will _not_ redeploy the 
 You can manually deploy the [Docker images](https://github.com/nimh-dsst/osm/actions/workflows/deploy-docker.yml) and [OpenTofu deployment](https://github.com/nimh-dsst/osm/actions/workflows/deploy-opentofu.yml) by navigating to the appropriate action and clicking the "Run workflow" button to reveal the associated menu. Using that menu, you can dispatch either workflow from an arbitrary branch in the repository to either staging or production.
 
 Note that running the OpenTofu deployment will automatically run the Docker deployment as a child workflow.
+
+## Implementation Notes
+
+The two main workflows are implemented in [`deploy-docker.yml`](../../../.github/workflows/deploy-docker.yml) and [`deploy-opentofu.yml`](../../../.github/workflows/deploy-opentofu.yml). There are other workflows that are called as child workflows to those two, but they are never called directly themselves. 
