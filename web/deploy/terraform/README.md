@@ -14,7 +14,10 @@ You must set the following [repository secrets](https://github.com/nimh-dsst/osm
 * `AWS_REGION`: The AWS region where the deployments reside
 * `MONGODB_URI`: The URI of the MongoDB holding the data. This variable was temperamental. Please try saving it as a secret surrounded by single quotes `'`.
 * `SSH_PRIVATE_KEY`: The private SSH key used to ssh into the ec2 instances
-* `SSH_PUBLIC_KEY`: The public SSH key used to ssh into the ec2 instances corresponding to the above private key
+* `SSH_PUBLIC_KEY`: The public SSH key used to ssh into the ec2 instances
+  corresponding to the above private key (use `ssh-keygen -y -f
+  path/to/private/key > path/to/public/key` if you have lost the public key, and
+  `ssh-keygen -f key.pub -i -m PKCS8` to convert from RSA format)
 * `SSH_PROD_HOST`: The static IP address of the production ec2 instance
 * `SSH_STAGE_HOST`: The static IP address of the staging ec2 instance
 * `LETSENCRYPT_ADMIN_EMAIL`: The email address associated with the Let's Encrypt certificate
