@@ -37,7 +37,7 @@ jobs:
       - name: Configure SSH
         env:
           PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          DEPLOY_USERNAME: ${{ secrets.DEPLOYMENT_USERNAME }}
+          DEPLOY_USERNAME: ${{ secrets.DEPLOYMENT_USERNAME || 'ubuntu' }}
         run: |
           mkdir -p ~/.ssh/
           echo "$PRIVATE_KEY" > ~/.ssh/aws

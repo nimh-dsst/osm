@@ -21,7 +21,7 @@ You must set the following [repository secrets](https://github.com/nimh-dsst/osm
 * `SSH_PROD_HOST`: The static IP address of the production ec2 instance
 * `SSH_STAGE_HOST`: The static IP address of the staging ec2 instance
 * `LETSENCRYPT_ADMIN_EMAIL`: The email address associated with the Let's Encrypt certificate
-
+* `DEPLOYMENT_USERNAME`: The username used to ssh into the ec2 instances. Defaults to `ubuntu`.
 You must also set the following [repository variables](https://github.com/nimh-dsst/osm/settings/variables/actions) before running the GitHub workflows:
 
 * `PRODUCTION_DEPLOYMENT_URI`: The URL of the production deployment. Probably `'opensciencemetrics.org'` (including single quotes `'`)
