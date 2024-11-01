@@ -6,6 +6,24 @@ Deployment of infrastructure resources requires [OpenTofu](https://opentofu.org/
 
 When calling modules, the relevant input variables can be found in their `variables.tf` file or sometimes their `variables_state.tf` file. This is where the parametrization takes place. In general, a module's `main.tf` file should only be modified if you would like to change what infrastructure is created. Modifying a module's `main.tf` file should seldom be necessary. 
 
+## Repository Secrets and Variables
+
+You must set the following [repository secrets](https://github.com/nimh-dsst/osm/settings/secrets/actions) before running the GitHub workflows: 
+
+* `AWS_ACCOUNT_ID`: The [AWS account ID](https://docs.aws.amazon.com/accounts/latest/reference/manage-acct-identifiers.html#FindAccountId) used for the deployments
+* `AWS_REGION`: The AWS region where the deployments reside
+* `MONGODB_URI`: The URI of the MongoDB holding the data. This variable was temperamental. Please try saving it as a secret surrounded by single quotes `'`.
+* `SSH_PRIVATE_KEY`: The private SSH key used to ssh into the ec2 instances
+* `SSH_PUBLIC_KEY`: The public SSH key used to ssh into the ec2 instances corresponding to the above private key
+* `SSH_PROD_HOST`: The static IP address of the production ec2 instance
+* `SSH_STAGE_HOST`: The static IP address of the staging ec2 instance
+* `LETSENCRYPT_ADMIN_EMAIL`: The email address associated with the Let's Encrypt certificate
+
+You must also set the following [repository variables](https://github.com/nimh-dsst/osm/settings/variables/actions) before running the GitHub workflows:
+
+* `PRODUCTION_DEPLOYMENT_URI`: The URL of the production deployment. Probably `'opensciencemetrics.org'` (including single quotes `'`)
+* `STAGING_DEPLOYMENT_URI`: The URL of the staging deployment. Probably `'dev.opensciencemetrics.org'` (including single quotes `'`)
+
 ## Manual Deployment Steps
 
 ### 0. Bootstrap Step: Deploy State Resources
