@@ -28,9 +28,11 @@ jobs:
         run: |
           if [[ ${{ inputs.development-environment }} == 'production' ]]; then
             echo "HOST_URI=${SSH_PROD_HOST}" >> $GITHUB_ENV
+            echo "DEPLOYMENT_URI=${{ vars.PRODUCTION_DEPLOYMENT_URI }}" >> $GITHUB_ENV
           else
             echo "HOST_URI=${SSH_STAGE_HOST}" >> $GITHUB_ENV
-          fi          
+            echo "DEPLOYMENT_URI=${{ vars.STAGING_DEPLOYMENT_URI }}" >> $GITHUB_ENV
+          fi
           
       - name: Configure SSH
         env:
@@ -70,6 +72,7 @@ jobs:
           AWS_ACCOUNT_ID="${AWS_ACCOUNT_ID}" \
           AWS_REGION="${AWS_REGION}" \
           LETSENCRYPT_ADMIN_EMAIL=${LETSENCRYPT_ADMIN_EMAIL} \
+          DEPLOYMENT_URI=${DEPLOYMENT_URI} \
           docker compose -f - up -d < ./web/deploy/docker-compose.yaml
 
       - name: Prune Docker artifacts
