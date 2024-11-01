@@ -43,9 +43,7 @@ $ tofu apply
 
 > **_Note:_** Until IAM policies are fixed, this step must also be run manually when deploying the infrastructure for the first time. 
 
-First, for each resource defined by a module in `shared/main.tf`, make sure that resource's input variables are set to your desired values. You can find the input variables for a module `foo` in `modules/foo/variables.tf`.
-
-Then you can deploy the shared resources with 
+You can deploy the shared resources with 
 
 ```bash
 $ cd ~/path-to-repo/web/deploy/terraform/shared/
@@ -66,9 +64,7 @@ $ tofu apply
 
 > **_Note:_** This step will usually be run by a CD workflow. This step is included here for development/debugging purposes.
 
-First, for each resource defined by a module in `staging/main.tf`, make sure that resource's input variables are set to your desired values. You can find the input variables for a module `foo` in `modules/foo/variables.tf`.
-
-Then you can deploy the staging resources with 
+You can deploy the staging resources with 
 
 ```bash
 $ cd ~/path-to-repo/web/deploy/terraform/staging/
@@ -89,9 +85,7 @@ $ tofu apply
 
 > **_Note:_** This step will usually be run by a CD workflow. This step is included here for development/debugging purposes.
 
-First, for each resource defined by a module in `production/main.tf`, make sure that resource's input variables are set to your desired values. You can find the input variables for a module `foo` in `modules/foo/variables.tf`.
-
-Then you can deploy the production resources with 
+You can deploy the production resources with 
 
 ```bash
 $ cd ~/path-to-repo/web/deploy/terraform/production/
