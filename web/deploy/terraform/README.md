@@ -101,3 +101,9 @@ $ cd ~/path-to-repo/web/deploy/terraform/production/
 $ tofu plan # This is not required, but gives a nice preview
 $ tofu apply
 ```
+
+## Development/Deployment Workflow
+
+In general, once everything is configured and resources are up, the only human interaction necessary is during [deployment to production](#deployment-to-production).
+
+### Deployment to Production
