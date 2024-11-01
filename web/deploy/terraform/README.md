@@ -115,3 +115,13 @@ If none of the files in a pull request are included in `web/deploy/terraform` or
 If any of the files in a pull request is included in `web/deploy/terraform` or `.github/workflows/deploy-opentofu.yml`, then both `deploy-docker.yml` and `deploy-opentofu.yml` will be run. In this case, however, `deploy-docker.yml` will see that paths dealing with OpenTofu were modified and terminate early and successfully without doing anything. At the same time, `deploy-opentofu.yml` will run and redeploy both shared and staging resources to the staging EC2 instance. After running all OpenTofu actions successfully, `deploy-opentofu.yml` will run `deploy-docker.yml` as a child workflow via the [`workflow_call`](https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows#workflow_call) trigger. This way, the potent parts of `deploy-docker.yml`, i.e. the parts that actually build and deploy images, is only run once per merged pull request. 
 
 ### Deployment to Production
+
+The way to deploy to production is to [manually dispatch your desired workflow](#manual-deployment-from-github-actions).
+
+Note that running the OpenTofu deployment to production will _not_ redeploy the shared resources.
+
+### Manual Deployment from GitHub Actions
+
+You can manually deploy the [Docker images](https://github.com/nimh-dsst/osm/actions/workflows/deploy-docker.yml) and [OpenTofu deployment](https://github.com/nimh-dsst/osm/actions/workflows/deploy-opentofu.yml) by navigating to the appropriate action and clicking the "Run workflow" button to reveal the associated menu. Using that menu, you can dispatch either workflow from an arbitrary branch in the repository to either staging or production.
+
+Note that running the OpenTofu deployment will automatically run the Docker deployment as a child workflow.
