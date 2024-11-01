@@ -19,14 +19,11 @@ It is recommended that you use the default variable values, as defined in `modul
 ```bash
 $ cd ~/path-to-repo/web/deploy/terraform/
 $ # Change DynamoDB state lock table names
-$ find staging/ shared/ production/ -name "variables_state.tf" -exec sed -i "s/terraform-state-locks/foo-bar-state-locks/g" {} +
-$ find modules/ -name "variables.tf" -exec sed -i "s/terraform-state-locks/foo-bar-state-locks/g" {} +
+$ find -name "*.tf" -exec sed -i "s/terraform-state-locks/foo-bar-state-locks/g" {} +
 $ # Change names of S3 buckets that store OpenTofu state
-$ find staging/ shared/ production/ -name "variables_state.tf" -exec sed -i "s/osm-terraform-state-storage/foo-bar-state-storage-test/g" {} +
-$ find modules/ -name "variables.tf" -exec sed -i "s/osm-terraform-state-storage/foo-bar-state-storage-test/g" {} +
+$ find -name "*.tf" -exec sed -i "s/osm-terraform-state-storage/foo-bar-state-storage-test/g" {} +
 $ # Change AWS region where state resources reside
-$ find staging/ shared/ production/ -name "variables_state.tf" -exec sed -i "s/us-east-1/us-foobar-1/g" {} +
-$ find modules/ -name "variables.tf" -exec sed -i "s/us-east-1/us-foobar-1/g" {} +
+$ find -name "*.tf" -exec sed -i "s/us-east-1/us-foobar-1/g" {} +
 ```
 
 Once you have configured the variables (or preferably will be using the defaults), you can deploy the state management resources with 
