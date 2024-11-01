@@ -106,6 +106,8 @@ $ tofu apply
 
 In general, once everything is configured and resources are up, the only human interaction necessary is during [deployment to production](#deployment-to-production).
 
+During development, for every push where a file in `web/deploy/terraform` or `.github/workflows/deploy-opentofu.yml` is modified, [`deploy-opentofu.yml`](../../../.github/workflows/deploy-opentofu.yml) will be run, and the actions up to the `tofu plan` steps will be run as feedback for the developer. The `tofu apply` steps will _not_ be run. 
+
 ### Deployment to Staging
 
 When pull requests are merged to main, up to two main workflows are run: [`deploy-docker.yml`](../../../.github/workflows/deploy-docker.yml) and [`deploy-opentofu.yml`](../../../.github/workflows/deploy-opentofu.yml).
