@@ -35,8 +35,7 @@ module "ecr_dashboard" {
 }
 
 module "iam_role_and_policy" {
-  source                  = "../modules/iam/"
-  environment             = var.environment
-  cd_iam_policy_resources = [module.ecr_api.arn, module.ecr_dashboard.arn]
-  AWS_ACCOUNT_ID          = var.AWS_ACCOUNT_ID
+  source         = "../modules/iam/"
+  environment    = var.environment
+  AWS_ACCOUNT_ID = var.AWS_ACCOUNT_ID
 }
