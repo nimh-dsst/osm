@@ -110,7 +110,6 @@ if __name__ == "__main__":
         app=app,
         host="0.0.0.0",
         port=80,
-        root_path="/api",
         loop=loop,
         log_config=LOGGING_CONFIG,
     )

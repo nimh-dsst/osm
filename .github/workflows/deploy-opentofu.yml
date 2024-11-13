@@ -17,7 +17,7 @@ on:
         type: choice
         options:
           - staging
-          - production    
+          - production
   pull_request:
     branches:
       - main
