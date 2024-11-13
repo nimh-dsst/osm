@@ -4,7 +4,7 @@ services:
         image: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/api-shared:${RELEASE_TAG}"
         pull_policy: always
         environment:
-            - MONGODB_URI="${MONGODB_URI}"
+            MONGODB_URI: ${MONGODB_URI}
         working_dir: /app/app
         expose:
             - "80"
@@ -17,6 +17,7 @@ services:
             - traefik.http.services.osm_web_api.loadbalancer.server.port=80
             - traefik.http.routers.osm_web_api.tls=true
             - traefik.http.routers.osm_web_api.tls.certresolver=le
+            - "traefik.http.routers.osm_web_api.priority=100"  # Higher priority than dashboard
         networks:
             - traefik-public
         restart: always
@@ -36,7 +37,7 @@ services:
         image: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/dashboard-shared:${RELEASE_TAG}"
         pull_policy: always
         environment:
-            - MONGODB_URI="${MONGODB_URI}"
+            MONGODB_URI: ${MONGODB_URI}
         working_dir: /app
         labels:
             - traefik.enable=true
