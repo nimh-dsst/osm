@@ -12,7 +12,7 @@ You must set the following [repository secrets](https://github.com/nimh-dsst/osm
 
 * `AWS_ACCOUNT_ID`: The [AWS account ID](https://docs.aws.amazon.com/accounts/latest/reference/manage-acct-identifiers.html#FindAccountId) used for the deployments
 * `AWS_REGION`: The AWS region where the deployments reside
-* `MONGODB_URI`: The URI of the MongoDB holding the data. This variable was temperamental. Please try saving it as a secret surrounded by single quotes `'`.
+* `MONGODB_URI`: The URI of the MongoDB holding the data.
 * `SSH_PRIVATE_KEY`: The private SSH key used to ssh into the ec2 instances
 * `SSH_PUBLIC_KEY`: The public SSH key used to ssh into the ec2 instances
   corresponding to the above private key (use `ssh-keygen -y -f

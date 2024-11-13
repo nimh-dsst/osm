@@ -61,7 +61,13 @@ jobs:
           push: true
           file: Dockerfile.base
           tags: localhost:5000/osm/osm_base
-          
+      - name: Download data from S3
+        # only build if the image tag doesn't exist
+        if: steps.check-image-tag.outputs.found_tag == 1
+        run: |
+          aws s3 cp s3://osm-terraform-storage/dashboard_data/matches.parquet dashboard_data/matches.parquet
+
+
       - name: Build and push Docker image
         # only build if the image tag doesn't exist
         if: steps.check-image-tag.outputs.found_tag == 1
