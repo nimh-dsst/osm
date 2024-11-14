@@ -42,13 +42,8 @@ resource "aws_iam_instance_profile" "profile" {
 }
 
 resource "aws_iam_policy" "cd" {
-  name = "${var.cd_iam_policy_name}-${var.environment}"
-  policy = templatefile(
-    "${path.module}/policies/gha-policy.json.tftpl",
-    {
-      resources = jsonencode(var.cd_iam_policy_resources)
-    },
-  )
+  name   = "${var.cd_iam_policy_name}-${var.environment}"
+  policy = file("${path.module}/policies/gha-policy.json")
 }
 
 resource "aws_iam_role" "cd" {
