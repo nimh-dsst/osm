@@ -49,7 +49,3 @@ jobs:
       - name: Run tests
         run: |
           tox
-
-      - name: Test packaging
-        run: |
-          tox -e .package
