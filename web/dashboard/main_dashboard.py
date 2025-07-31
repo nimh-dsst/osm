@@ -79,7 +79,9 @@ class MainDashboard(param.Parameterized):
     """
 
     # High-level parameters.
-    extraction_tool = param.Selector(default="", objects=[], label="Metrics group")
+    extraction_tool = param.Selector(
+        default="", objects=[], label="Metrics group"
+    )
 
     metrics = param.Selector(default=[], objects=[], label="Metrics")
 
@@ -91,7 +93,9 @@ class MainDashboard(param.Parameterized):
     # Filters
     filter_pubdate = param.Range(step=1, label="Publication date")
 
-    filter_journal = param.ListSelector(default=[], objects=[], label="Journal")
+    filter_journal = param.ListSelector(
+        default=[], objects=[], label="Journal"
+    )
 
     filter_affiliation_country = param.ListSelector(
         default=[], objects=[], label="Country"
@@ -106,7 +110,11 @@ class MainDashboard(param.Parameterized):
 
     # UI elements
     echarts_pane = pn.pane.ECharts(
-        {}, height=640, width=1200, renderer="svg", options={"replaceMerge": ["series"]}
+        {},
+        height=640,
+        width=1200,
+        renderer="svg",
+        options={"replaceMerge": ["series"]},
     )
 
     # set up in the init method
@@ -123,7 +131,10 @@ class MainDashboard(param.Parameterized):
     debug = False
 
     echarts_config_editor = pn.widgets.CodeEditor(
-        value="", sizing_mode="stretch_width", language="javascript", height=800
+        value="",
+        sizing_mode="stretch_width",
+        language="javascript",
+        height=800,
     )
     echarts_update_button = pn.widgets.Button(name="Update ECharts")
     echarts_config = param.Dict(default={})
@@ -145,11 +156,15 @@ class MainDashboard(param.Parameterized):
             self.param.filter_journal,
             annotations={
                 row[0]: row[1]
-                for row in self.raw_data.journal.value_counts().reset_index().values
+                for row in self.raw_data.journal.value_counts()
+                .reset_index()
+                .values
             },
             update_title_callback=lambda select_picker,
             values,
-            options: self.new_picker_title("journals", select_picker, values, options),
+            options: self.new_picker_title(
+                "journals", select_picker, values, options
+            ),
         )
 
         self.affiliation_country_select_picker = SelectPicker.from_param(
@@ -167,7 +182,9 @@ class MainDashboard(param.Parameterized):
             annotations=self.get_col_values_with_count("funder"),
             update_title_callback=lambda select_picker,
             values,
-            options: self.new_picker_title("funders", select_picker, values, options),
+            options: self.new_picker_title(
+                "funders", select_picker, values, options
+            ),
         )
 
         self.tags_select_picker = SelectPicker.from_param(
@@ -175,7 +192,9 @@ class MainDashboard(param.Parameterized):
             annotations=self.get_col_values_with_count("data_tags"),
             update_title_callback=lambda select_picker,
             values,
-            options: self.new_picker_title("tags", select_picker, values, options),
+            options: self.new_picker_title(
+                "tags", select_picker, values, options
+            ),
         )
 
         self.build_pubdate_filter()
@@ -184,12 +203,16 @@ class MainDashboard(param.Parameterized):
         self.echarts_update_button.on_click(self.did_click_update_echart_plot)
 
     def splitting_var_label(self, splitting_var):
-        return extraction_tools_params[self.extraction_tool]["labels"][splitting_var]
+        return extraction_tools_params[self.extraction_tool]["labels"][
+            splitting_var
+        ]
 
     def splitting_var_from_label(self, label):
         return [
             k
-            for k, v in extraction_tools_params[self.extraction_tool]["labels"].items()
+            for k, v in extraction_tools_params[self.extraction_tool][
+                "labels"
+            ].items()
             if v == label
         ][0]
 
@@ -201,9 +224,9 @@ class MainDashboard(param.Parameterized):
         self.raw_data = self.datasets[self.extraction_tool]
 
         # Updated the metrics param
-        new_extraction_tools_metrics = extraction_tools_params[self.extraction_tool][
-            "metrics"
-        ]
+        new_extraction_tools_metrics = extraction_tools_params[
+            self.extraction_tool
+        ]["metrics"]
 
         new_metrics = []
         for m in new_extraction_tools_metrics:
@@ -218,7 +241,8 @@ class MainDashboard(param.Parameterized):
             self.extraction_tool
         ]["splitting_vars"]
         self.param.splitting_var.objects = [
-            self.splitting_var_label(v) for v in new_extraction_tools_splitting_vars
+            self.splitting_var_label(v)
+            for v in new_extraction_tools_splitting_vars
         ]
 
         # Update the filters
@@ -233,7 +257,10 @@ class MainDashboard(param.Parameterized):
             self.raw_data.year.min(),
             self.raw_data.year.max(),
         )
-        self.filter_pubdate = (self.raw_data.year.min(), self.raw_data.year.max())
+        self.filter_pubdate = (
+            self.raw_data.year.min(),
+            self.raw_data.year.max(),
+        )
 
         ## filter_journal
 
@@ -245,7 +272,9 @@ class MainDashboard(param.Parameterized):
         # self.param.filter_journal.objects = self.raw_data.journal.unique()
 
         ## affiliation country
-        countries_with_count = self.get_col_values_with_count("affiliation_country")
+        countries_with_count = self.get_col_values_with_count(
+            "affiliation_country"
+        )
 
         def country_sorter(c):
             return countries_with_count[c]
@@ -279,7 +308,9 @@ class MainDashboard(param.Parameterized):
         self.splitting_var = self.param.splitting_var.objects[0]
 
     @lru_cache
-    def get_col_values_with_count(self, col, none_test=lambda row: "None" in row):
+    def get_col_values_with_count(
+        self, col, none_test=lambda row: "None" in row
+    ):
         values = {}
         for row in self.raw_data[col].values:
             if none_test(row):
@@ -308,13 +339,17 @@ class MainDashboard(param.Parameterized):
                 .iloc[:10]
                 .index
             )
-            notif_msg = "Splitting by journal. Top 10 journals selected by default."
+            notif_msg = (
+                "Splitting by journal. Top 10 journals selected by default."
+            )
         else:
             selected_journals = self.param.filter_journal.objects
 
         if splitting_var == "affiliation_country":
             # We want to show all countries, but pre-select only the top 10
-            countries_with_count = self.get_col_values_with_count("affiliation_country")
+            countries_with_count = self.get_col_values_with_count(
+                "affiliation_country"
+            )
 
             # pre-filter the countries because there are a lot
             countries_with_count = {
@@ -359,7 +394,9 @@ class MainDashboard(param.Parameterized):
                 if count > top_5_min and funder != "None"
             ]
 
-            notif_msg = "Splitting by funder. Top 5 Funders selected by default."
+            notif_msg = (
+                "Splitting by funder. Top 5 Funders selected by default."
+            )
         else:
             selected_funders = self.param.filter_funder.objects
 
@@ -409,7 +446,9 @@ class MainDashboard(param.Parameterized):
             filters.append(f"year <= {self.filter_pubdate[1]}")
 
         filtered_df = (
-            self.raw_data.query(" and ".join(filters)) if filters else self.raw_data
+            self.raw_data.query(" and ".join(filters))
+            if filters
+            else self.raw_data
         )
 
         if len(self.filter_affiliation_country) != len(
@@ -452,13 +491,18 @@ class MainDashboard(param.Parameterized):
         aggregations = {}
         for field, aggs in dims_aggregations.items():
             for agg in aggs:
-                aggregations[f"{agg}_{field}"] = (field, aggregation_formulas[agg])
+                aggregations[f"{agg}_{field}"] = (
+                    field,
+                    aggregation_formulas[agg],
+                )
 
         groupers = ["year"]
         if self.splitting_var != "None":
             groupers.append(self.splitting_var_from_label(self.splitting_var))
 
-        result = filtered_df.groupby(groupers).agg(**aggregations).reset_index()
+        result = (
+            filtered_df.groupby(groupers).agg(**aggregations).reset_index()
+        )
 
         for col in aggregations:
             if col.startswith("percent_"):
@@ -519,23 +563,31 @@ class MainDashboard(param.Parameterized):
             if splitting_var == "affiliation_country":
                 splitting_var_filter = self.filter_affiliation_country
                 splitting_var_column = "affiliation_country"
-                splitting_var_query = lambda cell, selected_item: selected_item in cell  # noqa: E731
+                splitting_var_query = (
+                    lambda cell, selected_item: selected_item in cell
+                )  # noqa: E731
 
             elif splitting_var == "funder":
                 splitting_var_filter = self.filter_funder
                 splitting_var_column = "funder"
-                splitting_var_query = lambda cell, selected_item: selected_item in cell  # noqa: E731
+                splitting_var_query = (
+                    lambda cell, selected_item: selected_item in cell
+                )  # noqa: E731
 
             elif splitting_var == "data_tags":
                 splitting_var_filter = self.filter_tags
                 splitting_var_column = "data_tags"
-                splitting_var_query = lambda cell, selected_item: selected_item in cell  # noqa: E731
+                splitting_var_query = (
+                    lambda cell, selected_item: selected_item in cell
+                )  # noqa: E731
 
             else:
                 print("Defaulting to splitting var 'journal' ")
                 splitting_var_filter = self.filter_journal
                 splitting_var_column = "journal"
-                splitting_var_query = lambda cell, selected_item: cell == selected_item  # noqa: E731
+                splitting_var_query = (
+                    lambda cell, selected_item: cell == selected_item
+                )  # noqa: E731
 
             last_year_values = {}
             for selected_item in sorted(splitting_var_filter):
@@ -560,7 +612,9 @@ class MainDashboard(param.Parameterized):
                     ].values[0]
                     last_year_values[selected_item] = value_last_year
 
-                    data_as_dict = sub_df.set_index("year")[raw_metric].to_dict()
+                    data_as_dict = sub_df.set_index("year")[
+                        raw_metric
+                    ].to_dict()
                     data = [data_as_dict.get(year, None) for year in xAxis]
 
                     series.append(
@@ -581,7 +635,10 @@ class MainDashboard(param.Parameterized):
                         }
                     )
                     legend_data.append(
-                        {"name": selected_item, "icon": "path://M 0 0 H 20 V 20 H 0 Z"}
+                        {
+                            "name": selected_item,
+                            "icon": "path://M 0 0 H 20 V 20 H 0 Z",
+                        }
                     )
 
             # Sort the legend series by decreasing order of the last year value
@@ -597,7 +654,9 @@ class MainDashboard(param.Parameterized):
         # time to get the same good-looking result.
         # So for the sake of delivering fast, I just round the values to 2 decimals.
         for serie in series:
-            serie["data"] = [round(v, 2) if v is not None else v for v in serie["data"]]
+            serie["data"] = [
+                round(v, 2) if v is not None else v for v in serie["data"]
+            ]
 
         # Default colormap is :
         # ["#5470c6", "#91cc75", "#fac858", "#ee6666", "#73c0de", "#3ba272", "#fc8452", "#9a60b4", "#ea7ccc"]
@@ -648,7 +707,9 @@ class MainDashboard(param.Parameterized):
                     "fontSize": "20",
                 },
                 "axisLabel": {
-                    "formatter": "{value}%" if "percent" in raw_metric else "{value}"
+                    "formatter": "{value}%"
+                    if "percent" in raw_metric
+                    else "{value}"
                 },
             },
             "series": series,
@@ -702,7 +763,9 @@ class MainDashboard(param.Parameterized):
             self.start_pubdate_input.value = str(self.pubdate_slider.value[0])
             self.end_pubdate_input.value = str(self.pubdate_slider.value[1])
 
-        self.pubdate_slider.param.watch(update_pubdate_text_inputs, "value_throttled")
+        self.pubdate_slider.param.watch(
+            update_pubdate_text_inputs, "value_throttled"
+        )
 
         # When the TextInputs' value change, update the slider,
         # and update filter_pubdate
@@ -717,7 +780,9 @@ class MainDashboard(param.Parameterized):
         self.end_pubdate_input.param.watch(update_pubdate_slider, "value")
 
         self.last_year_button = pn.widgets.Button(
-            name="Last year", width=80, css_classes=["last-year-button", "year-button"]
+            name="Last year",
+            width=80,
+            css_classes=["last-year-button", "year-button"],
         )
         self.past_5years_button = pn.widgets.Button(
             name="Past 5 years",
@@ -732,17 +797,26 @@ class MainDashboard(param.Parameterized):
 
         def did_click_shortcut_button(event):
             if event.obj.name == "Last year":
-                self.start_pubdate_input.value, self.end_pubdate_input.value = (
+                (
+                    self.start_pubdate_input.value,
+                    self.end_pubdate_input.value,
+                ) = (
                     str(datetime.now().year),
                     str(datetime.now().year),
                 )
             elif event.obj.name == "Past 5 years":
-                self.start_pubdate_input.value, self.end_pubdate_input.value = (
+                (
+                    self.start_pubdate_input.value,
+                    self.end_pubdate_input.value,
+                ) = (
                     str(datetime.now().year - 5),
                     str(datetime.now().year),
                 )
             elif event.obj.name == "Past 10 years":
-                self.start_pubdate_input.value, self.end_pubdate_input.value = (
+                (
+                    self.start_pubdate_input.value,
+                    self.end_pubdate_input.value,
+                ) = (
                     str(datetime.now().year - 10),
                     str(datetime.now().year),
                 )
@@ -756,13 +830,13 @@ class MainDashboard(param.Parameterized):
         options_count = len(picker.options)
 
         if value_count == options_count:
-            title = f"All {entity} ({ value_count })"
+            title = f"All {entity} ({value_count})"
 
         elif value_count == 0:
-            title = f"No {entity} (0 out of { options_count })"
+            title = f"No {entity} (0 out of {options_count})"
 
         else:
-            title = f"{ value_count } {entity} out of { options_count }"
+            title = f"{value_count} {entity} out of {options_count}"
 
         return title
 
@@ -771,7 +845,8 @@ class MainDashboard(param.Parameterized):
 
         items = [
             pn.pane.Markdown(
-                "### Publication Details", css_classes=["filters-section-header"]
+                "### Publication Details",
+                css_classes=["filters-section-header"],
             ),
             pn.Column(
                 pn.Row(self.start_pubdate_input, self.end_pubdate_input),
@@ -790,7 +865,7 @@ class MainDashboard(param.Parameterized):
             self.tags_select_picker,
         ]
 
-        sidebar = pn.Column(*items)
+        sidebar = pn.Column(*items, sizing_mode="stretch_width")
 
         return sidebar
 
@@ -839,7 +914,11 @@ class MainDashboard(param.Parameterized):
         ]
 
         if self.debug:
-            items += [divider(), self.echarts_update_button, self.echarts_config_editor]
+            items += [
+                divider(),
+                self.echarts_update_button,
+                self.echarts_config_editor,
+            ]
 
         # Layout the dashboard
         dashboard = pn.Column(
