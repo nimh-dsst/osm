@@ -556,12 +556,15 @@ class MainDashboard(param.Parameterized):
                     ].values[0]
                     last_year_values[selected_item] = value_last_year
 
+                    data_as_dict = sub_df.set_index("year")[raw_metric].to_dict()
+                    data = [data_as_dict.get(year, None) for year in xAxis]
+
                     series.append(
                         {
                             "id": selected_item,
                             "name": selected_item,
                             "type": "line",
-                            "data": sub_df[raw_metric].tolist(),
+                            "data": data,
                             # Shows a label at the end of the plotted line.
                             # Labels end up overlapping in some cases.
                             # To fix this, we would need to change the offset of the label
@@ -590,7 +593,7 @@ class MainDashboard(param.Parameterized):
         # time to get the same good-looking result.
         # So for the sake of delivering fast, I just round the values to 2 decimals.
         for serie in series:
-            serie["data"] = [round(v, 2) for v in serie["data"]]
+            serie["data"] = [round(v, 2) if v is not None else v for v in serie["data"]]
 
         # Default colormap is :
         # ["#5470c6", "#91cc75", "#fac858", "#ee6666", "#73c0de", "#3ba272", "#fc8452", "#9a60b4", "#ea7ccc"]
