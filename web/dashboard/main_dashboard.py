@@ -106,7 +106,11 @@ class MainDashboard(param.Parameterized):
 
     # UI elements
     echarts_pane = pn.pane.ECharts(
-        {}, height=640, width=1200, renderer="svg", options={"replaceMerge": ["series"]}
+        {},
+        height=640,
+        width=1200,
+        renderer="svg",
+        options={"replaceMerge": ["series"]},
     )
 
     # set up in the init method
@@ -123,7 +127,10 @@ class MainDashboard(param.Parameterized):
     debug = False
 
     echarts_config_editor = pn.widgets.CodeEditor(
-        value="", sizing_mode="stretch_width", language="javascript", height=800
+        value="",
+        sizing_mode="stretch_width",
+        language="javascript",
+        height=800,
     )
     echarts_update_button = pn.widgets.Button(name="Update ECharts")
     echarts_config = param.Dict(default={})
@@ -233,7 +240,10 @@ class MainDashboard(param.Parameterized):
             self.raw_data.year.min(),
             self.raw_data.year.max(),
         )
-        self.filter_pubdate = (self.raw_data.year.min(), self.raw_data.year.max())
+        self.filter_pubdate = (
+            self.raw_data.year.min(),
+            self.raw_data.year.max(),
+        )
 
         ## filter_journal
 
@@ -452,7 +462,10 @@ class MainDashboard(param.Parameterized):
         aggregations = {}
         for field, aggs in dims_aggregations.items():
             for agg in aggs:
-                aggregations[f"{agg}_{field}"] = (field, aggregation_formulas[agg])
+                aggregations[f"{agg}_{field}"] = (
+                    field,
+                    aggregation_formulas[agg],
+                )
 
         groupers = ["year"]
         if self.splitting_var != "None":
@@ -581,7 +594,10 @@ class MainDashboard(param.Parameterized):
                         }
                     )
                     legend_data.append(
-                        {"name": selected_item, "icon": "path://M 0 0 H 20 V 20 H 0 Z"}
+                        {
+                            "name": selected_item,
+                            "icon": "path://M 0 0 H 20 V 20 H 0 Z",
+                        }
                     )
 
             # Sort the legend series by decreasing order of the last year value
@@ -717,7 +733,9 @@ class MainDashboard(param.Parameterized):
         self.end_pubdate_input.param.watch(update_pubdate_slider, "value")
 
         self.last_year_button = pn.widgets.Button(
-            name="Last year", width=80, css_classes=["last-year-button", "year-button"]
+            name="Last year",
+            width=80,
+            css_classes=["last-year-button", "year-button"],
         )
         self.past_5years_button = pn.widgets.Button(
             name="Past 5 years",
@@ -732,17 +750,26 @@ class MainDashboard(param.Parameterized):
 
         def did_click_shortcut_button(event):
             if event.obj.name == "Last year":
-                self.start_pubdate_input.value, self.end_pubdate_input.value = (
+                (
+                    self.start_pubdate_input.value,
+                    self.end_pubdate_input.value,
+                ) = (
                     str(datetime.now().year),
                     str(datetime.now().year),
                 )
             elif event.obj.name == "Past 5 years":
-                self.start_pubdate_input.value, self.end_pubdate_input.value = (
+                (
+                    self.start_pubdate_input.value,
+                    self.end_pubdate_input.value,
+                ) = (
                     str(datetime.now().year - 5),
                     str(datetime.now().year),
                 )
             elif event.obj.name == "Past 10 years":
-                self.start_pubdate_input.value, self.end_pubdate_input.value = (
+                (
+                    self.start_pubdate_input.value,
+                    self.end_pubdate_input.value,
+                ) = (
                     str(datetime.now().year - 10),
                     str(datetime.now().year),
                 )
@@ -756,13 +783,13 @@ class MainDashboard(param.Parameterized):
         options_count = len(picker.options)
 
         if value_count == options_count:
-            title = f"All {entity} ({ value_count })"
+            title = f"All {entity} ({value_count})"
 
         elif value_count == 0:
-            title = f"No {entity} (0 out of { options_count })"
+            title = f"No {entity} (0 out of {options_count})"
 
         else:
-            title = f"{ value_count } {entity} out of { options_count }"
+            title = f"{value_count} {entity} out of {options_count}"
 
         return title
 
@@ -771,7 +798,8 @@ class MainDashboard(param.Parameterized):
 
         items = [
             pn.pane.Markdown(
-                "### Publication Details", css_classes=["filters-section-header"]
+                "### Publication Details",
+                css_classes=["filters-section-header"],
             ),
             pn.Column(
                 pn.Row(self.start_pubdate_input, self.end_pubdate_input),
@@ -790,7 +818,7 @@ class MainDashboard(param.Parameterized):
             self.tags_select_picker,
         ]
 
-        sidebar = pn.Column(*items)
+        sidebar = pn.Column(*items, sizing_mode="stretch_width")
 
         return sidebar
 
@@ -839,7 +867,11 @@ class MainDashboard(param.Parameterized):
         ]
 
         if self.debug:
-            items += [divider(), self.echarts_update_button, self.echarts_config_editor]
+            items += [
+                divider(),
+                self.echarts_update_button,
+                self.echarts_config_editor,
+            ]
 
         # Layout the dashboard
         dashboard = pn.Column(
