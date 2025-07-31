@@ -66,8 +66,8 @@ metrics_by_title = {v: k for k, v in metrics_titles.items()}
 
 
 aggregation_formulas = {
-    "percent": lambda x: x.mean() * 100,
-    "count_true": lambda x: (x == True).sum(),  # noqa
+    "percent": "mean",
+    "count_true": "sum",
     "count": "count",
     "mean": "mean",
 }
@@ -459,6 +459,10 @@ class MainDashboard(param.Parameterized):
             groupers.append(self.splitting_var_from_label(self.splitting_var))
 
         result = filtered_df.groupby(groupers).agg(**aggregations).reset_index()
+
+        for col in aggregations:
+            if col.startswith("percent_"):
+                result[col] = result[col] * 100
 
         print("FILTERED_GROUPED_DATA_DONE", len(result))
 
