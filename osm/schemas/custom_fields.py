@@ -41,7 +41,7 @@ class LongField(Generic[T]):
             cls._inner_schema,
         )
 
-        def get_schema(strict: bool) -> CoreSchema:
+        def get_schema() -> CoreSchema:
             return core_schema.json_or_python_schema(
                 python_schema=core_schema.union_schema(
                     [
@@ -49,7 +49,6 @@ class LongField(Generic[T]):
                         json_schema,
                     ],
                     custom_error_type=cls._error_kind,
-                    strict=strict,
                 ),
                 json_schema=json_schema,
                 serialization=core_schema.plain_serializer_function_ser_schema(
@@ -60,10 +59,7 @@ class LongField(Generic[T]):
                 ),
             )
 
-        return core_schema.lax_or_strict_schema(
-            lax_schema=get_schema(strict=False),
-            strict_schema=get_schema(strict=True),
-        )
+        return get_schema()
 
     def __init__(self, value: T):
         self._value = value
