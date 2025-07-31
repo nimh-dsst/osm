@@ -28,6 +28,7 @@ dev = [
   "ipython",
   "ruff",
   "pytest",
+  "tox",
 ]
 server = [
   "fastapi[standard]",
