@@ -25,6 +25,26 @@ except KeyError:
     msg = "LOCAL_DATA_PATH environment variable not found, please set it."
     raise RuntimeError(msg)
 
+col_1, col_2 = st.columns(2)
+
+with col_1:
+    splitting_variable = st.selectbox(
+        "Splitting variable",
+        options=[None, "journal", "affiliation_country", "funder"],
+        index=3,  # default to 'funder'
+    )
+with col_2:
+    aggregation_name = st.selectbox(
+        "Aggregation",
+        options=[
+            "data_sharing_percent",
+            "data_sharing",
+            "count",
+            "code_sharing_percent",
+            "code_sharing",
+        ],
+    )
+
 
 @st.cache_resource
 def load_data() -> pl.DataFrame:
@@ -91,12 +111,6 @@ data_for_country = load_data_for_country()
 data_for_funder = load_data_for_funder()
 
 
-splitting_variable = st.selectbox(
-    "Splitting variable",
-    options=[None, "journal", "affiliation_country", "funder"],
-    index=3,  # default to 'funder'
-)
-
 unique_journals = data["journal"].unique(maintain_order=True).to_list()
 if splitting_variable == "journal":
     default_journals = (
@@ -151,17 +165,6 @@ years: tuple[int, int] = st.slider(  # type: ignore[assignment]
     min_value=MIN_YEAR,
     max_value=max_year,
     value=(MIN_YEAR, max_year),
-)
-
-aggregation_name = st.selectbox(
-    "Aggregation",
-    options=[
-        "data_sharing_percent",
-        "data_sharing",
-        "count",
-        "code_sharing_percent",
-        "code_sharing",
-    ],
 )
 
 FORMULAE = {
