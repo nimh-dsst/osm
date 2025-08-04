@@ -20,6 +20,7 @@ dependencies = [
   "python_on_whales",
   "odmantic",
   "requests",
+  "polars",
 ]
 
 [project.optional-dependencies]
@@ -44,6 +45,8 @@ llm = [
 plot = [
   "colorcet",
   "panel",
+  "plotly",
+  "streamlit"
 ]
 [project.urls]
 homepage = "https://website"
@@ -66,3 +69,14 @@ osm = "osm.cli:main"
 [tool.ruff]
 line-length = 88
 indent-width = 4
+
+[dependency-groups]
+plot = [
+    "colorcet>=3.1.0",
+    "panel>=1.7.1",
+    "plotly>=6.2.0",
+    "streamlit>=1.47.1",
+]
+dev = [
+    "pre-commit>=4.2.0",
+]
