@@ -1,6 +1,6 @@
 """Usage:
 
-    streamlit run streamlit_app.py
+    LOCAL_DATA_PATH=big_files/matches.parquet streamlit run streamlit_app.py
 
 Make sure you have Streamlit, Polars, and Plotly installed. Current versions:
 
@@ -8,6 +8,8 @@ Make sure you have Streamlit, Polars, and Plotly installed. Current versions:
 - Polars: 1.32.0
 - Plotly: 6.2.0
 """
+
+import os
 
 import plotly.express as px  # type: ignore[attr-defined]
 import polars as pl
@@ -17,11 +19,17 @@ st.set_page_config(layout="wide")
 
 MIN_YEAR = 2000
 
+try:
+    PATH = os.environ["LOCAL_DATA_PATH"]
+except KeyError:
+    msg = "LOCAL_DATA_PATH environment variable not found, please set it."
+    raise RuntimeError(msg)
+
 
 @st.cache_resource
 def load_data() -> pl.DataFrame:
     return (
-        pl.scan_parquet("big_files/matches.parquet")  # pyright: ignore[reportUnknownMemberType]
+        pl.scan_parquet(PATH)  # pyright: ignore[reportUnknownMemberType]
         .select(
             "is_open_data",
             "is_open_code",
@@ -38,7 +46,7 @@ def load_data() -> pl.DataFrame:
 @st.cache_resource
 def load_data_for_funder() -> pl.DataFrame:
     return (
-        pl.scan_parquet("big_files/matches.parquet")  # pyright: ignore[reportUnknownMemberType]
+        pl.scan_parquet(PATH)  # pyright: ignore[reportUnknownMemberType]
         .select(
             "is_open_data",
             "is_open_code",
@@ -58,7 +66,7 @@ def load_data_for_funder() -> pl.DataFrame:
 @st.cache_resource
 def load_data_for_country() -> pl.DataFrame:
     return (
-        pl.scan_parquet("big_files/matches.parquet")  # pyright: ignore[reportUnknownMemberType]
+        pl.scan_parquet(PATH)  # pyright: ignore[reportUnknownMemberType]
         .select(
             "is_open_data",
             "is_open_code",
