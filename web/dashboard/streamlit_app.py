@@ -189,19 +189,28 @@ with row_2_col_2:
 
 unique_funders = data_for_funder["funder"].unique(maintain_order=True).to_list()
 if splitting_variable == "funder":
-    # Ensure that Howard Hughes Medical Institute always appears.
-    default_funders: list[str] = [
-        *data_for_funder.group_by("funder")
-        .len()
-        .filter(~pl.col("funder").is_in(NIH_INSTITUTES_AND_FUNDERS))
-        .select(
-            pl.col("funder").top_k_by("len", 9),
-        )["funder"]
-        .to_list(),
-        "Howard Hughes Medical Institute",
-    ]
+    funders_preset = st.selectbox(
+        "Funders preset", options=["Top funders", "NIH institutes and funders"], index=0
+    )
+    if funders_preset == "Top funders":
+        # Ensure that Howard Hughes Medical Institute always appears.
+        default_funders: list[str] = [
+            *data_for_funder.group_by("funder")
+            .len()
+            .filter(~pl.col("funder").is_in(NIH_INSTITUTES_AND_FUNDERS))
+            .select(
+                pl.col("funder").top_k_by("len", 9),
+            )["funder"]
+            .to_list(),
+            "Howard Hughes Medical Institute",
+        ]
+    else:
+        default_funders = list(
+            set(NIH_INSTITUTES_AND_FUNDERS).intersection(unique_funders)
+        )
 else:
     default_funders = []
+
 with row_2_col_3:
     funders = st.multiselect("Funder", options=unique_funders, default=default_funders)
 
