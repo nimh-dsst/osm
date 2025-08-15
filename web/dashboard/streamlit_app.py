@@ -26,26 +26,31 @@ except KeyError:
     msg = "LOCAL_DATA_PATH environment variable not found, please set it."
     raise RuntimeError(msg)
 
-col_1, col_2, col_3 = st.columns(3)
+row_1_col_1, row_1_col_2, row_1_col_3 = st.columns(3)
+row_2_col_1, row_2_col_2, row_2_col_3 = st.columns(3)
 
-with col_1:
-    splitting_variable = st.selectbox(
+with row_1_col_1:
+    splitting_variable: str | None = st.selectbox(
         "Splitting variable",
-        options=[None, "journal", "affiliation_country", "funder"],
+        options=[None, "Journal", "Affiliation Country", "Funder"],
         index=3,  # default to 'funder'
     )
-with col_2:
+    if splitting_variable is not None:
+        splitting_variable = splitting_variable.lower().replace(" ", "_")
+with row_1_col_2:
     aggregation_name = st.selectbox(
         "Aggregation",
         options=[
-            "data_sharing_percent",
-            "data_sharing",
-            "count",
-            "code_sharing_percent",
-            "code_sharing",
+            "Data Sharing Percent",
+            "Data Sharing",
+            "Count",
+            "Code Sharing Percent",
+            "Code Sharing",
         ],
+        index=0,
     )
-with col_3:
+    aggregation_name = aggregation_name.lower().replace(" ", "_")
+with row_1_col_3:
     y_axis_sort_method = st.selectbox(
         "Y-axis sort method",
         ["Alphebetic", "Last aggregated value", "Median aggregated value"],
@@ -128,7 +133,10 @@ if splitting_variable == "journal":
     )
 else:
     default_journals = []
-journals = st.multiselect("Journal", options=unique_journals, default=default_journals)
+with row_2_col_1:
+    journals = st.multiselect(
+        "Journal", options=unique_journals, default=default_journals
+    )
 
 unique_countries = (
     data_for_country["affiliation_country"].unique(maintain_order=True).to_list()
@@ -144,11 +152,12 @@ if splitting_variable == "affiliation_country":
     )
 else:
     default_countries = []
-countries = st.multiselect(
-    "Country",
-    options=unique_countries,
-    default=default_countries,
-)
+with row_2_col_2:
+    countries = st.multiselect(
+        "Country",
+        options=unique_countries,
+        default=default_countries,
+    )
 
 unique_funders = data_for_funder["funder"].unique(maintain_order=True).to_list()
 if splitting_variable == "funder":
@@ -165,7 +174,8 @@ if splitting_variable == "funder":
     ]
 else:
     default_funders = []
-funders = st.multiselect("Funder", options=unique_funders, default=default_funders)
+with row_2_col_3:
+    funders = st.multiselect("Funder", options=unique_funders, default=default_funders)
 
 max_year: int = data["year"].max()  # type: ignore[assignment]
 years: tuple[int, int] = st.slider(  # type: ignore[assignment]
@@ -276,6 +286,11 @@ else:
         title=f"Open Data by {splitting_variable.title()} Over Time",
     )
 
-fig.update_layout(hovermode="x unified")  # pyright: ignore[reportUnknownMemberType]
-fig.update_traces(hovertemplate="%{y}")  # pyright: ignore[reportUnknownMemberType]
+fig.update_layout(hovermode="x unified", height=600)  # pyright: ignore[reportUnknownMemberType]
+if "percent" in aggregation_name:
+    fig.update_traces(hovertemplate="%{y:,.1f}")  # pyright: ignore[reportUnknownMemberType]
+else:
+    fig.update_traces(hovertemplate="%{y}")  # pyright: ignore[reportUnknownMemberType]
 st.plotly_chart(fig, use_container_width=True)  # pyright: ignore[reportUnknownMemberType]
+
+st.text("Toggle lines on or off by clicking on them")
