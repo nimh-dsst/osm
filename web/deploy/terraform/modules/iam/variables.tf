@@ -27,11 +27,6 @@ variable "cd_iam_policy_name" {
   type        = string
 }
 
-variable "cd_iam_policy_resources" {
-  description = "The arn of the resource to which the IAM policy is applied"
-  type        = list(string)
-}
-
 variable "cd_iam_role_policy_name" {
   description = "The name of the IAM role policy for continuous deployment to ECR"
   default     = "github-actions-role"
