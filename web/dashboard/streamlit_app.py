@@ -18,7 +18,35 @@ import streamlit as st
 st.set_page_config(layout="wide")
 
 MIN_YEAR = 2000
-EXCLUDED_FUNDERS = ["National Cancer Institute"]
+NIH_INSTITUTES_AND_FUNDERS = [
+    "National Cancer Institute",
+    "National Eye Institute",
+    "National Heart Lung and Blood Institute",
+    "National Human Genome Research Institute",
+    "National Institute on Aging",
+    "National Institute on Alcohol Abuse and Alcoholism",
+    "National Institute of Allergy and Infectious Diseases",
+    "National Institute of Arthritis and Musculoskeletal and Skin Diseases",
+    "National Institute of Biomedical Imaging and Bioengineering",
+    "Eunice Kennedy Shriver National Institute of Child Health and Human Development",
+    "National Institute on Deafness and Other Communication Disorders",
+    "National Institute of Dental and Craniofacial Research",
+    "National Institute of Diabetes and Digestive and Kidney Diseases",
+    "National Institute on Drug Abuse",
+    "National Institute of Environmental Health Sciences",
+    "National Institute of General Medical Sciences",
+    "National Institute of Mental Health",
+    "National Institute on Minority Health and Health Disparities",
+    "National Institute of Neurological Disorders and Stroke",
+    "National Institute of Nursing Research",
+    "National Library of Medicine",
+    "NIH Clinical Center",
+    "Center for Information Technology",
+    "Center for Scientific Review",
+    "Fogarty International Center",
+    "National Center for Advancing Translational Sciences",
+    "National Center for Complementary and Integrative Health",
+]
 
 try:
     PATH = os.environ["LOCAL_DATA_PATH"]
@@ -165,7 +193,7 @@ if splitting_variable == "funder":
     default_funders: list[str] = [
         *data_for_funder.group_by("funder")
         .len()
-        .filter(~pl.col("funder").is_in(EXCLUDED_FUNDERS))
+        .filter(~pl.col("funder").is_in(NIH_INSTITUTES_AND_FUNDERS))
         .select(
             pl.col("funder").top_k_by("len", 9),
         )["funder"]
