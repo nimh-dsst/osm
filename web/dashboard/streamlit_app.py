@@ -18,6 +18,7 @@ import streamlit as st
 st.set_page_config(layout="wide")
 
 MIN_YEAR = 2000
+EXCLUDED_FUNDERS = ["National Cancer Institute"]
 
 try:
     PATH = os.environ["LOCAL_DATA_PATH"]
@@ -25,7 +26,7 @@ except KeyError:
     msg = "LOCAL_DATA_PATH environment variable not found, please set it."
     raise RuntimeError(msg)
 
-col_1, col_2 = st.columns(2)
+col_1, col_2, col_3 = st.columns(3)
 
 with col_1:
     splitting_variable = st.selectbox(
@@ -43,6 +44,12 @@ with col_2:
             "code_sharing_percent",
             "code_sharing",
         ],
+    )
+with col_3:
+    y_axis_sort_method = st.selectbox(
+        "Y-axis sort method",
+        ["Alphebetic", "Last aggregated value", "Median aggregated value"],
+        index=1,
     )
 
 
@@ -149,6 +156,7 @@ if splitting_variable == "funder":
     default_funders: list[str] = [
         *data_for_funder.group_by("funder")
         .len()
+        .filter(~pl.col("funder").is_in(EXCLUDED_FUNDERS))
         .select(
             pl.col("funder").top_k_by("len", 9),
         )["funder"]
@@ -205,6 +213,28 @@ def apply_filters(df: pl.DataFrame) -> pl.DataFrame:
     return df
 
 
+def sort_for_y_axis(df: pl.DataFrame) -> pl.DataFrame:
+    if y_axis_sort_method == "Alphabetic":
+        return df.sort(
+            splitting_variable,
+            "year",
+        )
+    if y_axis_sort_method == "Last aggregated value":
+        return df.sort(
+            pl.col(aggregation_name).last().over(splitting_variable, order_by="year"),
+            "year",
+            descending=[True, False],
+        )
+    if y_axis_sort_method == "Median aggregated value":
+        return df.sort(
+            pl.col(aggregation_name).median().over(splitting_variable),
+            "year",
+            descending=[True, False],
+        )
+    msg = "Unreachable code"
+    raise RuntimeError(msg)
+
+
 if splitting_variable is None:
     df = apply_filters(data)
     summary = df.group_by("year").agg(formula.alias(aggregation_name)).sort("year")
@@ -220,7 +250,7 @@ elif splitting_variable == "journal":
     summary = (
         df.group_by(splitting_variable, "year")
         .agg(formula.alias(aggregation_name))
-        .sort("year", splitting_variable)
+        .pipe(sort_for_y_axis)
     )
     fig = px.line(  # pyright: ignore[reportUnknownMemberType]
         summary,
@@ -236,7 +266,7 @@ else:
         df.select("is_open_data", "year", "is_open_code", splitting_variable)
         .group_by(splitting_variable, "year")
         .agg(formula.alias(aggregation_name))
-        .sort("year", splitting_variable)
+        .pipe(sort_for_y_axis)
     )
     fig = px.line(  # pyright: ignore[reportUnknownMemberType]
         summary,
