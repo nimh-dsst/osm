@@ -47,6 +47,40 @@ NIH_INSTITUTES_AND_FUNDERS = [
     "National Center for Advancing Translational Sciences",
     "National Center for Complementary and Integrative Health",
 ]
+FUNDER_ACRONYMS = {
+    "National Institutes of Health": "NIH",
+    "European Commission": "EC",
+    "National Natural Science Foundation of China": "NSFC",
+    "German Research Foundation": "DFG",
+    "Japan Agency for Medical Research and Development": "AMED",
+    "Wellcome Trust": "WT",
+    "Canadian Institutes of Health Research": "CIHR",
+    "Medical Research Council": "MRC",
+    "Howard Hughes Medical Institute": "HHMI",
+    "Bill & Melinda Gates Foundation": "BMGF",
+    "National Cancer Institute": "NCI",
+    "National Institute of Allergy and Infectious Diseases": "NIAID",
+    "National Institute on Aging": "NIA",
+    "National Heart Lung and Blood Institute": "NHLBI",
+    "National Institute of General Medical Sciences": "NIGMS",
+    "National Institute of Neurological Disorders and Stroke": "NINDS",
+    "National Institute of Diabetes and Digestive and Kidney Diseases": "NIDDK",
+    "National Institute of Mental Health": "NIMH",
+    "National Institute of Child Health and Human Development": "NICHD",
+    "National Institute on Drug Abuse": "NIDA",
+    "National Institute of Environmental Health Sciences": "NIEHS",
+    "National Eye Institute": "NEI",
+    "National Human Genome Research Institute": "NHGRI",
+    "National Institute of Arthritis and Musculoskeletal and Skin Diseases": "NIAMS",
+    "National Institute on Alcohol Abuse and Alcoholism": "NIAAA",
+    "National Institute of Dental and Craniofacial Research": "NIDCR",
+    "National Library of Medicine": "NLM",
+    "National Institute of Biomedical Imaging and Bioengineering": "NIBIB",
+    "National Institute on Minority Health and Health Disparities": "NIMHD",
+    "National Institute of Nursing Research": "NINR",
+    "National Center for Complementary and Integrative Health": "NCCIH",
+}
+REVERSE_FUNDER_ACRONYMS = {v: k for k, v in FUNDER_ACRONYMS.items()}
 
 try:
     PATH = os.environ["LOCAL_DATA_PATH"]
@@ -212,7 +246,11 @@ else:
     default_funders = []
 
 with row_2_col_3:
-    funders = st.multiselect("Funder", options=unique_funders, default=default_funders)
+    funders = st.multiselect(
+        "Funder",
+        options=[FUNDER_ACRONYMS.get(x, x) for x in unique_funders],
+        default=[FUNDER_ACRONYMS.get(x, x) for x in default_funders],
+    )
 
 max_year: int = data["year"].max()  # type: ignore[assignment]
 years: tuple[int, int] = st.slider(  # type: ignore[assignment]
@@ -250,12 +288,17 @@ def apply_filters(df: pl.DataFrame) -> pl.DataFrame:
                 ),
             )
     if funders:
+        full_name_funders: list[str | None] = [
+            REVERSE_FUNDER_ACRONYMS.get(x, x) if x else None for x in funders
+        ]
         if splitting_variable == "funder":
             # 'funder' has already been preprocessed, so we can just use `is_in`.
-            df = df.filter(pl.col("funder").is_in(funders))
+            df = df.filter(pl.col("funder").is_in(full_name_funders))
         else:
             df = df.filter(
-                pl.any_horizontal([pl.col("funder").list.contains(x) for x in funders]),
+                pl.any_horizontal(
+                    [pl.col("funder").list.contains(x) for x in full_name_funders]
+                ),
             )
     return df
 
