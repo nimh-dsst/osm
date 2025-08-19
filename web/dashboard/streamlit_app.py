@@ -248,7 +248,7 @@ if splitting_variable == "funder":
                 *data_for_funder.group_by("funder")
                 .len()
                 .filter(pl.col("funder").is_in(NIH_INSTITUTES_AND_FUNDERS))
-                .select(pl.col("funder").top_k_by("len", 10))["funder"]
+                .select(pl.col("funder").top_k_by("len", 9))["funder"]
                 .to_list(),
                 "Howard Hughes Medical Institute",
             ]
