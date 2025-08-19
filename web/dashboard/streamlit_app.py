@@ -28,7 +28,7 @@ NIH_INSTITUTES_AND_FUNDERS = [
     "National Institute of Allergy and Infectious Diseases",
     "National Institute of Arthritis and Musculoskeletal and Skin Diseases",
     "National Institute of Biomedical Imaging and Bioengineering",
-    "Eunice Kennedy Shriver National Institute of Child Health and Human Development",
+    "National Institute of Child Health and Human Development",
     "National Institute on Deafness and Other Communication Disorders",
     "National Institute of Dental and Craniofacial Research",
     "National Institute of Diabetes and Digestive and Kidney Diseases",
@@ -115,7 +115,7 @@ with row_1_col_2:
 with row_1_col_3:
     y_axis_sort_method = st.selectbox(
         "Y-axis sort method",
-        ["Alphebetic", "Last aggregated value", "Median aggregated value"],
+        ["Alphabetic", "Last aggregated value", "Median aggregated value"],
         index=1,
     )
 
@@ -152,7 +152,10 @@ def load_data_for_funder() -> pl.DataFrame:
         .filter(pl.col("year") >= MIN_YEAR)
         .with_columns(pl.col("funder").list.unique())
         .explode("funder")
-        .filter(pl.col("funder").str.len_chars() > 0, pl.col("funder").is_not_null())
+        .filter(
+            pl.col("funder").str.len_chars() > 0,
+            pl.col("funder").is_not_null(),
+        )
         .collect()
     )
 
@@ -169,7 +172,10 @@ def load_data_for_country() -> pl.DataFrame:
             "funder",
             "year",
         )
-        .filter(pl.col("year") >= MIN_YEAR, pl.col("affiliation_country").is_not_null())
+        .filter(
+            pl.col("year") >= MIN_YEAR,
+            pl.col("affiliation_country").is_not_null(),
+        )
         .with_columns(pl.col("affiliation_country").str.split("; ").list.unique())
         .explode("affiliation_country")
         .filter(
@@ -224,24 +230,30 @@ with row_2_col_2:
 unique_funders = data_for_funder["funder"].unique(maintain_order=True).to_list()
 if splitting_variable == "funder":
     funders_preset = st.selectbox(
-        "Funders preset", options=["Top funders", "NIH institutes and funders"], index=0
+        "Funders preset",
+        options=["Top funders", "NIH institutes and funders"],
+        index=0,
     )
     if funders_preset == "Top funders":
         # Ensure that Howard Hughes Medical Institute always appears.
-        default_funders: list[str] = [
-            *data_for_funder.group_by("funder")
+        default_funders: list[str] = (
+            data_for_funder.group_by("funder")
             .len()
             .filter(~pl.col("funder").is_in(NIH_INSTITUTES_AND_FUNDERS))
-            .select(
-                pl.col("funder").top_k_by("len", 9),
-            )["funder"]
-            .to_list(),
-            "Howard Hughes Medical Institute",
-        ]
-    else:
-        default_funders = list(
-            set(NIH_INSTITUTES_AND_FUNDERS).intersection(unique_funders)
+            .select(pl.col("funder").top_k_by("len", 10))["funder"]
+            .to_list()
         )
+        if "Howard Hughes Medical Institute" not in default_funders:
+            default_funders = [
+                *data_for_funder.group_by("funder")
+                .len()
+                .filter(pl.col("funder").is_in(NIH_INSTITUTES_AND_FUNDERS))
+                .select(pl.col("funder").top_k_by("len", 10))["funder"]
+                .to_list(),
+                "Howard Hughes Medical Institute",
+            ]
+    else:
+        default_funders = set(NIH_INSTITUTES_AND_FUNDERS).intersection(unique_funders)
 else:
     default_funders = []
 
