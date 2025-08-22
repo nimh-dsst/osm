@@ -10,7 +10,7 @@ The script searches for funder names and acronyms across multiple funding-relate
 columns in the input data and generates a comprehensive funding matrix that can be
 used for analysis of funding patterns in biomedical research.
 
-Author: OpenSciMetrics Team
+Author: Adam Thomas & Cursor
 Usage: python funder-mapping-stdin.py [--log-level LEVEL] < input_data.csv
 """
 
@@ -46,7 +46,8 @@ def setup_logging(log_level):
 logger = logging.getLogger(__name__)
 
 # Load the funder reference database
-# This CSV contains 32 major biomedical research funders with their names and acronyms
+# This CSV contains the 10 largest biomedical research funders with their names and acronyms
+# as well as 22 centers and institutes that compose the NIH
 try:
     funders_df = pd.read_csv('biomedical_research_funders.csv')
     logger.info(f"Loaded {len(funders_df)} funder organizations from reference database")
