@@ -189,7 +189,7 @@ def load_data_for_funder() -> pl.DataFrame:
             "funder",
             "year",
         )
-        .with_columns(pl.col("funder").list.unique())
+        .with_columns(pl.col("funder").list.unique(maintain_order=True))
         .explode("funder")
         .filter(
             pl.col("funder").str.len_chars() > 0,
@@ -214,7 +214,7 @@ def load_data_for_country() -> pl.DataFrame:
             pl.col("year") >= MIN_YEAR,
             pl.col("affiliation_country").is_not_null(),
         )
-        .with_columns(pl.col("affiliation_country").list.unique())
+        .with_columns(pl.col("affiliation_country").list.unique(maintain_order=True))
         .explode("affiliation_country")
         .filter(
             pl.col("affiliation_country").is_in(REFERENCE_COUNTRIES),
@@ -229,7 +229,7 @@ data_for_country = load_data_for_country()
 data_for_funder = load_data_for_funder()
 
 
-unique_journals = data["journal"].unique(maintain_order=True).to_list()
+unique_journals = sorted(data["journal"].unique(maintain_order=True).to_list())
 if splitting_variable == "journal":
     default_journals: list[str] = (
         data.group_by("journal")
@@ -239,26 +239,21 @@ if splitting_variable == "journal":
         .get_column("journal")
         .to_list()
     )
-    with row_2_col_1:
-        journals: list[str] = st.multiselect(
-            "Journal", options=unique_journals, default=default_journals, key="journal"
-        )
 else:
     default_journals = []
-    with row_2_col_1:
-        journals = st.multiselect(
-            "Journal", options=unique_journals, default=default_journals, key="journal"
-        )
+with row_2_col_1:
+    journals = st.multiselect(
+        "Journal", options=unique_journals, default=default_journals, key="journal"
+    )
 
 
 def get_unique_countries() -> list[str]:
     df = load_data_for_country()
-    return (
+    return sorted(
         df["affiliation_country"]
         .value_counts()
         # Exclude countries that appear fewer than 100 times. Many of these are typos or city names.
-        .filter(pl.col("count") >= 100)
-        .sort("count", descending=True)["affiliation_country"]
+        .filter(pl.col("count") >= 100)["affiliation_country"]
         .to_list()
     )
 
@@ -272,24 +267,17 @@ if splitting_variable == "affiliation_country":
         .sort("len")["affiliation_country"]
         .to_list()
     )
-    with row_2_col_2:
-        countries = st.multiselect(
-            "Country",
-            options=unique_countries,
-            default=default_countries,
-            key="country",
-        )
 else:
     default_countries = []
-    with row_2_col_2:
-        countries = st.multiselect(
-            "Country",
-            options=unique_countries,
-            default=default_countries,
-            key="country",
-        )
+with row_2_col_2:
+    countries = st.multiselect(
+        "Country",
+        options=unique_countries,
+        default=default_countries,
+        key="country",
+    )
 
-unique_funders = data_for_funder["funder"].unique(maintain_order=True).to_list()
+unique_funders = sorted(data_for_funder["funder"].unique(maintain_order=True).to_list())
 if splitting_variable == "funder":
     funders_preset = st.selectbox(
         "Funders preset",
@@ -320,22 +308,16 @@ if splitting_variable == "funder":
         default_funders = list(
             set(NIH_INSTITUTES_AND_FUNDERS).intersection(unique_funders)
         )
-    with row_2_col_3:
-        funders = st.multiselect(
-            "Funder",
-            options=[FUNDER_ACRONYMS.get(x, x) for x in unique_funders],
-            default=[FUNDER_ACRONYMS.get(x, x) for x in default_funders],
-            key="funder",
-        )
 else:
     default_funders = []
-    with row_2_col_3:
-        funders = st.multiselect(
-            "Funder",
-            options=[FUNDER_ACRONYMS.get(x, x) for x in unique_funders],
-            default=[FUNDER_ACRONYMS.get(x, x) for x in default_funders],
-            key="funder",
-        )
+
+with row_2_col_3:
+    funders = st.multiselect(
+        "Funder",
+        options=[FUNDER_ACRONYMS.get(x, x) for x in unique_funders],
+        default=[FUNDER_ACRONYMS.get(x, x) for x in default_funders],
+        key="funder",
+    )
 
 max_year: int = data["year"].max()  # type: ignore[assignment]
 years: tuple[int, int] = st.slider(  # type: ignore[assignment]
