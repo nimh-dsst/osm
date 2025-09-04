@@ -1,23 +1,27 @@
 """Usage:
 
-    LOCAL_DATA_PATH=big_files/matches.parquet streamlit run streamlit_app.py
+    LOCAL_DATA_PATH=big_files/matches.parquet streamlit run web/dashboard/streamlit_app.py
 
-Make sure you have Streamlit, Polars, and Plotly installed. Current versions:
+Make sure you have Streamlit, Polars, PyCountry, and Plotly installed. Current versions:
 
 - Streamlit: 1.47.1
 - Polars: 1.32.0
 - Plotly: 6.2.0
+- pycountry: 24.6.1
 """
 
 import os
 
 import plotly.express as px  # type: ignore[attr-defined]
 import polars as pl
+import pycountry
 import streamlit as st
 
 st.set_page_config(layout="wide")
 
 MIN_YEAR = 2000
+
+# Funder normalization.
 NIH_INSTITUTES_AND_FUNDERS = [
     "National Cancer Institute",
     "National Eye Institute",
@@ -82,6 +86,36 @@ FUNDER_ACRONYMS = {
 }
 REVERSE_FUNDER_ACRONYMS = {v: k for k, v in FUNDER_ACRONYMS.items()}
 
+
+# Country normalization.
+RAW_REFERENCE_COUNTRIES: list[str] = [x.name.lower() for x in pycountry.countries]  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownArgumentType]
+COUNTRY_NORMALISATION = {
+    "korea, republic of": "south korea",
+    "korea": "south korea",
+    "uk": "united kingdom",
+    "ukuk": "united kingdom",
+    "usa": "united states",
+    "iran, islamic republic of": "iran",
+    "taiwan, province of china": "taiwan",
+    "russian federation": "russia",
+    "türkiye": "turkey",
+    "czechia": "czech republic",
+    "viet nam": "vietnam",
+    "tanzania, united republic of": "tanzania",
+    "venezuela, bolivarian republic of": "venezuela",
+    "south south korea": "south korea",
+    "palestine, state of": "palestine",
+    "côte d'ivoire": "ivory coast",
+}
+COUNTRY_NAME_FIXES: dict[str, str] = {
+    **{x.alpha_2.lower(): x.name.lower() for x in (pycountry.countries)},  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
+    **COUNTRY_NORMALISATION,
+}
+REFERENCE_COUNTRIES: list[str] = [
+    COUNTRY_NORMALISATION.get(x, x).title() for x in RAW_REFERENCE_COUNTRIES
+]
+
+
 try:
     PATH = os.environ["LOCAL_DATA_PATH"]
 except KeyError:
@@ -132,6 +166,12 @@ def load_data() -> pl.DataFrame:
             "funder",
             "year",
         )
+        .with_columns(
+            pl.col("affiliation_country")
+            .str.to_lowercase()
+            .str.split("; ")
+            .list.eval(pl.element().replace(COUNTRY_NAME_FIXES).str.to_titlecase())
+        )
         .filter(pl.col("year") >= MIN_YEAR)
         .collect()
     )
@@ -140,7 +180,7 @@ def load_data() -> pl.DataFrame:
 @st.cache_resource
 def load_data_for_funder() -> pl.DataFrame:
     return (
-        pl.scan_parquet(PATH)  # pyright: ignore[reportUnknownMemberType]
+        load_data()  # pyright: ignore[reportUnknownMemberType]
         .select(
             "is_open_data",
             "is_open_code",
@@ -149,21 +189,19 @@ def load_data_for_funder() -> pl.DataFrame:
             "funder",
             "year",
         )
-        .filter(pl.col("year") >= MIN_YEAR)
-        .with_columns(pl.col("funder").list.unique())
+        .with_columns(pl.col("funder").list.unique(maintain_order=True))
         .explode("funder")
         .filter(
             pl.col("funder").str.len_chars() > 0,
             pl.col("funder").is_not_null(),
         )
-        .collect()
     )
 
 
 @st.cache_resource
 def load_data_for_country() -> pl.DataFrame:
     return (
-        pl.scan_parquet(PATH)  # pyright: ignore[reportUnknownMemberType]
+        load_data()
         .select(
             "is_open_data",
             "is_open_code",
@@ -176,13 +214,13 @@ def load_data_for_country() -> pl.DataFrame:
             pl.col("year") >= MIN_YEAR,
             pl.col("affiliation_country").is_not_null(),
         )
-        .with_columns(pl.col("affiliation_country").str.split("; ").list.unique())
+        .with_columns(pl.col("affiliation_country").list.unique(maintain_order=True))
         .explode("affiliation_country")
         .filter(
+            pl.col("affiliation_country").is_in(REFERENCE_COUNTRIES),
             pl.col("affiliation_country").str.len_chars() > 0,
             pl.col("affiliation_country").is_not_null(),
         )
-        .collect()
     )
 
 
@@ -191,31 +229,42 @@ data_for_country = load_data_for_country()
 data_for_funder = load_data_for_funder()
 
 
-unique_journals = data["journal"].unique(maintain_order=True).to_list()
+unique_journals = sorted(data["journal"].unique(maintain_order=True).to_list())
 if splitting_variable == "journal":
-    default_journals = (
+    default_journals: list[str] = (
         data.group_by("journal")
         .len()
-        .select(pl.col("journal").top_k_by("len", 10))["journal"]
+        .top_k(10, by="len")
+        .sort("len")
+        .get_column("journal")
         .to_list()
     )
 else:
     default_journals = []
 with row_2_col_1:
     journals = st.multiselect(
-        "Journal", options=unique_journals, default=default_journals
+        "Journal", options=unique_journals, default=default_journals, key="journal"
     )
 
-unique_countries = (
-    data_for_country["affiliation_country"].unique(maintain_order=True).to_list()
-)
+
+def get_unique_countries() -> list[str]:
+    df = load_data_for_country()
+    return sorted(
+        df["affiliation_country"]
+        .value_counts()
+        # Exclude countries that appear fewer than 100 times. Many of these are typos or city names.
+        .filter(pl.col("count") >= 100)["affiliation_country"]
+        .to_list()
+    )
+
+
+unique_countries = get_unique_countries()
 if splitting_variable == "affiliation_country":
-    default_countries = (
+    default_countries: list[str] = (
         data_for_country.group_by("affiliation_country")
         .len()
-        .select(pl.col("affiliation_country").top_k_by("len", 10))[
-            "affiliation_country"
-        ]
+        .top_k(10, by="len")
+        .sort("len")["affiliation_country"]
         .to_list()
     )
 else:
@@ -225,9 +274,10 @@ with row_2_col_2:
         "Country",
         options=unique_countries,
         default=default_countries,
+        key="country",
     )
 
-unique_funders = data_for_funder["funder"].unique(maintain_order=True).to_list()
+unique_funders = sorted(data_for_funder["funder"].unique(maintain_order=True).to_list())
 if splitting_variable == "funder":
     funders_preset = st.selectbox(
         "Funders preset",
@@ -240,7 +290,8 @@ if splitting_variable == "funder":
             data_for_funder.group_by("funder")
             .len()
             .filter(~pl.col("funder").is_in(NIH_INSTITUTES_AND_FUNDERS))
-            .select(pl.col("funder").top_k_by("len", 10))["funder"]
+            .top_k(10, by="len")
+            .sort("len")["funder"]
             .to_list()
         )
         if "Howard Hughes Medical Institute" not in default_funders:
@@ -248,12 +299,15 @@ if splitting_variable == "funder":
                 *data_for_funder.group_by("funder")
                 .len()
                 .filter(pl.col("funder").is_in(NIH_INSTITUTES_AND_FUNDERS))
-                .select(pl.col("funder").top_k_by("len", 9))["funder"]
+                .top_k(9, by="len")
+                .sort("len")["funder"]
                 .to_list(),
                 "Howard Hughes Medical Institute",
             ]
     else:
-        default_funders = set(NIH_INSTITUTES_AND_FUNDERS).intersection(unique_funders)
+        default_funders = list(
+            set(NIH_INSTITUTES_AND_FUNDERS).intersection(unique_funders)
+        )
 else:
     default_funders = []
 
@@ -262,6 +316,7 @@ with row_2_col_3:
         "Funder",
         options=[FUNDER_ACRONYMS.get(x, x) for x in unique_funders],
         default=[FUNDER_ACRONYMS.get(x, x) for x in default_funders],
+        key="funder",
     )
 
 max_year: int = data["year"].max()  # type: ignore[assignment]
@@ -293,10 +348,7 @@ def apply_filters(df: pl.DataFrame) -> pl.DataFrame:
         else:
             df = df.filter(
                 pl.any_horizontal(
-                    [
-                        pl.col("affiliation_country").str.split("; ").list.contains(x)
-                        for x in countries
-                    ],
+                    [pl.col("affiliation_country").list.contains(x) for x in countries],
                 ),
             )
     if funders:

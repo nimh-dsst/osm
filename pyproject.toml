@@ -21,6 +21,7 @@ dependencies = [
   "odmantic",
   "requests",
   "polars",
+  "pycountry",
 ]
 
 [project.optional-dependencies]
