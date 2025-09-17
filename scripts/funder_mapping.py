@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import sys
 import logging
+import re
 
 import pandas as pd
 
@@ -26,7 +27,7 @@ def data_cleaning_processing():
             r'[^\w\s]', '', regex=True)  # Remove punctuation
 
 
-def funder_mapping(funder_names, funder_acronyms):
+def funder_mapping(funder_names, funder_acronyms, funder_regex):
     """map founder and return a new df with new mapping"""
     try:
         output_df = pd.DataFrame(indicators_df['pmid'])
@@ -40,7 +41,7 @@ def funder_mapping(funder_names, funder_acronyms):
             output_df[name + '_f'] = False
             for column in funding_columns:
                 output_df[name + '_f'] = (output_df[name + '_f'] 
-                                          | indicators_df[column].str.contains(funder_regex[idx], case=False, na=False)
+                                          | indicators_df[column].str.contains(funder_regex[idx], flags=re.IGNORECASE, regex=True, na=False)
                                           | indicators_df[column].str.contains(f'\\b{funder_acronyms[idx]}\\b', case=True, na=False))
 
             output_df['funder'] += output_df[name].where(output_df[name + '_f'], '') + ','
