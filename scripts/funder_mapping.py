@@ -1,12 +1,15 @@
-import pandas as pd
+#!/usr/bin/env python3
+import sys
 import logging
+
+import pandas as pd
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
-indicators_df = pd.read_csv('indicators_all.csv')
+indicators_df = pd.read_parquet(sys.argv[2] if sys.argv[0].startswith('python') else sys.argv[1])
 funders_df = pd.read_csv('biomedical_research_funders.csv')
 
 funding_columns = ['fund_text', 'fund_pmc_institute',
@@ -17,25 +20,31 @@ def data_cleaning_processing():
     """Removes spaces and symbols"""
     for col in funding_columns:
         indicators_df[col] = indicators_df[col].str.replace(
-            '[^\w\s]', '', regex=True)  # Remove punctuation
+            r'[^\w\s]', '', regex=True)  # Remove punctuation
 
 
 def funder_mapping(funder_names, funder_acronyms):
     """map founder and return a new df with new mapping"""
     try:
         output_df = pd.DataFrame(indicators_df['pmid'])
+        output_df['funder'] = '['
 
         # Check for funder matches and populate the output DataFrame
-        for name in funder_names:
-            # Initialize a column for each funder with False
-            output_df[name] = False
-
+        for idx, name in enumerate(funder_names):
+            output_df[name] = name
+            logging.info(f"Mapping {name}")
             # Update the column if any of the funding information columns contain the funder name
-            for ind, column in enumerate(funding_columns):
-                output_df[name] = (output_df[name]
-                                   | indicators_df[column].str.contains(name, case=False, na=False)
-                                   | indicators_df[column].str.contains(funder_acronyms[ind], case=False, na=False))
+            output_df[name + '_f'] = False
+            for column in funding_columns:
+                output_df[name + '_f'] = (output_df[name + '_f'] 
+                                          | indicators_df[column].str.contains(name, case=False, na=False)
+                                          | indicators_df[column].str.contains(f'\\b{funder_acronyms[idx]}\\b', case=True, na=False))
 
+            output_df['funder'] += output_df[name].where(output_df[name + '_f'], '') + ','
+            output_df = output_df.drop(columns=[name, name + '_f'])
+
+        output_df['funder'] = output_df['funder'].str.rstrip(',')
+        output_df['funder'] += ']'
         return output_df
 
     except Exception as e:
@@ -43,9 +52,9 @@ def funder_mapping(funder_names, funder_acronyms):
 
 
 def output_to_file(output_df: pd.DataFrame):
-    """Convert True/False to  TRUE/FALSE and save to file"""
     output = output_df.replace({True: 'TRUE', False: 'FALSE'})
-    output.to_csv('pmid-funding-matrix.csv', index=False)
+    output_file = sys.argv[3] if sys.argv[0].startswith('python') else sys.argv[2]
+    output.to_csv(output_file, index=False) 
 
 
 def main():
