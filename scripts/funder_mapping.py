@@ -4,6 +4,9 @@ import logging
 
 import pandas as pd
 
+# Usage: python3 funder_mapping.py <input_path> <output_path>
+#        ./funder_mapping.py <input_path> <output_path>
+
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
