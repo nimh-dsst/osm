@@ -40,7 +40,7 @@ def funder_mapping(funder_names, funder_acronyms):
             output_df[name + '_f'] = False
             for column in funding_columns:
                 output_df[name + '_f'] = (output_df[name + '_f'] 
-                                          | indicators_df[column].str.contains(name, case=False, na=False)
+                                          | indicators_df[column].str.contains(funder_regex[idx], case=False, na=False)
                                           | indicators_df[column].str.contains(f'\\b{funder_acronyms[idx]}\\b', case=True, na=False))
 
             output_df['funder'] += output_df[name].where(output_df[name + '_f'], '') + ','
@@ -64,10 +64,11 @@ def main():
     try:
         funder_names = funders_df['Name'].tolist()
         funder_acronyms = funders_df['Acronym'].tolist()
+        funder_regex = funders_df['Regex'].tolist()
 
         data_cleaning_processing()
 
-        output_df = funder_mapping(funder_names, funder_acronyms)
+        output_df = funder_mapping(funder_names, funder_acronyms, funder_regex)
 
         output_to_file(output_df)
     except Exception as e:
