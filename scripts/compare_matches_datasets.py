@@ -185,9 +185,9 @@ def create_confusion_matrix(
     # Calculate additional metrics
     accuracy = np.mean(y_true_clean == y_pred_clean)
     true_positives = np.sum((y_true_clean & y_pred_clean))
-    true_negatives = np.sum((not y_true_clean) & (not y_pred_clean))
-    false_positives = np.sum((not y_true_clean) & (y_pred_clean))
-    false_negatives = np.sum((y_true_clean) & (not y_pred_clean))
+    true_negatives = np.sum((~y_true_clean) & (~y_pred_clean))
+    false_positives = np.sum((~y_true_clean) & (y_pred_clean))
+    false_negatives = np.sum((y_true_clean) & (~y_pred_clean))
 
     precision = (
         true_positives / (true_positives + false_positives)
