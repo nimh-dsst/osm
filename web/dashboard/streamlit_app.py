@@ -430,7 +430,7 @@ else:
         title=f"Open Data by {splitting_variable.title()} Over Time",
     )
 
-fig.update_layout(hovermode="x unified", legend=dict(font=dict(size=16)), height=600)  # pyright: ignore[reportUnknownMemberType]
+fig.update_layout(hovermode="x unified", legend=dict(font=dict(size=26)), height=600)  # pyright: ignore[reportUnknownMemberType]
 if "percent" in aggregation_name:
     fig.update_traces(hovertemplate="%{y:,.1f}")  # pyright: ignore[reportUnknownMemberType]
 else:
