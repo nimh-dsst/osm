@@ -53,15 +53,17 @@ NIH_INSTITUTES_AND_FUNDERS = [
 ]
 FUNDER_ACRONYMS = {
     "National Institutes of Health": "NIH",
-    "European Commission": "EC",
-    "National Natural Science Foundation of China": "NSFC",
-    "German Research Foundation": "DFG",
-    "Japan Agency for Medical Research and Development": "AMED",
-    "Wellcome Trust": "WT",
-    "Canadian Institutes of Health Research": "CIHR",
-    "Medical Research Council": "MRC",
-    "Howard Hughes Medical Institute": "HHMI",
-    "Bill & Melinda Gates Foundation": "BMGF",
+    "NIH Extramural Research Program": "ERP",
+    "NIH Intramural Research Program": "IRP",
+    # "European Commission": "EC",
+    # "National Natural Science Foundation of China": "NSFC",
+    # "German Research Foundation": "DFG",
+    # "Japan Agency for Medical Research and Development": "AMED",
+    # "Wellcome Trust": "WT",
+    # "Canadian Institutes of Health Research": "CIHR",
+    # "Medical Research Council": "MRC",
+    # "Howard Hughes Medical Institute": "HHMI",
+    # "Bill & Melinda Gates Foundation": "BMGF",
     "National Cancer Institute": "NCI",
     "National Institute of Allergy and Infectious Diseases": "NIAID",
     "National Institute on Aging": "NIA",
@@ -294,16 +296,16 @@ if splitting_variable == "funder":
             .sort("len")["funder"]
             .to_list()
         )
-        if "Howard Hughes Medical Institute" not in default_funders:
-            default_funders = [
-                *data_for_funder.group_by("funder")
-                .len()
-                .filter(pl.col("funder").is_in(NIH_INSTITUTES_AND_FUNDERS))
-                .top_k(9, by="len")
-                .sort("len")["funder"]
-                .to_list(),
-                "Howard Hughes Medical Institute",
-            ]
+        # if "Howard Hughes Medical Institute" not in default_funders:
+        #     default_funders = [
+        #         *data_for_funder.group_by("funder")
+        #         .len()
+        #         .filter(pl.col("funder").is_in(NIH_INSTITUTES_AND_FUNDERS))
+        #         .top_k(9, by="len")
+        #         .sort("len")["funder"]
+        #         .to_list(),
+        #         "Howard Hughes Medical Institute",
+        #     ]
     else:
         default_funders = list(
             set(NIH_INSTITUTES_AND_FUNDERS).intersection(unique_funders)
