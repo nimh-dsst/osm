@@ -69,7 +69,7 @@ jobs:
         # only build if the image tag doesn't exist
         if: steps.check-image-tag.outputs.found_tag == 1
         run: |
-          aws s3 cp s3://osm-terraform-storage/dashboard_data/matches_new3.parquet dashboard_data/matches.parquet
+          aws s3 cp s3://osm-terraform-storage/dashboard_data/dashboard_251204-0918.parquet dashboard_data/matches.parquet
 
 
       - name: Build and push Docker image
