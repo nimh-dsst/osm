@@ -10,7 +10,9 @@ Make sure you have Streamlit, Polars, PyCountry, and Plotly installed. Current v
 - pycountry: 24.6.1
 """
 
+import csv
 import os
+from pathlib import Path
 
 import plotly.express as px  # type: ignore[attr-defined]
 import polars as pl
@@ -51,40 +53,29 @@ NIH_INSTITUTES_AND_FUNDERS = [
     "National Center for Advancing Translational Sciences",
     "National Center for Complementary and Integrative Health",
 ]
-FUNDER_ACRONYMS = {
-    "National Institutes of Health": "NIH",
-    "European Commission": "EC",
-    "National Natural Science Foundation of China": "NSFC",
-    "German Research Foundation": "DFG",
-    "Japan Agency for Medical Research and Development": "AMED",
-    "Wellcome Trust": "WT",
-    "Canadian Institutes of Health Research": "CIHR",
-    "Medical Research Council": "MRC",
-    "Howard Hughes Medical Institute": "HHMI",
-    "Bill & Melinda Gates Foundation": "BMGF",
-    "National Cancer Institute": "NCI",
-    "National Institute of Allergy and Infectious Diseases": "NIAID",
-    "National Institute on Aging": "NIA",
-    "National Heart Lung and Blood Institute": "NHLBI",
-    "National Institute of General Medical Sciences": "NIGMS",
-    "National Institute of Neurological Disorders and Stroke": "NINDS",
-    "National Institute of Diabetes and Digestive and Kidney Diseases": "NIDDK",
-    "National Institute of Mental Health": "NIMH",
-    "National Institute of Child Health and Human Development": "NICHD",
-    "National Institute on Drug Abuse": "NIDA",
-    "National Institute of Environmental Health Sciences": "NIEHS",
-    "National Eye Institute": "NEI",
-    "National Human Genome Research Institute": "NHGRI",
-    "National Institute of Arthritis and Musculoskeletal and Skin Diseases": "NIAMS",
-    "National Institute on Alcohol Abuse and Alcoholism": "NIAAA",
-    "National Institute of Dental and Craniofacial Research": "NIDCR",
-    "National Library of Medicine": "NLM",
-    "National Institute of Biomedical Imaging and Bioengineering": "NIBIB",
-    "National Institute on Minority Health and Health Disparities": "NIMHD",
-    "National Institute of Nursing Research": "NINR",
-    "National Center for Complementary and Integrative Health": "NCCIH",
-}
-REVERSE_FUNDER_ACRONYMS = {v: k for k, v in FUNDER_ACRONYMS.items()}
+# Load funder to country mapping from CSV file
+FUNDER_ALIASES_PATH = Path(__file__).parent / "data" / "funder_aliases_v3.csv"
+
+
+def load_funder_countries() -> dict[str, str]:
+    """Load funder to country mapping from the funder aliases CSV."""
+    funder_countries: dict[str, str] = {}
+    if FUNDER_ALIASES_PATH.exists():
+        with open(FUNDER_ALIASES_PATH, newline="", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                canonical_name = row["canonical_name"]
+                country = row["country"]
+                if (
+                    canonical_name
+                    and country
+                    and canonical_name not in funder_countries
+                ):
+                    funder_countries[canonical_name] = country
+    return funder_countries
+
+
+FUNDER_COUNTRIES: dict[str, str] = load_funder_countries()
 
 
 # Country normalization.
@@ -128,8 +119,8 @@ row_2_col_1, row_2_col_2, row_2_col_3 = st.columns(3)
 with row_1_col_1:
     splitting_variable: str | None = st.selectbox(
         "Splitting variable",
-        options=[None, "Journal", "Affiliation Country", "Funder"],
-        index=3,  # default to 'funder'
+        options=[None, "Affiliation Country", "Funder"],
+        index=2,  # default to 'funder'
     )
     if splitting_variable is not None:
         splitting_variable = splitting_variable.lower().replace(" ", "_")
@@ -229,21 +220,16 @@ data_for_country = load_data_for_country()
 data_for_funder = load_data_for_funder()
 
 
-unique_journals = sorted(data["journal"].unique(maintain_order=True).to_list())
-if splitting_variable == "journal":
-    default_journals: list[str] = (
-        data.group_by("journal")
-        .len()
-        .top_k(10, by="len")
-        .sort("len")
-        .get_column("journal")
-        .to_list()
-    )
-else:
-    default_journals = []
+# Journal functionality temporarily disabled due to compute constraints
+journals: list[str] = []
 with row_2_col_1:
-    journals = st.multiselect(
-        "Journal", options=unique_journals, default=default_journals, key="journal"
+    st.multiselect(
+        "Journal (disabled)",
+        options=[],
+        default=[],
+        key="journal",
+        disabled=True,
+        help="Journal filtering is temporarily disabled due to the large number of journals.",
     )
 
 
@@ -278,53 +264,66 @@ with row_2_col_2:
     )
 
 unique_funders = sorted(data_for_funder["funder"].unique(maintain_order=True).to_list())
+
+
+def get_default_funders_by_metrics() -> list[str]:
+    """Get top 5 funders by Data Sharing Percent + top 5 by Data Sharing count."""
+    # Calculate data sharing percent for each funder
+    funder_stats = (
+        data_for_funder.group_by("funder")
+        .agg(
+            (pl.col("is_open_data").mean() * 100).alias("data_sharing_percent"),
+            pl.col("is_open_data").sum().alias("data_sharing_count"),
+        )
+        .filter(pl.col("funder").is_not_null())
+    )
+
+    # Top 5 by data sharing percent
+    top_by_percent = funder_stats.top_k(5, by="data_sharing_percent")[
+        "funder"
+    ].to_list()
+
+    # Top 5 by data sharing count
+    top_by_count = funder_stats.top_k(5, by="data_sharing_count")["funder"].to_list()
+
+    # Combine and deduplicate, preserving order
+    combined = []
+    for f in top_by_percent + top_by_count:
+        if f not in combined:
+            combined.append(f)
+
+    return combined
+
+
 if splitting_variable == "funder":
     funders_preset = st.selectbox(
         "Funders preset",
-        options=["Top funders", "NIH institutes and funders"],
+        options=["Top by data sharing"],
         index=0,
+        disabled=True,
+        help="Additional presets coming soon",
     )
-    if funders_preset == "Top funders":
-        # Ensure that Howard Hughes Medical Institute always appears.
-        default_funders: list[str] = (
-            data_for_funder.group_by("funder")
-            .len()
-            .filter(~pl.col("funder").is_in(NIH_INSTITUTES_AND_FUNDERS))
-            .top_k(10, by="len")
-            .sort("len")["funder"]
-            .to_list()
-        )
-        if "Howard Hughes Medical Institute" not in default_funders:
-            default_funders = [
-                *data_for_funder.group_by("funder")
-                .len()
-                .filter(pl.col("funder").is_in(NIH_INSTITUTES_AND_FUNDERS))
-                .top_k(9, by="len")
-                .sort("len")["funder"]
-                .to_list(),
-                "Howard Hughes Medical Institute",
-            ]
-    else:
-        default_funders = list(
-            set(NIH_INSTITUTES_AND_FUNDERS).intersection(unique_funders)
-        )
+    # Top 5 by Data Sharing Percent + top 5 by Data Sharing count
+    default_funders: list[str] = get_default_funders_by_metrics()
 else:
     default_funders = []
 
 with row_2_col_3:
     funders = st.multiselect(
         "Funder",
-        options=[FUNDER_ACRONYMS.get(x, x) for x in unique_funders],
-        default=[FUNDER_ACRONYMS.get(x, x) for x in default_funders],
+        options=unique_funders,  # Use full names, no acronyms
+        default=default_funders,
         key="funder",
     )
 
 max_year: int = data["year"].max()  # type: ignore[assignment]
+DEFAULT_START_YEAR = 2010
+DEFAULT_END_YEAR = 2024
 years: tuple[int, int] = st.slider(  # type: ignore[assignment]
     "Years",
     min_value=MIN_YEAR,
     max_value=max_year,
-    value=(MIN_YEAR, max_year),
+    value=(DEFAULT_START_YEAR, min(DEFAULT_END_YEAR, max_year)),
 )
 
 FORMULAE = {
@@ -352,17 +351,12 @@ def apply_filters(df: pl.DataFrame) -> pl.DataFrame:
                 ),
             )
     if funders:
-        full_name_funders: list[str | None] = [
-            REVERSE_FUNDER_ACRONYMS.get(x, x) if x else None for x in funders
-        ]
         if splitting_variable == "funder":
             # 'funder' has already been preprocessed, so we can just use `is_in`.
-            df = df.filter(pl.col("funder").is_in(full_name_funders))
+            df = df.filter(pl.col("funder").is_in(funders))
         else:
             df = df.filter(
-                pl.any_horizontal(
-                    [pl.col("funder").list.contains(x) for x in full_name_funders]
-                ),
+                pl.any_horizontal([pl.col("funder").list.contains(x) for x in funders]),
             )
     return df
 
@@ -422,13 +416,33 @@ else:
         .agg(formula.alias(aggregation_name))
         .pipe(sort_for_y_axis)
     )
-    fig = px.line(  # pyright: ignore[reportUnknownMemberType]
-        summary,
-        x="year",
-        y=aggregation_name,
-        color=splitting_variable,
-        title=f"Open Data by {splitting_variable.title()} Over Time",
-    )
+
+    # For funder view, add country to the legend labels
+    if splitting_variable == "funder":
+        # Create a new column with funder name + country for legend
+        summary = summary.with_columns(
+            pl.col("funder")
+            .map_elements(
+                lambda x: f"{x} ({FUNDER_COUNTRIES.get(x, 'Unknown')})",
+                return_dtype=pl.Utf8,
+            )
+            .alias("funder_with_country")
+        )
+        fig = px.line(  # pyright: ignore[reportUnknownMemberType]
+            summary,
+            x="year",
+            y=aggregation_name,
+            color="funder_with_country",
+            title="Open Data by Funder Over Time",
+        )
+    else:
+        fig = px.line(  # pyright: ignore[reportUnknownMemberType]
+            summary,
+            x="year",
+            y=aggregation_name,
+            color=splitting_variable,
+            title=f"Open Data by {splitting_variable.title()} Over Time",
+        )
 
 fig.update_layout(hovermode="x unified", height=600)  # pyright: ignore[reportUnknownMemberType]
 if "percent" in aggregation_name:
