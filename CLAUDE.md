@@ -118,3 +118,40 @@ CI/CD workflows in `.github/workflows/`:
 3. XML → RTransparent → 190+ transparency metrics
 4. Results → local JSON + OSM API (MongoDB)
 5. Dashboard queries MongoDB for visualization
+
+## Dashboard
+
+The Streamlit dashboard (`web/dashboard/streamlit_app.py`) visualizes open science metrics.
+
+### Local Testing
+
+```bash
+# Use Python 3.11 venv (matches production Dockerfile)
+source ~/claude/venv/bin/activate
+
+# Run with local parquet file
+LOCAL_DATA_PATH=/path/to/dashboard.parquet \
+  streamlit run web/dashboard/streamlit_app.py --server.port 8501 --server.headless true
+```
+
+### Updating Dashboard Data
+
+1. Upload new parquet file to S3: `s3://osm-terraform-storage/dashboard_data/`
+2. Update `.github/workflows/build-docker.yml` line 72 with new filename
+3. Commit, push, create PR, merge
+4. Trigger deployment: `gh workflow run deploy-docker.yml -f development-environment=staging`
+
+Or use the automation script: `./scripts/refresh_dashboard.sh dashboard_YYMMDD-HHMM.parquet`
+
+### Dashboard Reference Files
+
+- `web/dashboard/data/funder_aliases_v4.csv` - Funder to country mappings (loaded dynamically)
+
+### Key Dashboard Features
+
+- **Splitting variables**: Affiliation Country, Funder, Journal
+- **Funder presets**: Top 5 by Data Sharing % + top 5 by Data Sharing count (combined default)
+- **Journal presets**: Top 10 by data sharing count, Top 10 by data sharing percent
+- **Default year range**: 2010-2024
+- **Funder legend**: Shows country in parenthesis (e.g., "NIH (USA)")
+- **Hover tooltips**: Shows percent sign for percent metrics

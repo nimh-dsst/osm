@@ -1,0 +1,134 @@
+canonical_name,variant,variant_type,country,parent_funder,variant_count,merged_count,selection_method,discovery_method,funder_type
+National Natural Science Foundation of China,National Natural Science Foundation,alias,China,,89214,99031,4.0sigma+consolidation,ner_pipeline,government
+National Natural Science Foundation of China,NSFC,acronym,China,,7224,99031,4.0sigma+consolidation,ner_pipeline,government
+National Natural Science Foundation of China,grants from the National Natural Science Foundation,alias,China,,2593,99031,4.0sigma+consolidation,ner_pipeline,government
+National Natural Science Foundation of China,NNSFC,acronym_manual,China,,0,99031,4.0sigma+consolidation,ner_pipeline,government
+National Natural Science Foundation of China,Natural Science Foundation of China,alias_manual,China,,0,99031,4.0sigma+consolidation,ner_pipeline,government
+National Institutes of Health,NIH,acronym,USA,,71044,71044,4.0sigma+consolidation,ner_pipeline,government
+National Science Foundation,National Science Foundation,primary,USA,,30741,45566,4.0sigma+consolidation,ner_pipeline,government
+National Science Foundation,NSF,acronym,USA,,14825,45566,4.0sigma+consolidation,ner_pipeline,government
+National Science Foundation,US National Science Foundation,alias_manual,USA,,0,45566,4.0sigma+consolidation,ner_pipeline,government
+European Research Council,European Research Council,primary,EU,European Commission,15744,25664,4.0sigma+consolidation,ner_pipeline,supranational
+European Research Council,ERC,acronym,EU,European Commission,9920,25664,4.0sigma+consolidation,ner_pipeline,supranational
+Medical Research Council,Medical Research Council,primary,UK,UK Research and Innovation,16958,23913,4.0sigma+consolidation,ner_pipeline,government
+Medical Research Council,MRC,acronym,UK,UK Research and Innovation,6955,23913,4.0sigma+consolidation,ner_pipeline,government
+Medical Research Council,UK Medical Research Council,alias_manual,UK,UK Research and Innovation,0,23913,4.0sigma+consolidation,ner_pipeline,government
+Japan Society for the Promotion of Science,Japan Society,alias,Japan,,11390,21489,4.0sigma+consolidation,ner_pipeline,government
+Japan Society for the Promotion of Science,JSPS,acronym,Japan,,10099,21489,4.0sigma+consolidation,ner_pipeline,government
+Deutsche Forschungsgemeinschaft,DFG,acronym,Germany,,12851,21342,4.0sigma+consolidation,ner_pipeline,government
+Deutsche Forschungsgemeinschaft,German Research Foundation,alias,Germany,,8491,21342,4.0sigma+consolidation,ner_pipeline,government
+Wellcome Trust,Wellcome Trust,primary,UK,,20201,21058,4.0sigma+consolidation,ner_pipeline,philanthropy
+Wellcome Trust,a Wellcome Trust,alias,UK,,857,21058,4.0sigma+consolidation,ner_pipeline,philanthropy
+Wellcome Trust,Wellcome,alias_manual,UK,,0,21058,4.0sigma+consolidation,ner_pipeline,philanthropy
+National Research Foundation of Korea,National Research Foundation,alias,Korea,,10876,20271,4.0sigma+consolidation,ner_pipeline,government
+National Research Foundation of Korea,NRF,acronym,Korea,,9395,20271,4.0sigma+consolidation,ner_pipeline,government
+National Research Foundation of Korea,Korea National Research Foundation,alias_manual,Korea,,0,20271,4.0sigma+consolidation,ner_pipeline,government
+Biotechnology and Biological Sciences Research Council,Biological Sciences Research Council,alias,UK,UK Research and Innovation,8471,16877,4.0sigma+consolidation,ner_pipeline,government
+Biotechnology and Biological Sciences Research Council,BBSRC,acronym,UK,UK Research and Innovation,7583,16877,4.0sigma+consolidation,ner_pipeline,government
+Biotechnology and Biological Sciences Research Council,Biotechnology and Biological Sciences Research Council,primary,UK,UK Research and Innovation,823,16877,4.0sigma+consolidation,ner_pipeline,government
+Agence Nationale de la Recherche,ANR,acronym,France,,13195,15083,4.0sigma+consolidation,ner_pipeline,government
+Agence Nationale de la Recherche,French National Research Agency,alias,France,,1888,15083,4.0sigma+consolidation,ner_pipeline,government
+European Regional Development Fund,FEDER,acronym,EU,,6417,14188,4.0sigma+consolidation,ner_pipeline,supranational
+European Regional Development Fund,European Regional Development Fund,primary,EU,,5071,14188,4.0sigma+consolidation,ner_pipeline,supranational
+European Regional Development Fund,ERDF,acronym,EU,,2700,14188,4.0sigma+consolidation,ner_pipeline,supranational
+National Cancer Institute,National Cancer Institute,primary,USA,National Institutes of Health,11148,11148,4.0sigma+consolidation,ner_pipeline,government
+National Cancer Institute,NCI,acronym_manual,USA,National Institutes of Health,0,11148,4.0sigma+consolidation,ner_pipeline,government
+Engineering and Physical Sciences Research Council,Engineering Research Council,alias,UK,UK Research and Innovation,7912,9922,4.0sigma+consolidation,ner_pipeline,government
+Engineering and Physical Sciences Research Council,EPSRC,acronym,UK,UK Research and Innovation,2010,9922,4.0sigma+consolidation,ner_pipeline,government
+Swiss National Science Foundation,Swiss National Science Foundation,primary,Switzerland,,6817,8624,4.0sigma+consolidation,ner_pipeline,government
+Swiss National Science Foundation,SNF,acronym,Switzerland,,907,8624,4.0sigma+consolidation,ner_pipeline,government
+Swiss National Science Foundation,SNSF,acronym,Switzerland,,900,8624,4.0sigma+consolidation,ner_pipeline,government
+National Institute of Allergy and Infectious Diseases,NIAID,acronym,USA,National Institutes of Health,7857,7857,4.0sigma+consolidation,ner_pipeline,government
+United States Department of Agriculture,USDA,acronym,USA,,7773,7773,4.0sigma+consolidation,ner_pipeline,government
+Ministerio de Economia y Competitividad,Spanish Ministry,alias,Spain,,5709,7743,4.0sigma+consolidation,ner_pipeline,government
+Ministerio de Economia y Competitividad,MINECO,acronym,Spain,,2034,7743,4.0sigma+consolidation,ner_pipeline,government
+Japan Agency for Medical Research and Development,Japan Agency,alias,Japan,,3825,7405,4.0sigma+consolidation,ner_pipeline,government
+Japan Agency for Medical Research and Development,AMED,acronym,Japan,,3580,7405,4.0sigma+consolidation,ner_pipeline,government
+Austrian Science Fund,Austrian Science Fund,primary,Austria,,4257,7133,4.0sigma+consolidation,ner_pipeline,government
+Austrian Science Fund,FWF,acronym,Austria,,2876,7133,4.0sigma+consolidation,ner_pipeline,government
+Bundesministerium fur Bildung und Forschung,BMBF,acronym,Germany,,3971,6976,4.0sigma+consolidation,ner_pipeline,government
+Bundesministerium fur Bildung und Forschung,German Federal Ministry,alias,Germany,,3005,6976,4.0sigma+consolidation,ner_pipeline,government
+National Institute for Health Research,NIHR,acronym,UK,,6747,6747,4.0sigma+consolidation,ner_pipeline,government
+Swedish Research Council,Swedish Research Council,primary,Sweden,,6286,6286,4.0sigma+consolidation,ner_pipeline,government
+Swedish Research Council,VR,acronym_manual,Sweden,,0,6286,4.0sigma+consolidation,ner_pipeline,government
+Swedish Research Council,Vetenskapsradet,alias_manual,Sweden,,0,6286,4.0sigma+consolidation,ner_pipeline,government
+Howard Hughes Medical Institute,Howard Hughes Medical Institute,primary,USA,,4454,5972,4.0sigma+consolidation,ner_pipeline,philanthropy
+Howard Hughes Medical Institute,HHMI,acronym,USA,,1518,5972,4.0sigma+consolidation,ner_pipeline,philanthropy
+Australian Research Council,Australian Research Council,primary,Australia,,5642,5642,4.0sigma+consolidation,ner_pipeline,government
+Australian Research Council,ARC,acronym_manual,Australia,,0,5642,4.0sigma+consolidation,ner_pipeline,government
+National Institute of General Medical Sciences,NIGMS,acronym,USA,National Institutes of Health,5583,5583,4.0sigma+consolidation,ner_pipeline,government
+"Ministry of Education, Culture, Sports, Science and Technology",MEXT,acronym,Japan,,5523,5523,4.0sigma+consolidation,ner_pipeline,government
+Natural Sciences and Engineering Research Council of Canada,NSERC,acronym,Canada,,5302,5302,4.0sigma+consolidation,ner_pipeline,government
+Department of Energy,DOE,acronym,USA,,5122,5122,4.0sigma+consolidation,ner_pipeline,government
+Fundacao para a Ciencia e a Tecnologia,FCT,acronym,Portugal,,5010,5010,4.0sigma+consolidation,ner_pipeline,government
+Coordenacao de Aperfeicoamento de Pessoal de Nivel Superior,CAPES,acronym,Brazil,,5006,5006,4.0sigma+consolidation,ner_pipeline,government
+European Commission,European Commission,primary,EU,,4798,4798,4.0sigma+consolidation,ner_pipeline,supranational
+European Commission,EC,acronym_manual,EU,,0,4798,4.0sigma+consolidation,ner_pipeline,supranational
+European Commission,EU,acronym_manual,EU,,0,4798,4.0sigma+consolidation,ner_pipeline,supranational
+European Commission,European Union,alias_manual,EU,,0,4798,4.0sigma+consolidation,ner_pipeline,supranational
+Fundacao de Amparo a Pesquisa do Estado de Sao Paulo,FAPESP,acronym,Brazil,,4778,4778,4.0sigma+consolidation,ner_pipeline,government
+Fundacao de Amparo a Pesquisa do Estado de Sao Paulo,Sao Paulo Research Foundation,alias_manual,Brazil,,0,4778,4.0sigma+consolidation,ner_pipeline,government
+Bill and Melinda Gates Foundation,Melinda Gates Foundation,alias,USA,,4661,4661,4.0sigma+consolidation,ner_pipeline,philanthropy
+Bill and Melinda Gates Foundation,BMGF,acronym_manual,USA,,0,4661,4.0sigma+consolidation,ner_pipeline,philanthropy
+Bill and Melinda Gates Foundation,Gates Foundation,alias_manual,USA,,0,4661,4.0sigma+consolidation,ner_pipeline,philanthropy
+National Health and Medical Research Council,NHMRC,acronym,Australia,,4286,4286,4.0sigma+consolidation,ner_pipeline,government
+Italian Ministry,Italian Ministry,primary,Italy,,4283,4283,4.0sigma+consolidation,ner_pipeline,government
+China Postdoctoral Science Foundation,China Postdoctoral Science Foundation,primary,China,,4214,4214,4.0sigma+consolidation,ner_pipeline,government
+National Human Genome Research Institute,National Human Genome Research Institute,primary,USA,National Institutes of Health,2365,3913,4.0sigma+consolidation,ner_pipeline,government
+National Human Genome Research Institute,NHGRI,acronym,USA,National Institutes of Health,1548,3913,4.0sigma+consolidation,ner_pipeline,government
+China Scholarship Council,China Scholarship Council,primary,China,,2522,3677,4.0sigma+consolidation,ner_pipeline,government
+China Scholarship Council,CSC,acronym,China,,1155,3677,4.0sigma+consolidation,ner_pipeline,government
+Ministry of Science and Technology,MOST,acronym,Taiwan,,3672,3672,4.0sigma+consolidation,ner_pipeline,government
+Netherlands Organisation for Scientific Research,NWO,acronym,Netherlands,,3634,3634,4.0sigma+consolidation,ner_pipeline,government
+Netherlands Organisation for Scientific Research,Dutch Research Council,alias_manual,Netherlands,,0,3634,4.0sigma+consolidation,ner_pipeline,government
+Russian Science Foundation,Russian Science Foundation,primary,Russia,,3632,3632,4.0sigma+consolidation,ner_pipeline,government
+Russian Science Foundation,RSF,acronym_manual,Russia,,0,3632,4.0sigma+consolidation,ner_pipeline,government
+Royal Society,Royal Society,primary,UK,,3623,3623,4.0sigma+consolidation,ner_pipeline,philanthropy
+Canadian Institutes of Health Research,CIHR,acronym,Canada,,3454,3454,4.0sigma+consolidation,ner_pipeline,government
+Natural Environment Research Council,Natural Environment Research Council,primary,UK,UK Research and Innovation,1736,3382,4.0sigma+consolidation,ner_pipeline,government
+Natural Environment Research Council,NERC,acronym,UK,UK Research and Innovation,1646,3382,4.0sigma+consolidation,ner_pipeline,government
+National Heart Lung and Blood Institute,NHLBI,acronym,USA,National Institutes of Health,3180,3180,4.0sigma+consolidation,ner_pipeline,government
+National Heart Lung and Blood Institute,Blood Institute,alias_manual,USA,National Institutes of Health,0,3180,4.0sigma+consolidation,ner_pipeline,government
+Centre National de la Recherche Scientifique,CNRS,acronym,France,,3019,3019,4.0sigma+consolidation,ner_pipeline,government
+Research Foundation Flanders,FWO,acronym,Belgium,,2686,2686,4.0sigma+consolidation,ner_pipeline,philanthropy
+National Key Research and Development Program,National Key Research and Development Program,primary,China,,2660,2660,4.0sigma+consolidation,ner_pipeline,government
+National Science Centre,National Science Centre,primary,Poland,,2583,2583,4.0sigma+consolidation,ner_pipeline,government
+National Science Centre,NCN,acronym_manual,Poland,,0,2583,4.0sigma+consolidation,ner_pipeline,government
+American Heart Association,American Heart Association,primary,USA,,2557,2557,4.0sigma+consolidation,ner_pipeline,philanthropy
+American Heart Association,AHA,acronym_manual,USA,,0,2557,4.0sigma+consolidation,ner_pipeline,philanthropy
+Department of Biotechnology,DBT,acronym,India,,2402,2402,4.0sigma+consolidation,ner_pipeline,government
+Japan Science and Technology Agency,JST,acronym,Japan,,2363,2363,4.0sigma+consolidation,ner_pipeline,government
+Max Planck Society,Max Planck Society,primary,Germany,,2232,2232,4.0sigma+consolidation,ner_pipeline,philanthropy
+Max Planck Society,Max Planck,alias_manual,Germany,,0,2232,4.0sigma+consolidation,ner_pipeline,philanthropy
+Max Planck Society,MPG,acronym_manual,Germany,,0,2232,4.0sigma+consolidation,ner_pipeline,philanthropy
+Czech Science Foundation,Czech Science Foundation,primary,Czech Republic,,2130,2130,4.0sigma+consolidation,ner_pipeline,government
+Czech Science Foundation,GACR,acronym_manual,Czech Republic,,0,2130,4.0sigma+consolidation,ner_pipeline,government
+UK Research and Innovation,UKRI,acronym,UK,,2069,2069,4.0sigma+consolidation,ner_pipeline,government
+Associazione Italiana per la Ricerca sul Cancro,AIRC,acronym,Italy,,2000,2000,4.0sigma+consolidation,ner_pipeline,philanthropy
+National Institute of Mental Health,NIMH,acronym,USA,National Institutes of Health,1568,1568,4.0sigma+consolidation,ner_pipeline,government
+National Institute of Diabetes and Digestive and Kidney Diseases,NIDDK,acronym,USA,National Institutes of Health,1908,1908,4.0sigma+consolidation,ner_pipeline,government
+National Institute of Neurological Disorders and Stroke,NINDS,acronym,USA,National Institutes of Health,1968,1968,4.0sigma+consolidation,ner_pipeline,government
+National Institute on Aging,NIA,acronym,USA,National Institutes of Health,1616,1616,4.0sigma+consolidation,ner_pipeline,government
+National Institute on Aging,Institute on Aging,alias_manual,USA,National Institutes of Health,0,1616,manual_addition,manual,government
+Eunice Kennedy Shriver National Institute of Child Health and Human Development,NICHD,acronym,USA,National Institutes of Health,1214,2534,4.0sigma+consolidation,ner_pipeline,government
+Eunice Kennedy Shriver National Institute of Child Health and Human Development,Eunice Kennedy Shriver National Institute,alias,USA,National Institutes of Health,1320,2534,4.0sigma+consolidation,ner_pipeline,government
+Eunice Kennedy Shriver National Institute of Child Health and Human Development,National Institute of Child Health,alias_manual,USA,National Institutes of Health,0,2534,manual_addition,manual,government
+National Eye Institute,National Eye Institute,primary,USA,National Institutes of Health,1157,1157,4.0sigma+consolidation,ner_pipeline,government
+National Eye Institute,NEI,acronym_manual,USA,National Institutes of Health,0,1157,manual_addition,manual,government
+National Eye Institute,Eye Institute,alias_manual,USA,National Institutes of Health,0,1157,manual_addition,manual,government
+National Institute on Drug Abuse,NIDA,acronym,USA,National Institutes of Health,706,706,4.0sigma+consolidation,ner_pipeline,government
+National Institute on Alcohol Abuse and Alcoholism,NIAAA,acronym,USA,National Institutes of Health,408,408,4.0sigma+consolidation,ner_pipeline,government
+National Institute of Arthritis and Musculoskeletal and Skin Diseases,NIAMS,acronym,USA,National Institutes of Health,649,649,4.0sigma+consolidation,ner_pipeline,government
+National Institute of Dental and Craniofacial Research,NIDCR,acronym,USA,National Institutes of Health,855,855,4.0sigma+consolidation,ner_pipeline,government
+National Institute of Environmental Health Sciences,NIEHS,acronym,USA,National Institutes of Health,1045,1045,4.0sigma+consolidation,ner_pipeline,government
+National Institute of Nursing Research,NINR,acronym,USA,National Institutes of Health,48,48,4.0sigma+consolidation,ner_pipeline,government
+National Institute on Deafness and Other Communication Disorders,NIDCD,acronym,USA,National Institutes of Health,445,445,4.0sigma+consolidation,ner_pipeline,government
+National Institute of Biomedical Imaging and Bioengineering,NIBIB,acronym,USA,National Institutes of Health,334,334,4.0sigma+consolidation,ner_pipeline,government
+National Center for Complementary and Integrative Health,NCCIH,acronym,USA,National Institutes of Health,108,133,4.0sigma+consolidation,ner_pipeline,government
+National Center for Complementary and Integrative Health,NCCAM,alias,USA,National Institutes of Health,25,133,4.0sigma+consolidation,ner_pipeline,government
+National Center for Advancing Translational Sciences,NCATS,acronym,USA,National Institutes of Health,878,878,4.0sigma+consolidation,ner_pipeline,government
+Fogarty International Center,Fogarty International Center,primary,USA,National Institutes of Health,551,721,4.0sigma+consolidation,ner_pipeline,government
+Fogarty International Center,FIC,acronym,USA,National Institutes of Health,170,721,4.0sigma+consolidation,ner_pipeline,government
+Fogarty International Center,Fogarty,alias_manual,USA,National Institutes of Health,0,721,manual_addition,manual,government
+National Library of Medicine,NLM,acronym,USA,National Institutes of Health,435,438,4.0sigma+consolidation,ner_pipeline,government
+National Library of Medicine,National Library of Medicine,primary,USA,National Institutes of Health,3,438,4.0sigma+consolidation,ner_pipeline,government

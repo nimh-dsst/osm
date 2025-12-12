@@ -2,59 +2,70 @@
 
 OpenSciMetrics (OSM) applies NLP and LLM-based metrics and indicators related to transparency, data sharing, rigor, and open science on biomedical publications.
 
-# Running the app
+## Dashboard
 
-N.B. pdf parsing does not work on Apple silicon...
+The Open Science Metrics Dashboard visualizes data sharing and code sharing trends across biomedical research funders and journals, based on analysis of PubMed Central publications.
 
-- With docker-compose and python >=3.11 installed, run the following from the project's root directory:
+**Live Dashboard:** [https://www.opensciencemetrics.org](https://www.opensciencemetrics.org)
 
-```
+### Features
+
+- **Splitting Variables:** View trends by Journal or Funder
+- **Presets:** Quick selection of top journals/funders by data sharing count or percent
+- **Aggregation Metrics:** Data Sharing %, Code Sharing %, article counts
+- **Interactive Charts:** Toggle individual lines, hover for details
+- **Year Range Filter:** Focus on specific time periods (default: 2010-2024)
+
+## CLI Tool (Legacy)
+
+The repository also contains a command line tool for processing individual PDFs and XMLs. Note: This tool is not currently being actively maintained.
+
+With docker-compose and python >=3.11 installed:
+
+```bash
 pip install .
 osm -f path/to/pdf-or-xml -u uuid
 ```
 
-If you have many files to upload you may with to start up the docker-compose  dependencies in a separate terminal window:
+For processing many files, start docker-compose dependencies separately:
 
-```
-docker compose up # docker-compose on some systems
-```
-
-And then tell the osm tool that this has been handled:
-
-```
-osm -f path/to/pdf-or-xml -u uuid --user-managed-compose
-osm -f path/to/pdf-or-xml2 -u uuid2 --user-managed-compose
+```bash
+docker compose up  # In one terminal
+osm -f path/to/pdf-or-xml -u uuid --user-managed-compose  # In another terminal
 ```
 
-# Contributing
+## Contributing
 
-N.B. On Apple silicon you must use emulation and download the mongo container in advance:
+To set up a development environment:
 
-```
-export DOCKER_DEFAULT_PLATFORM=linux/amd64
-docker pull mongo:4.4.6
-```
-
-To contribute to the project please run the following commands to set up a development environment:
-
-```
+```bash
 pip install -e .
 docker compose -f compose.yaml -f compose.development.override.yaml up --build
 ```
-And in another terminal:
 
-```
+In another terminal:
+
+```bash
 export OSM_API="http://localhost:80"
 osm -f path/to/pdf-or-xml -u uuid --user-managed-compose
 ```
 
+### Pre-commit Hooks
 
-## Using pre-commit for commit checks
+Pre-commit runs checks on every commit. To install:
 
-Pre-commit will run all of its hooks on every commit you make. To install
-pre-commit and its hooks, run the following commands:
-
-```
+```bash
 pip install pre-commit
 pre-commit install
 ```
+
+### Apple Silicon Notes
+
+On Apple silicon, you must use emulation:
+
+```bash
+export DOCKER_DEFAULT_PLATFORM=linux/amd64
+docker pull mongo:4.4.6
+```
+
+Note: PDF parsing does not work on Apple silicon.
