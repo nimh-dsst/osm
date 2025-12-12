@@ -21,6 +21,17 @@ import streamlit as st
 
 st.set_page_config(layout="wide")
 
+# Page title and description
+st.title("Open Science Metrics Dashboard")
+st.markdown(
+    """
+    Visualizing data sharing and code sharing trends across biomedical research funders and journals.
+
+    **Links:** [INCF 2025 Poster](https://github.com/nimh-dsst/osm-2025-12-poster-incf) |
+    [OpenSciMetrics GitHub](https://github.com/nimh-dsst/osm)
+    """
+)
+
 MIN_YEAR = 2000
 
 # Funder normalization.
@@ -54,7 +65,7 @@ NIH_INSTITUTES_AND_FUNDERS = [
     "National Center for Complementary and Integrative Health",
 ]
 # Load funder to country mapping from CSV file
-FUNDER_ALIASES_PATH = Path(__file__).parent / "data" / "funder_aliases_v3.csv"
+FUNDER_ALIASES_PATH = Path(__file__).parent / "data" / "funder_aliases_v4.csv"
 
 
 def load_funder_countries() -> dict[str, str]:
@@ -117,26 +128,37 @@ row_1_col_1, row_1_col_2, row_1_col_3 = st.columns(3)
 row_2_col_1, row_2_col_2, row_2_col_3 = st.columns(3)
 
 with row_1_col_1:
+    # NOTE: "Affiliation Country" temporarily disabled until we improve affiliation_country
+    # coverage in the dataset (currently only ~25% of records have valid labels).
+    # Re-enable by adding "Affiliation Country" back to options and updating index.
     splitting_variable: str | None = st.selectbox(
         "Splitting variable",
-        options=[None, "Affiliation Country", "Funder"],
+        options=[None, "Journal", "Funder"],
         index=2,  # default to 'funder'
     )
     if splitting_variable is not None:
         splitting_variable = splitting_variable.lower().replace(" ", "_")
 with row_1_col_2:
-    aggregation_name = st.selectbox(
+    aggregation_display = st.selectbox(
         "Aggregation",
         options=[
             "Data Sharing Percent",
-            "Data Sharing",
-            "Count",
+            "Article Count w/Data Sharing",
+            "Total Research Articles",
             "Code Sharing Percent",
-            "Code Sharing",
+            "Article Count w/Code Sharing",
         ],
         index=0,
     )
-    aggregation_name = aggregation_name.lower().replace(" ", "_")
+    # Map display names to internal names
+    aggregation_map = {
+        "Data Sharing Percent": "data_sharing_percent",
+        "Article Count w/Data Sharing": "data_sharing",
+        "Total Research Articles": "count",
+        "Code Sharing Percent": "code_sharing_percent",
+        "Article Count w/Code Sharing": "code_sharing",
+    }
+    aggregation_name = aggregation_map[aggregation_display]
 with row_1_col_3:
     y_axis_sort_method = st.selectbox(
         "Y-axis sort method",
@@ -220,101 +242,195 @@ data_for_country = load_data_for_country()
 data_for_funder = load_data_for_funder()
 
 
-# Journal functionality temporarily disabled due to compute constraints
-journals: list[str] = []
-with row_2_col_1:
-    st.multiselect(
-        "Journal (disabled)",
-        options=[],
-        default=[],
-        key="journal",
-        disabled=True,
-        help="Journal filtering is temporarily disabled due to the large number of journals.",
+# Get journals sorted by data sharing percent
+journal_stats = (
+    data.group_by("journal")
+    .agg(
+        (pl.col("is_open_data").mean() * 100).alias("data_sharing_percent"),
+        pl.col("is_open_data").sum().alias("data_sharing_count"),
     )
+    .filter(pl.col("journal").is_not_null())
+)
+journal_stats_sorted = journal_stats.sort("data_sharing_percent", descending=True)
+unique_journals = journal_stats_sorted["journal"].to_list()
+
+# Create display labels with data sharing percent
+journal_display_map = {
+    f"{row['journal']} ({row['data_sharing_percent']:.1f}%)": row["journal"]
+    for row in journal_stats_sorted.iter_rows(named=True)
+}
+unique_journal_labels = list(journal_display_map.keys())
+
+# Precompute top journal lists
+top_10_journals_by_percent = journal_stats.top_k(10, by="data_sharing_percent")[
+    "journal"
+].to_list()
+top_10_journals_by_count = journal_stats.top_k(10, by="data_sharing_count")[
+    "journal"
+].to_list()
+top_5_journals_by_percent = journal_stats.top_k(5, by="data_sharing_percent")[
+    "journal"
+].to_list()
+top_5_journals_by_count = journal_stats.top_k(5, by="data_sharing_count")[
+    "journal"
+].to_list()
+# Combined: top 5 by count + top 5 by percent (deduplicated)
+top_5_journals_combined = []
+for j in top_5_journals_by_count + top_5_journals_by_percent:
+    if j not in top_5_journals_combined:
+        top_5_journals_combined.append(j)
 
 
-def get_unique_countries() -> list[str]:
-    df = load_data_for_country()
-    return sorted(
-        df["affiliation_country"]
-        .value_counts()
-        # Exclude countries that appear fewer than 100 times. Many of these are typos or city names.
-        .filter(pl.col("count") >= 100)["affiliation_country"]
-        .to_list()
+def get_journal_labels(journal_list: list[str]) -> list[str]:
+    """Convert journal names to display labels with percent."""
+    reverse_map = {v: k for k, v in journal_display_map.items()}
+    return [reverse_map[j] for j in journal_list if j in reverse_map]
+
+
+# Preset to journal list mapping
+JOURNAL_PRESETS = {
+    "Top 5 by count + Top 5 by percent": top_5_journals_combined,
+    "Top 10 by data sharing count": top_10_journals_by_count,
+    "Top 10 by data sharing percent": top_10_journals_by_percent,
+}
+
+
+def on_journal_preset_change() -> None:
+    """Callback to update journal selection when preset changes."""
+    preset = st.session_state.get("journal_preset_select")
+    if preset and preset in JOURNAL_PRESETS:
+        st.session_state["journal"] = get_journal_labels(JOURNAL_PRESETS[preset])
+
+
+if splitting_variable == "journal":
+    # Initialize journal selection if not set
+    if "journal" not in st.session_state:
+        st.session_state["journal"] = get_journal_labels(top_5_journals_combined)
+
+    journal_preset = st.selectbox(
+        "Journals preset",
+        options=list(JOURNAL_PRESETS.keys()),
+        index=0,
+        key="journal_preset_select",
+        on_change=on_journal_preset_change,
     )
-
-
-unique_countries = get_unique_countries()
-if splitting_variable == "affiliation_country":
-    default_countries: list[str] = (
-        data_for_country.group_by("affiliation_country")
-        .len()
-        .top_k(10, by="len")
-        .sort("len")["affiliation_country"]
-        .to_list()
+    default_journal_labels: list[str] = st.session_state.get(
+        "journal", get_journal_labels(top_5_journals_combined)
     )
 else:
-    default_countries = []
+    default_journal_labels = []
+
+with row_2_col_1:
+    selected_journal_labels = st.multiselect(
+        "Journal (sorted by Data Sharing %)",
+        options=unique_journal_labels,
+        default=default_journal_labels,
+        key="journal",
+    )
+    # Map back to actual journal names for filtering
+    journals = [journal_display_map[label] for label in selected_journal_labels]
+
+
+# NOTE: Country functionality temporarily disabled until we improve affiliation_country
+# coverage in the dataset (currently only ~25% of records have valid labels).
+# To re-enable: uncomment country_stats, unique_countries, default_countries,
+# and the countries multiselect below, then add "Affiliation Country" back to
+# the splitting variable options above.
+countries: list[str] = []
 with row_2_col_2:
-    countries = st.multiselect(
-        "Country",
-        options=unique_countries,
-        default=default_countries,
+    st.multiselect(
+        "Country (disabled)",
+        options=[],
+        default=[],
         key="country",
+        disabled=True,
+        help="Country filtering temporarily disabled (~25% data coverage)",
     )
 
-unique_funders = sorted(data_for_funder["funder"].unique(maintain_order=True).to_list())
-
-
-def get_default_funders_by_metrics() -> list[str]:
-    """Get top 5 funders by Data Sharing Percent + top 5 by Data Sharing count."""
-    # Calculate data sharing percent for each funder
-    funder_stats = (
-        data_for_funder.group_by("funder")
-        .agg(
-            (pl.col("is_open_data").mean() * 100).alias("data_sharing_percent"),
-            pl.col("is_open_data").sum().alias("data_sharing_count"),
-        )
-        .filter(pl.col("funder").is_not_null())
+# Get funders sorted by data sharing percent
+funder_stats = (
+    data_for_funder.group_by("funder")
+    .agg(
+        (pl.col("is_open_data").mean() * 100).alias("data_sharing_percent"),
+        pl.col("is_open_data").sum().alias("data_sharing_count"),
     )
+    .filter(pl.col("funder").is_not_null())
+)
+# Sort by data sharing percent for dropdown
+funder_stats_sorted = funder_stats.sort("data_sharing_percent", descending=True)
+unique_funders = funder_stats_sorted["funder"].to_list()
 
-    # Top 5 by data sharing percent
-    top_by_percent = funder_stats.top_k(5, by="data_sharing_percent")[
-        "funder"
-    ].to_list()
+# Create display labels with data sharing percent
+funder_display_map = {
+    f"{row['funder']} ({row['data_sharing_percent']:.1f}%)": row["funder"]
+    for row in funder_stats_sorted.iter_rows(named=True)
+}
+unique_funder_labels = list(funder_display_map.keys())
 
-    # Top 5 by data sharing count
-    top_by_count = funder_stats.top_k(5, by="data_sharing_count")["funder"].to_list()
+# Precompute top lists
+top_10_by_percent = funder_stats.top_k(10, by="data_sharing_percent")[
+    "funder"
+].to_list()
+top_10_by_count = funder_stats.top_k(10, by="data_sharing_count")["funder"].to_list()
+top_5_by_percent = funder_stats.top_k(5, by="data_sharing_percent")["funder"].to_list()
+top_5_by_count = funder_stats.top_k(5, by="data_sharing_count")["funder"].to_list()
+# Combined: top 5 by count + top 5 by percent (deduplicated)
+top_5_combined = []
+for f in top_5_by_count + top_5_by_percent:
+    if f not in top_5_combined:
+        top_5_combined.append(f)
+nih_institutes = [f for f in NIH_INSTITUTES_AND_FUNDERS if f in unique_funders]
 
-    # Combine and deduplicate, preserving order
-    combined = []
-    for f in top_by_percent + top_by_count:
-        if f not in combined:
-            combined.append(f)
 
-    return combined
+def get_funder_labels(funder_list: list[str]) -> list[str]:
+    """Convert funder names to display labels with percent."""
+    reverse_map = {v: k for k, v in funder_display_map.items()}
+    return [reverse_map[f] for f in funder_list if f in reverse_map]
+
+
+# Preset to funder list mapping
+FUNDER_PRESETS = {
+    "Top 5 by count + Top 5 by percent": top_5_combined,
+    "Top 10 by data sharing count": top_10_by_count,
+    "Top 10 by data sharing percent": top_10_by_percent,
+    "NIH Institutes": nih_institutes,
+}
+
+
+def on_funder_preset_change() -> None:
+    """Callback to update funder selection when preset changes."""
+    preset = st.session_state.get("funder_preset_select")
+    if preset and preset in FUNDER_PRESETS:
+        st.session_state["funder"] = get_funder_labels(FUNDER_PRESETS[preset])
 
 
 if splitting_variable == "funder":
+    # Initialize funder selection if not set
+    if "funder" not in st.session_state:
+        st.session_state["funder"] = get_funder_labels(top_5_combined)
+
     funders_preset = st.selectbox(
         "Funders preset",
-        options=["Top by data sharing"],
+        options=list(FUNDER_PRESETS.keys()),
         index=0,
-        disabled=True,
-        help="Additional presets coming soon",
+        key="funder_preset_select",
+        on_change=on_funder_preset_change,
     )
-    # Top 5 by Data Sharing Percent + top 5 by Data Sharing count
-    default_funders: list[str] = get_default_funders_by_metrics()
+    default_funder_labels: list[str] = st.session_state.get(
+        "funder", get_funder_labels(top_5_combined)
+    )
 else:
-    default_funders = []
+    default_funder_labels = []
 
 with row_2_col_3:
-    funders = st.multiselect(
-        "Funder",
-        options=unique_funders,  # Use full names, no acronyms
-        default=default_funders,
+    selected_funder_labels = st.multiselect(
+        "Funder (sorted by Data Sharing %)",
+        options=unique_funder_labels,
+        default=default_funder_labels,
         key="funder",
     )
+    # Map back to actual funder names for filtering
+    funders = [funder_display_map[label] for label in selected_funder_labels]
 
 max_year: int = data["year"].max()  # type: ignore[assignment]
 DEFAULT_START_YEAR = 2010
@@ -446,7 +562,7 @@ else:
 
 fig.update_layout(hovermode="x unified", height=600)  # pyright: ignore[reportUnknownMemberType]
 if "percent" in aggregation_name:
-    fig.update_traces(hovertemplate="%{y:,.1f}")  # pyright: ignore[reportUnknownMemberType]
+    fig.update_traces(hovertemplate="%{y:,.1f}%")  # pyright: ignore[reportUnknownMemberType]
 else:
     fig.update_traces(hovertemplate="%{y}")  # pyright: ignore[reportUnknownMemberType]
 st.plotly_chart(fig, use_container_width=True)  # pyright: ignore[reportUnknownMemberType]
