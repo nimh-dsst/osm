@@ -289,7 +289,6 @@ def get_journal_labels(journal_list: list[str]) -> list[str]:
 
 # Preset to journal list mapping
 JOURNAL_PRESETS = {
-    "Top 5 by count + Top 5 by percent": top_5_journals_combined,
     "Top 10 by data sharing count": top_10_journals_by_count,
     "Top 10 by data sharing percent": top_10_journals_by_percent,
 }
@@ -303,9 +302,9 @@ def on_journal_preset_change() -> None:
 
 
 if splitting_variable == "journal":
-    # Initialize journal selection if not set
+    # Initialize journal selection if not set (use first preset)
     if "journal" not in st.session_state:
-        st.session_state["journal"] = get_journal_labels(top_5_journals_combined)
+        st.session_state["journal"] = get_journal_labels(top_10_journals_by_count)
 
     journal_preset = st.selectbox(
         "Journals preset",
@@ -314,19 +313,24 @@ if splitting_variable == "journal":
         key="journal_preset_select",
         on_change=on_journal_preset_change,
     )
-    default_journal_labels: list[str] = st.session_state.get(
-        "journal", get_journal_labels(top_5_journals_combined)
-    )
-else:
-    default_journal_labels = []
 
 with row_2_col_1:
-    selected_journal_labels = st.multiselect(
-        "Journal (sorted by Data Sharing %)",
-        options=unique_journal_labels,
-        default=default_journal_labels,
-        key="journal",
-    )
+    # When using session state (splitting_variable == "journal"), don't pass default
+    # to avoid "widget with key was created with default but also had value set via
+    # Session State API" warning
+    if splitting_variable == "journal":
+        selected_journal_labels = st.multiselect(
+            "Journal (sorted by Data Sharing %)",
+            options=unique_journal_labels,
+            key="journal",
+        )
+    else:
+        selected_journal_labels = st.multiselect(
+            "Journal (sorted by Data Sharing %)",
+            options=unique_journal_labels,
+            default=[],
+            key="journal",
+        )
     # Map back to actual journal names for filtering
     journals = [journal_display_map[label] for label in selected_journal_labels]
 
@@ -416,19 +420,24 @@ if splitting_variable == "funder":
         key="funder_preset_select",
         on_change=on_funder_preset_change,
     )
-    default_funder_labels: list[str] = st.session_state.get(
-        "funder", get_funder_labels(top_5_combined)
-    )
-else:
-    default_funder_labels = []
 
 with row_2_col_3:
-    selected_funder_labels = st.multiselect(
-        "Funder (sorted by Data Sharing %)",
-        options=unique_funder_labels,
-        default=default_funder_labels,
-        key="funder",
-    )
+    # When using session state (splitting_variable == "funder"), don't pass default
+    # to avoid "widget with key was created with default but also had value set via
+    # Session State API" warning
+    if splitting_variable == "funder":
+        selected_funder_labels = st.multiselect(
+            "Funder (sorted by Data Sharing %)",
+            options=unique_funder_labels,
+            key="funder",
+        )
+    else:
+        selected_funder_labels = st.multiselect(
+            "Funder (sorted by Data Sharing %)",
+            options=unique_funder_labels,
+            default=[],
+            key="funder",
+        )
     # Map back to actual funder names for filtering
     funders = [funder_display_map[label] for label in selected_funder_labels]
 
