@@ -145,11 +145,13 @@ Or use the automation script: `./scripts/refresh_dashboard.sh dashboard_YYMMDD-H
 
 ### Dashboard Reference Files
 
-- `web/dashboard/data/funder_aliases_v3.csv` - Funder to country mappings (loaded dynamically)
+- `web/dashboard/data/funder_aliases_v4.csv` - Funder to country mappings (loaded dynamically)
 
 ### Key Dashboard Features
 
-- **Splitting variables**: Affiliation Country, Funder (Journal disabled for performance)
-- **Default funders**: Top 5 by Data Sharing % + top 5 by Data Sharing count
+- **Splitting variables**: Affiliation Country, Funder, Journal
+- **Funder presets**: Top 5 by Data Sharing % + top 5 by Data Sharing count (combined default)
+- **Journal presets**: Top 10 by data sharing count, Top 10 by data sharing percent
 - **Default year range**: 2010-2024
 - **Funder legend**: Shows country in parenthesis (e.g., "NIH (USA)")
+- **Hover tooltips**: Shows percent sign for percent metrics
