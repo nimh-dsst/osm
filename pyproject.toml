@@ -9,7 +9,6 @@ keywords = [
   "scientific transparency",
   "reproducibility"
 ]
-
 dynamic = ["version"]
 dependencies = [
   "dill",
@@ -22,7 +21,7 @@ dependencies = [
   "requests",
   "polars",
   "pycountry",
-  "altair<5",
+  "altair==4.2.2",
 ]
 
 [project.optional-dependencies]
@@ -32,6 +31,7 @@ dev = [
   "ruff",
   "pytest",
   "tox",
+  "pre-commit>=4.2.0",
 ]
 server = [
   "fastapi[standard]",
@@ -45,11 +45,12 @@ llm = [
   "llama-index-llms-openrouter"
 ]
 plot = [
-  "colorcet",
-  "panel",
-  "plotly",
-  "streamlit"
+  "colorcet>=3.1.0",
+  "panel>=1.7.1",
+  "plotly>=6.2.0",
+  "streamlit>=1.47.1",
 ]
+
 [project.urls]
 homepage = "https://website"
 source = "https://github.com/nimh-dsst/osm"
@@ -71,14 +72,3 @@ osm = "osm.cli:main"
 [tool.ruff]
 line-length = 88
 indent-width = 4
-
-[dependency-groups]
-plot = [
-    "colorcet>=3.1.0",
-    "panel>=1.7.1",
-    "plotly>=6.2.0",
-    "streamlit>=1.47.1",
-]
-dev = [
-    "pre-commit>=4.2.0",
-]
