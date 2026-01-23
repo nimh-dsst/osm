@@ -5,16 +5,20 @@ WORKDIR /app
 RUN mkdir -p /opt/data
 RUN mkdir -p /opt/osm/osm
 ENV UV_SYSTEM_PYTHON=1
-# ENV UV_PYTHON=/usr/local/bin/python
+
 # Install requirements first in a separate layer to avoid re-installing them on
 # every code changes
 COPY pyproject.toml /opt/osm
+
+# Add --upgrade flag to force recompilation with latest versions
 RUN --mount=type=cache,target=/root/.cache/uv \
     SETUPTOOLS_SCM_PRETEND_VERSION_FOR_OSM=9.9.9; \
     cd /opt/osm; \
-    uv pip install --system  -r <(uv pip compile --all-extras pyproject.toml )
+    uv pip install --system --upgrade -r <(uv pip compile --all-extras --upgrade pyproject.toml)
+
 COPY ./osm /opt/osm/osm
+
 RUN --mount=source=.git,target=/opt/osm/.git,type=bind \
     --mount=type=cache,target=/root/.cache/uv \
     cd /opt/osm; \
-    uv pip install  --system -r <(uv pip compile --all-extras pyproject.toml ) -e  .
+    uv pip install --system --upgrade -r <(uv pip compile --all-extras --upgrade pyproject.toml) -e .
