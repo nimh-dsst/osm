@@ -21,7 +21,6 @@ dependencies = [
   "requests",
   "polars",
   "pycountry",
-  "altair==4.2.2",
 ]
 
 [project.optional-dependencies]
